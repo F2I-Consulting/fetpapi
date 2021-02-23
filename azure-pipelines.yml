@@ -141,6 +141,10 @@ jobs:
     timeoutInMinutes: 120
     steps:
       - script: |
+          sudo apt install -y libhdf5-dev libminizip-dev valgrind
+        displayName: 'APT install'
+        
+      - script: |
           curl https://mirroir.wptheme.fr/apache/avro/avro-1.10.1/cpp/avro-cpp-1.10.1.tar.gz -o $(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz
       - task: ExtractFiles@1
         inputs:
