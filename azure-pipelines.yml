@@ -141,7 +141,7 @@ jobs:
     timeoutInMinutes: 120
     steps:
       - script: |
-          sudo apt install -y libhdf5-dev libminizip-dev valgrind
+          sudo apt install libboost-all-dev
         displayName: 'APT install'
         
       - script: |
