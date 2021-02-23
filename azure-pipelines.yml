@@ -148,7 +148,7 @@ jobs:
           cleanDestinationFolder: false
       - powershell: |
           sed -i 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
-          sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin\)//' $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+          sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
         displayName: 'Do not install avro non static' 
       - task: CMake@1
         displayName: 'CMake configure AVRO'
