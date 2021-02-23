@@ -4,7 +4,7 @@
 # https://aka.ms/yaml
 
 jobs:
-- job:
+  - job:
     displayName: Windows VS2017
     pool:
       vmImage: 'vs2017-win2016'
@@ -64,7 +64,6 @@ jobs:
         inputs:
           cmakeArgs: --build . --config $(BuildType) -- /verbosity:minimal
 
-        
   - job:
     displayName: Windows VS2019
     pool:
