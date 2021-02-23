@@ -164,12 +164,12 @@ jobs:
             -DBoost_INCLUDE_DIR=$(BOOST_ROOT_1_72_0)/include
             -DCMAKE_INSTALL_PREFIX=$(Agent.TempDirectory)/avro-cpp-1.10.1-install
       - task: CMake@1
-        displayName: "CMake build AVRO --config $(BuildType)"
+        displayName: "CMake build AVRO"
         inputs:
           workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
-          cmakeArgs: --build . --config $(BuildType) --target avrocpp_s -- /verbosity:minimal
+          cmakeArgs: --build . --target avrocpp_s -- /verbosity:minimal
       - task: CMake@1
-        displayName: "CMake Install AVRO --config $(BuildType)"
+        displayName: "CMake Install AVRO"
         inputs:
           workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
           cmakeArgs: --install .    
