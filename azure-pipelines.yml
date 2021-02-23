@@ -141,18 +141,14 @@ jobs:
     timeoutInMinutes: 120
     steps:
       - script: |
-          sudo apt install -y libhdf5-dev libminizip-dev valgrind
-        displayName: 'APT install'
-
-      - script: |
           curl https://mirroir.wptheme.fr/apache/avro/avro-1.10.1/cpp/avro-cpp-1.10.1.tar.gz -o $(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz
       - task: ExtractFiles@1
         inputs:
           archiveFilePatterns: '$(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz'
           cleanDestinationFolder: false
       - powershell: |
-          sed -i 's/install \(TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
-          sed -i 's/install \(TARGETS avrogencpp RUNTIME DESTINATION bin\)//' $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+          sed -i 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+          sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin\)//' $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
         displayName: 'Do not install avro non static' 
       - task: CMake@1
         displayName: 'CMake configure AVRO'
@@ -160,7 +156,6 @@ jobs:
           workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
           cmakeArgs:
             $(Build.SourcesDirectory)/avro-cpp-1.10.1
-            $(Generator)
             -Wno-dev -Wno-deprecated
             -DBoost_INCLUDE_DIR=$(BOOST_ROOT_1_72_0)/include
             -DCMAKE_INSTALL_PREFIX=$(Agent.TempDirectory)/avro-cpp-1.10.1-install
