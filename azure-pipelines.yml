@@ -140,10 +140,12 @@ jobs:
       vmImage: 'ubuntu-16.04'
     timeoutInMinutes: 120
     steps:
+      # BOOST
       - script: |
           sudo apt install libboost-all-dev
         displayName: 'APT install'
         
+      # AVRO
       - script: |
           curl https://mirroir.wptheme.fr/apache/avro/avro-1.10.1/cpp/avro-cpp-1.10.1.tar.gz -o $(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz
       - task: ExtractFiles@1

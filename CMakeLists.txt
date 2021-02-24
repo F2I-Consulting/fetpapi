@@ -16,7 +16,7 @@ ENDIF (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 # required to define CMAKE_INSTALL_BINDIR, CMAKE_INSTALL_LIBDIR and CMAKE_INSTALL_INCLUDEDIR
 include(GNUInstallDirs) 
 
-# find_package (Threads)
+find_package (Threads)
 
 # avro DEPENDENCY
 set (AVRO_INCLUDE_DIR AVRO_INCLUDE_DIR-NOTFOUND CACHE PATH "Path to the directory which contains the avro header files")
