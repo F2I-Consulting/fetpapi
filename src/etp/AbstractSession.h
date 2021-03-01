@@ -34,7 +34,7 @@ under the License.
 
 #include <unordered_map>
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(FETPAPI_STATIC)
 	#ifndef DLL_IMPORT_OR_EXPORT
 		#if defined(Fetpapi_EXPORTS)
 			#define DLL_IMPORT_OR_EXPORT __declspec(dllexport)
@@ -126,8 +126,8 @@ namespace ETP_NS
 			e->init(*out);
 			avro::encode(*e, mh);
 			avro::encode(*e, mb);
-			sendingQueue.push_back(*avro::snapshot(*out).get());
 			e->flush();
+			sendingQueue.push_back(*avro::snapshot(*out).get());
 
 			return mh.messageId;
 		}

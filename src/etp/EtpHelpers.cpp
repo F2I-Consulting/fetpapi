@@ -25,8 +25,6 @@ under the License.
 #include "AbstractSession.h"
 #include "EtpException.h"
 
-//#include "../common/AbstractObject.h"
-
 Energistics::Etp::v12::Datatypes::ErrorInfo ETP_NS::EtpHelpers::validateUri(const std::string & uri, ETP_NS::AbstractSession* session)
 {
 	Energistics::Etp::v12::Datatypes::ErrorInfo errorInfo;
@@ -94,50 +92,6 @@ Energistics::Etp::v12::Datatypes::ErrorInfo ETP_NS::EtpHelpers::validateDataObje
 
 	return errorInfo;
 }
-
-//Energistics::Etp::v12::Datatypes::Object::Resource ETP_NS::EtpHelpers::buildEtpResourceFromEnergisticsObject(const COMMON_NS::AbstractObject * const obj, bool countRels)
-//{
-//	if (obj == nullptr) {
-//		throw std::invalid_argument("Cannot build resource from a null object.");
-//	}
-//
-//	Energistics::Etp::v12::Datatypes::Object::Resource result;
-//
-//	result.dataObjectType = obj->getQualifiedType();
-//	result.uri = buildUriFromEnergisticsObject(obj);
-//	result.name = obj->getTitle();
-//	if (obj->isPartial()) {
-//		result.lastChanged = -1;
-//	}
-//	else {
-//		const time_t lastUpdate = obj->getLastUpdate();
-//		result.lastChanged = (lastUpdate > -1 ? lastUpdate : obj->getCreation()) * 1000000;
-//	}
-//	
-//	if (countRels) {
-//		result.sourceCount = obj->getRepository()->getSourceObjects(obj).size();
-//		result.targetCount = obj->getRepository()->getTargetObjects(obj).size();
-//	}
-//
-//	result.storeLastWrite = -1; // Not supported yet
-//
-//	return result;
-//}
-
-//Energistics::Etp::v12::Datatypes::Object::DataObject ETP_NS::EtpHelpers::buildEtpDataObjectFromEnergisticsObject(COMMON_NS::AbstractObject * obj, bool includeSerialization)
-//{
-//	Energistics::Etp::v12::Datatypes::Object::DataObject result;
-//	if (includeSerialization) {
-//		if (obj->isPartial()) {
-//			obj = obj->getRepository()->resolvePartial(obj);
-//		}
-//		result.format = "xml";
-//		result.data = obj->serializeIntoString();
-//	}
-//	result.resource = ETP_NS::EtpHelpers::buildEtpResourceFromEnergisticsObject(obj);
-//
-//	return result;
-//}
 
 Energistics::Etp::v12::Protocol::Core::ProtocolException ETP_NS::EtpHelpers::buildSingleMessageProtocolException(int32_t m_code, const std::string & m_message)
 {

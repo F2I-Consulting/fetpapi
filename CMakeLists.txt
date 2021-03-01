@@ -9,7 +9,31 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
-add_library (${LIBRARY_NAME} SHARED "")
+# ============================================================================
+# Lib type (shared/static)
+# ============================================================================
+
+set (BUILD_SHARED_LIBS ON CACHE BOOL "Build shared lib")
+if (BUILD_SHARED_LIBS)
+	set (LIB_TYPE SHARED)
+else (BUILD_SHARED_LIBS)
+	set (LIB_TYPE STATIC)
+endif (BUILD_SHARED_LIBS)
+
+add_library (${LIBRARY_NAME} ${LIB_TYPE} "") 
+
+if (WIN32)
+	if (NOT BUILD_SHARED_LIBS)
+		target_compile_definitions(${LIBRARY_NAME} PRIVATE FETPAPI_STATIC)
+	endif ()
+endif (WIN32)
+
+# ============================================================================
+# some useful variables
+# ============================================================================
+
+set (WITH_FESAPI OFF CACHE BOOL "Build Fetpapi with Fesapi support.")
+# SSL
 
 # ============================================================================
 # checking for required dependencies
@@ -55,6 +79,12 @@ else (WIN32)
 	target_link_libraries (${LIBRARY_NAME} PRIVATE ${AVRO_LIBRARY_RELEASE})
 endif (WIN32)
 
+# SSL
+
+if (WITH_FESAPI)
+	find_package(fesapi)
+endif (WITH_FESAPI)
+
 # ============================================================================
 # Getting source files
 # ============================================================================
@@ -78,6 +108,19 @@ set (ALL_SOURCES_AND_HEADERS
 	${FETPAPI_TOOLS_HEADERS}
 	${FETPAPI_TOOLS_SOURCES}
 )
+
+# SSL
+
+if (WITH_FESAPI)
+	file (GLOB FETPAPI_FESAPI_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/fesapi/*.cpp)
+	file (GLOB FETPAPI_FESAPI_PROTOCOL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/fesapi/ProtocolHandlers/*.cpp)
+	set (ALL_SOURCES_AND_HEADERS
+		${ALL_SOURCES_AND_HEADERS}
+		${FETPAPI_FESAPi_SOURCES}
+		${FETPAPI_FESAPI_PROTOCOL_SOURCES}
+	)
+endif (WITH_FESAPI)
+
 target_sources(${LIBRARY_NAME} PRIVATE ${ALL_SOURCES_AND_HEADERS})
 
 target_include_directories(${LIBRARY_NAME} PRIVATE ${AVRO_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
@@ -97,7 +140,7 @@ endif (WIN32)
 # ============================================================================
 # Install Fetpapi library
 # ============================================================================
- 
+  
 IF (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 	set (CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/install CACHE PATH "${LIBRARY_NAME} install prefix" FORCE)
 ENDIF (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)

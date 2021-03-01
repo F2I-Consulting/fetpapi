@@ -21,7 +21,7 @@ under the License.
 #include "../nsDefinitions.h"
 #include "EtpMessages.h"
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(FETPAPI_STATIC)
 	#ifndef DLL_IMPORT_OR_EXPORT
 		#if defined(Fetpapi_EXPORTS)
 			#define DLL_IMPORT_OR_EXPORT __declspec(dllexport)
@@ -53,21 +53,6 @@ namespace ETP_NS
 		* Provide a session if you want to send a protocol exception in case of non validation.
 		*/
 		DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::ErrorInfo validateDataObjectUri(const std::string & uri, AbstractSession* session = nullptr);
-
-		/**
-		* Build and return an ETP resource from an Energistics object.
-		* @param obj		The input Energistics obj
-		* @param countRels	Indicate if the returned resource contain the count of source or target relationships.
-		* @return			The ETP resource built from the Energistics object
-		*/
-		//DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::Resource buildEtpResourceFromEnergisticsObject(const COMMON_NS::AbstractObject * const obj, bool countRels = true);
-
-		/**
-		* Build and return an ETP data object from an Energistics object.
-		* @param obj	The input Energistics obj
-		* @return		The ETP data object built from the Energistics object
-		*/
-		//DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::DataObject buildEtpDataObjectFromEnergisticsObject(COMMON_NS::AbstractObject * obj, bool includeSerialization = true);
 
 		/**
 		* Build a protocol exception message which only contains a single error message (not a messsage map).

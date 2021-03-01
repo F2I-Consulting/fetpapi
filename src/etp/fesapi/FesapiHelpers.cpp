@@ -1,0 +1,72 @@
+/*-----------------------------------------------------------------------
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"; you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.
+-----------------------------------------------------------------------*/
+#include "FesapiHelpers.h"
+
+#if (defined(_WIN32) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))))
+#include <regex>
+#endif
+
+#include "../AbstractSession.h"
+#include "../EtpException.h"
+
+#include "fesapi/common/AbstractObject.h"
+
+Energistics::Etp::v12::Datatypes::Object::Resource ETP_NS::FesapiHelpers::buildEtpResourceFromEnergisticsObject(const COMMON_NS::AbstractObject * const obj, bool countRels)
+{
+	if (obj == nullptr) {
+		throw std::invalid_argument("Cannot build resource from a null object.");
+	}
+
+	Energistics::Etp::v12::Datatypes::Object::Resource result;
+
+	result.dataObjectType = obj->getQualifiedType();
+	result.uri = obj->buildEtp12Uri();
+	result.name = obj->getTitle();
+	if (obj->isPartial()) {
+		result.lastChanged = -1;
+	}
+	else {
+		const time_t lastUpdate = obj->getLastUpdate();
+		result.lastChanged = (lastUpdate > -1 ? lastUpdate : obj->getCreation()) * 1000000;
+	}
+	
+	if (countRels) {
+		result.sourceCount = obj->getRepository()->getSourceObjects(obj).size();
+		result.targetCount = obj->getRepository()->getTargetObjects(obj).size();
+	}
+
+	result.storeLastWrite = -1; // Not supported yet
+
+	return result;
+}
+
+Energistics::Etp::v12::Datatypes::Object::DataObject ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(COMMON_NS::AbstractObject * obj, bool includeSerialization)
+{
+	Energistics::Etp::v12::Datatypes::Object::DataObject result;
+	if (includeSerialization) {
+		if (obj->isPartial()) {
+			obj = obj->getRepository()->resolvePartial(obj);
+		}
+		result.format = "xml";
+		result.data = obj->serializeIntoString();
+	}
+	result.resource = ETP_NS::FesapiHelpers::buildEtpResourceFromEnergisticsObject(obj);
+
+	return result;
+}

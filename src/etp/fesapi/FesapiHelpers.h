@@ -7,7 +7,7 @@ to you under the Apache License, Version 2.0 (the
 "License"; you may not use this file except in compliance
 with the License.  You may obtain a copy of the License at
 
-  http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing,
 software distributed under the License is distributed on an
@@ -17,8 +17,6 @@ specific language governing permissions and limitations
 under the License.
 -----------------------------------------------------------------------*/
 #pragma once
-
-#include <memory>
 
 #include "../../nsDefinitions.h"
 #include "../EtpMessages.h"
@@ -35,24 +33,29 @@ under the License.
 	#define DLL_IMPORT_OR_EXPORT
 #endif
 
+namespace COMMON_NS
+{
+	class AbstractObject;
+}
+
 namespace ETP_NS
 {
 	class AbstractSession;
 
-	class DLL_IMPORT_OR_EXPORT ProtocolHandlers : public std::enable_shared_from_this<ProtocolHandlers>
-	{
-	protected:
-		ProtocolHandlers(AbstractSession* mySession): session(mySession) {}
+	namespace FesapiHelpers {
+		/**
+		* Build and return an ETP resource from an Energistics object.
+		* @param obj		The input Energistics obj
+		* @param countRels	Indicate if the returned resource contain the count of source or target relationships.
+		* @return			The ETP resource built from the Energistics object
+		*/
+		DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::Resource buildEtpResourceFromEnergisticsObject(const COMMON_NS::AbstractObject * const obj, bool countRels = true);
 
-		AbstractSession* session;
-
-		void printDataObject(const Energistics::Etp::v12::Datatypes::Object::DataObject & dataObject);
-
-	public:
-		virtual ~ProtocolHandlers() {}
-
-	    virtual void decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader & mh, avro::DecoderPtr d) = 0;
-
-		AbstractSession* getSession() { return session; }
-	};
+		/**
+		* Build and return an ETP data object from an Energistics object.
+		* @param obj	The input Energistics obj
+		* @return		The ETP data object built from the Energistics object
+		*/
+		DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::DataObject buildEtpDataObjectFromEnergisticsObject(COMMON_NS::AbstractObject * obj, bool includeSerialization = true);
+	}
 }
