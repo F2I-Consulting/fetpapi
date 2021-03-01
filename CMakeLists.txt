@@ -55,13 +55,6 @@ else (WIN32)
 	target_link_libraries (${LIBRARY_NAME} PRIVATE ${AVRO_LIBRARY_RELEASE})
 endif (WIN32)
 
-if (WITH_ETP_SSL)
-	if (NOT TARGET OpenSSL::SSL OR NOT TARGET OpenSSL::Crypto)
-		find_package(OpenSSL REQUIRED)
-	endif()
-	target_link_libraries(${LIBRARY_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
-endif ()
-
 # ============================================================================
 # Getting source files
 # ============================================================================
@@ -99,9 +92,6 @@ if (WIN32)
 	set (ETP_PREFIX "etp")
 	source_group ("${ETP_PREFIX}" FILES ${FETPAPI_SOURCES} ${FETPAPI_HEADERS})
 	source_group ("${ETP_PREFIX}\\ProtocolHandlers" FILES ${FETPAPI_PROTOCOL_SOURCES} ${FETPAPI_PROTOCOL_HEADERS})
-	if (WITH_ETP_SSL)
-		source_group ("${ETP_PREFIX}\\ssl" FILES ${FETPAPI_SSL_SOURCES} ${FETPAPI_SSL_HEADERS})
-	endif ()	
 endif (WIN32)
 
 # ============================================================================
