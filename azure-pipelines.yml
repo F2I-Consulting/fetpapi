@@ -547,7 +547,7 @@ jobs:
             -DAVRO_INCLUDE_DIR=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/include
             -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/lib/libavrocpp_s.a
             -DWITH_FESAPI=TRUE
-            -DHDF5_C_INCLUDE_DIR=
+            -DHDF5_C_INCLUDE_DIR=/usr/include/hdf5/serial/
             -DFESAPI_INCLUDE_DIR=$(Agent.TempDirectory)/fesapi-build/install/include
             -DFESAPI_LIBRARY_RELEASE=$(Agent.TempDirectory)/fesapi-build/install/bin/FesapiCpp.2.1.0.0.so
             -DCMAKE_BUILD_TYPE=Release
