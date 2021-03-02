@@ -143,7 +143,7 @@ jobs:
       
       # fesapi 
       - powershell: |
-          git clone https://github.com/F2I-Consulting/fetpapi.git C:/fesapi
+          git clone https://github.com/F2I-Consulting/fesapi.git C:/fesapi
         displayName: 'Cloning fesapi'
       - task: CMake@1
         displayName: 'CMake configure fesapi'
