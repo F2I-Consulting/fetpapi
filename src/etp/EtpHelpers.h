@@ -22,15 +22,15 @@ under the License.
 #include "EtpMessages.h"
 
 #if defined(_WIN32) && !defined(FETPAPI_STATIC)
-	#ifndef DLL_IMPORT_OR_EXPORT
+	#ifndef FETPAPI_DLL_IMPORT_OR_EXPORT
 		#if defined(Fetpapi_EXPORTS)
-			#define DLL_IMPORT_OR_EXPORT __declspec(dllexport)
+			#define FETPAPI_DLL_IMPORT_OR_EXPORT __declspec(dllexport)
 		#else
-			#define DLL_IMPORT_OR_EXPORT __declspec(dllimport)
+			#define FETPAPI_DLL_IMPORT_OR_EXPORT __declspec(dllimport)
 		#endif
 	#endif
 #else
-	#define DLL_IMPORT_OR_EXPORT
+	#define FETPAPI_DLL_IMPORT_OR_EXPORT
 #endif
 
 namespace COMMON_NS
@@ -47,21 +47,21 @@ namespace ETP_NS
 		/**
 		* Provide a session if you want to send a protocol exception in case of non validation.
 		*/
-		DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::ErrorInfo validateUri(const std::string & uri, AbstractSession* session = nullptr);
+		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::ErrorInfo validateUri(const std::string & uri, AbstractSession* session = nullptr);
 
 		/**
 		* Provide a session if you want to send a protocol exception in case of non validation.
 		*/
-		DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::ErrorInfo validateDataObjectUri(const std::string & uri, AbstractSession* session = nullptr);
+		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::ErrorInfo validateDataObjectUri(const std::string & uri, AbstractSession* session = nullptr);
 
 		/**
 		* Build a protocol exception message which only contains a single error message (not a messsage map).
 		*/
-		DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Protocol::Core::ProtocolException buildSingleMessageProtocolException(int32_t m_code, const std::string & m_message);
+		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Protocol::Core::ProtocolException buildSingleMessageProtocolException(int32_t m_code, const std::string & m_message);
 
 		/**
 		* extract and return the uuid and the version of a dataobejct based on its URI.
 		*/
-		DLL_IMPORT_OR_EXPORT std::pair<std::string, std::string> getUuidAndVersionFromUri(const std::string & uri);
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::pair<std::string, std::string> getUuidAndVersionFromUri(const std::string & uri);
 	}
 }

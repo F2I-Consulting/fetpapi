@@ -24,7 +24,7 @@ under the License.
 
 namespace ETP_NS
 {
-	class DLL_IMPORT_OR_EXPORT DataArrayBlockingSession : public ETP_NS::AbstractSession
+	class FETPAPI_DLL_IMPORT_OR_EXPORT DataArrayBlockingSession : public ETP_NS::AbstractSession
 	{
 	private:
 		websocket::stream<tcp::socket> ws;

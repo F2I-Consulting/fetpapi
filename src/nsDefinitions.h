@@ -18,5 +18,8 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
+/** @namespace	common @brief The common namespace. This namespace contains classes that are common to different Energistics data models and classes that handle the EPC document (EpcDocument) and the data object repository (DataObjectRepository) as well. These two last classes are starting points to write or read an EPC document contaning some data objects. */
+#define COMMON_NS common
+
 /** @namespace	etp @brief The etp namespace. */
 #define ETP_NS etp

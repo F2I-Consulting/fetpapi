@@ -35,15 +35,15 @@ under the License.
 #include <unordered_map>
 
 #if defined(_WIN32) && !defined(FETPAPI_STATIC)
-	#ifndef DLL_IMPORT_OR_EXPORT
+	#ifndef FETPAPI_DLL_IMPORT_OR_EXPORT
 		#if defined(Fetpapi_EXPORTS)
-			#define DLL_IMPORT_OR_EXPORT __declspec(dllexport)
+			#define FETPAPI_DLL_IMPORT_OR_EXPORT __declspec(dllexport)
 		#else
-			#define DLL_IMPORT_OR_EXPORT __declspec(dllimport)
+			#define FETPAPI_DLL_IMPORT_OR_EXPORT __declspec(dllimport)
 		#endif
 	#endif
 #else
-	#define DLL_IMPORT_OR_EXPORT
+	#define FETPAPI_DLL_IMPORT_OR_EXPORT
 #endif
 
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
@@ -155,7 +155,7 @@ namespace ETP_NS
 		/**
 		 * Set the Core protocol handlers
 		 */
-		DLL_IMPORT_OR_EXPORT void setCoreProtocolHandlers(std::shared_ptr<CoreHandlers> coreHandlers) {
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setCoreProtocolHandlers(std::shared_ptr<CoreHandlers> coreHandlers) {
 	    	if (protocolHandlers.empty()) {
 	    		protocolHandlers.push_back(coreHandlers);
 	    	}
@@ -167,14 +167,14 @@ namespace ETP_NS
 	    /**
 		 * Set the Discovery protocol handlers
 		 */
-		DLL_IMPORT_OR_EXPORT void setDiscoveryProtocolHandlers(std::shared_ptr<DiscoveryHandlers> discoveryHandlers) {
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setDiscoveryProtocolHandlers(std::shared_ptr<DiscoveryHandlers> discoveryHandlers) {
 			while (protocolHandlers.size() < Energistics::Etp::v12::Datatypes::Protocol::Discovery + 1) {
 				protocolHandlers.push_back(nullptr);
 			}
 			protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Discovery] = discoveryHandlers;
 		}
 
-		DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ProtocolHandlers> getDiscoveryProtocolHandlers() {
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ProtocolHandlers> getDiscoveryProtocolHandlers() {
 			return protocolHandlers.size() > Energistics::Etp::v12::Datatypes::Protocol::Discovery ?
 				protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Discovery] :
 				nullptr;
@@ -183,14 +183,14 @@ namespace ETP_NS
 		/**
 		 * Set the Store protocol handlers
 		 */
-		DLL_IMPORT_OR_EXPORT void setStoreProtocolHandlers(std::shared_ptr<StoreHandlers> storeHandlers) {
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setStoreProtocolHandlers(std::shared_ptr<StoreHandlers> storeHandlers) {
 			while (protocolHandlers.size() < Energistics::Etp::v12::Datatypes::Protocol::Store + 1) {
 				protocolHandlers.push_back(nullptr);
 			}
 			protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Store] = storeHandlers;
 		}
 
-		DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ProtocolHandlers> getStoreProtocolHandlers() {
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ProtocolHandlers> getStoreProtocolHandlers() {
 			return protocolHandlers.size() > Energistics::Etp::v12::Datatypes::Protocol::Store ?
 				protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Store] :
 				nullptr;
@@ -199,14 +199,14 @@ namespace ETP_NS
 		/**
 		* Set the StoreNotification protocol handlers
 		*/
-		DLL_IMPORT_OR_EXPORT void setStoreNotificationProtocolHandlers(std::shared_ptr<ETP_NS::StoreNotificationHandlers> storeNotificationHandlers) {
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setStoreNotificationProtocolHandlers(std::shared_ptr<ETP_NS::StoreNotificationHandlers> storeNotificationHandlers) {
 			while (protocolHandlers.size() < Energistics::Etp::v12::Datatypes::Protocol::StoreNotification + 1) {
 				protocolHandlers.push_back(nullptr);
 			}
 			protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::StoreNotification] = storeNotificationHandlers;
 		}
 
-		DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ProtocolHandlers> getStoreNotificationProtocolHandlers() {
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ProtocolHandlers> getStoreNotificationProtocolHandlers() {
 			return protocolHandlers.size() > Energistics::Etp::v12::Datatypes::Protocol::StoreNotification ?
 				protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::StoreNotification] :
 				nullptr;
@@ -215,14 +215,14 @@ namespace ETP_NS
 		/**
 		 * Set the Data Array protocol handlers
 		 */
-		DLL_IMPORT_OR_EXPORT void setDataArrayProtocolHandlers(std::shared_ptr<DataArrayHandlers> dataArrayHandlers) {
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setDataArrayProtocolHandlers(std::shared_ptr<DataArrayHandlers> dataArrayHandlers) {
 			while (protocolHandlers.size() < Energistics::Etp::v12::Datatypes::Protocol::DataArray + 1) {
 				protocolHandlers.push_back(nullptr);
 			}
 			protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::DataArray] = dataArrayHandlers;
 		}
 
-		DLL_IMPORT_OR_EXPORT void close();
+		FETPAPI_DLL_IMPORT_OR_EXPORT void close();
 
 		/**
 		 * Create a default ETP message header from the ETP message body.
@@ -254,7 +254,7 @@ namespace ETP_NS
 			return msgId;
 		}
 
-		DLL_IMPORT_OR_EXPORT void sendCloseFrame() {
+		FETPAPI_DLL_IMPORT_OR_EXPORT void sendCloseFrame() {
 			std::vector<uint8_t> empty;
 			sendingQueue.push_back(empty);
 
@@ -276,7 +276,7 @@ namespace ETP_NS
 		/**
 		 * This method is called each time a message is received on the web socket
 		 */
-		DLL_IMPORT_OR_EXPORT void on_read(boost::system::error_code ec, std::size_t bytes_transferred);
+		FETPAPI_DLL_IMPORT_OR_EXPORT void on_read(boost::system::error_code ec, std::size_t bytes_transferred);
 
 		void on_write(boost::system::error_code ec, std::size_t) {
 			if(ec) {
@@ -303,9 +303,9 @@ namespace ETP_NS
 			webSocketSessionClosed = true;
 		}
 
-		DLL_IMPORT_OR_EXPORT bool isWebSocketSessionClosed() const { return webSocketSessionClosed;  }
+		FETPAPI_DLL_IMPORT_OR_EXPORT bool isWebSocketSessionClosed() const { return webSocketSessionClosed;  }
 
-		DLL_IMPORT_OR_EXPORT void setEtpSessionClosed(bool etpSessionClosed_) { etpSessionClosed = etpSessionClosed_; }
-		DLL_IMPORT_OR_EXPORT bool isEtpSessionClosed() const { return webSocketSessionClosed || etpSessionClosed; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setEtpSessionClosed(bool etpSessionClosed_) { etpSessionClosed = etpSessionClosed_; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT bool isEtpSessionClosed() const { return webSocketSessionClosed || etpSessionClosed; }
 	};
 }

@@ -42,22 +42,22 @@ namespace ETP_NS
 		}
 		virtual ~ServerInitializationParameters() = default;
 
-		DLL_IMPORT_OR_EXPORT virtual const boost::uuids::uuid& getServerInstanceId() const { return identifier; }
-		DLL_IMPORT_OR_EXPORT virtual std::string getApplicationName() const { return "F2I-CONSULTING ETP SERVER"; }
-		DLL_IMPORT_OR_EXPORT virtual std::string getApplicationVersion() const { return "0.0"; }
-		DLL_IMPORT_OR_EXPORT virtual std::string getContactEmail() const { return "philippe.verney@f2i-consulting.com"; }
-		DLL_IMPORT_OR_EXPORT virtual std::string getContactName() const { return "Philippe Verney"; }
-		DLL_IMPORT_OR_EXPORT virtual std::string getContactPhone() const { return "Please use Zoom or Slack"; }
-		DLL_IMPORT_OR_EXPORT virtual std::string getOrganizationName() const { return "F2I-CONSULTING"; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT virtual const boost::uuids::uuid& getServerInstanceId() const { return identifier; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getApplicationName() const { return "F2I-CONSULTING ETP SERVER"; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getApplicationVersion() const { return "0.0"; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getContactEmail() const { return "philippe.verney@f2i-consulting.com"; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getContactName() const { return "Philippe Verney"; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getContactPhone() const { return "Please use Zoom or Slack"; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getOrganizationName() const { return "F2I-CONSULTING"; }
 
-		DLL_IMPORT_OR_EXPORT virtual std::vector<std::string> makeSupportedEncodings() const;
-		DLL_IMPORT_OR_EXPORT virtual std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> makeEndpointCapabilities() const;
-		DLL_IMPORT_OR_EXPORT virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> makeSupportedDataObjects() const;
-		DLL_IMPORT_OR_EXPORT virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> makeSupportedProtocols() const;
+		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::vector<std::string> makeSupportedEncodings() const;
+		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> makeEndpointCapabilities() const;
+		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> makeSupportedDataObjects() const;
+		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> makeSupportedProtocols() const;
 
 		/**
 		* Override this method in order to register some dedicated protocol handlers for a session.
 		*/
-		DLL_IMPORT_OR_EXPORT virtual void postSessionCreationOperation (AbstractSession*) const {}
+		FETPAPI_DLL_IMPORT_OR_EXPORT virtual void postSessionCreationOperation (AbstractSession*) const {}
 	};
 }

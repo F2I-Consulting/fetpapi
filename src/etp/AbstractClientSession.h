@@ -172,11 +172,11 @@ namespace ETP_NS
 #endif
 		}
 
-		DLL_IMPORT_OR_EXPORT std::shared_ptr<DataArrayBlockingSession> createDataArrayBlockingSession() {
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<DataArrayBlockingSession> createDataArrayBlockingSession() {
 			return std::make_shared<DataArrayBlockingSession>(derived().ws().get_executor().context(), host, port, target);
 		}
 
-		DLL_IMPORT_OR_EXPORT void do_write() {
+		FETPAPI_DLL_IMPORT_OR_EXPORT void do_write() {
 			if (!sendingQueue[0].empty()) {
 				derived().ws().async_write(
 					boost::asio::buffer(sendingQueue[0]),
@@ -191,7 +191,7 @@ namespace ETP_NS
 			}
 		}
 
-		DLL_IMPORT_OR_EXPORT void do_close() {
+		FETPAPI_DLL_IMPORT_OR_EXPORT void do_close() {
 			derived().ws().async_close(websocket::close_code::normal,
 				std::bind(
 					&AbstractSession::on_close,
@@ -199,7 +199,7 @@ namespace ETP_NS
 					std::placeholders::_1));
 		}
 		
-		DLL_IMPORT_OR_EXPORT void do_read()
+		FETPAPI_DLL_IMPORT_OR_EXPORT void do_read()
 		{
 			if (webSocketSessionClosed) {
 				std::cout << "CLOSED : NOTHING MORE TO DO" << std::endl;

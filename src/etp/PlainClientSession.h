@@ -28,9 +28,9 @@ namespace ETP_NS
 		websocket::stream<tcp::socket> ws_;
 
 	public:
-		DLL_IMPORT_OR_EXPORT PlainClientSession(): ws_(ioc) {}
+		FETPAPI_DLL_IMPORT_OR_EXPORT PlainClientSession(): ws_(ioc) {}
 
-		DLL_IMPORT_OR_EXPORT PlainClientSession(
+		FETPAPI_DLL_IMPORT_OR_EXPORT PlainClientSession(
 			const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
 			const std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> & requestedProtocols,
 			const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& supportedDataObjects);
@@ -38,7 +38,7 @@ namespace ETP_NS
 		virtual ~PlainClientSession() = default;
 
 		// Called by the base class
-		DLL_IMPORT_OR_EXPORT websocket::stream<tcp::socket>& ws() { return ws_; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT websocket::stream<tcp::socket>& ws() { return ws_; }
 
 		void on_resolve(boost::system::error_code ec, tcp::resolver::results_type results)
 		{

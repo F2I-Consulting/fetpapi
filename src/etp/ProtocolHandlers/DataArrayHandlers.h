@@ -22,7 +22,7 @@ under the License.
 
 namespace ETP_NS
 {
-	class DLL_IMPORT_OR_EXPORT DataArrayHandlers : public ProtocolHandlers
+	class FETPAPI_DLL_IMPORT_OR_EXPORT DataArrayHandlers : public ProtocolHandlers
 	{
 	public:
 		DataArrayHandlers(AbstractSession* mySession): ProtocolHandlers(mySession) {}

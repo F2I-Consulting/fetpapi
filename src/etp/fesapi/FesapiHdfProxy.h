@@ -24,7 +24,7 @@ under the License.
 
 namespace ETP_NS
 {
-	class DLL_IMPORT_OR_EXPORT FesapiHdfProxy : public EML2_NS::AbstractHdfProxy
+	class FETPAPI_DLL_IMPORT_OR_EXPORT FesapiHdfProxy : public EML2_NS::AbstractHdfProxy
 	{
 	private:
 		std::shared_ptr<DataArrayBlockingSession> session;
@@ -547,7 +547,7 @@ namespace ETP_NS
 		std::string getXmlNamespace() const { return XML_NS; }
 	};
 
-	class DLL_IMPORT_OR_EXPORT FesapiHdfProxyFactory : public COMMON_NS::HdfProxyFactory
+	class FETPAPI_DLL_IMPORT_OR_EXPORT FesapiHdfProxyFactory : public COMMON_NS::HdfProxyFactory
 	{
 	public:
 		/**

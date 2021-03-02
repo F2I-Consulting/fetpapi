@@ -55,6 +55,31 @@ if (NOT EXISTS ${AVRO_LIBRARY_DEBUG})
 	message(WARNING "The AVRO library (AVRO_LIBRARY_DEBUG variable) does not look to be a valid file. Please modify it.")
 endif ()
 
+# SSL
+
+if (WITH_FESAPI)
+	# hdf5
+	# FIND_PACKAGE (HDF5) is not used because we need debug and release versions of hdf5 for windows build environments. The cmake module does not provide both debug and release library cmake variables.
+	set (HDF5_C_INCLUDE_DIR HDF5_C_INCLUDE_DIR-NOTFOUND CACHE PATH "Path to the directory which contains the HDF5 C header files")
+	IF (NOT IS_DIRECTORY ${HDF5_C_INCLUDE_DIR})
+		MESSAGE(WARNING "The HDF5 include dir (HDF5_C_INCLUDE_DIR variable) does not look to be a valid directory. Please modify it.")
+	ENDIF ()
+
+	set (FESAPI_INCLUDE_DIR FESAPI_INCLUDE_DIR-NOTFOUND CACHE PATH "Path to the directory which contains the fesapi header files")
+	if (NOT IS_DIRECTORY ${FESAPI_INCLUDE_DIR})
+		message(WARNING "The Fesapi include dir (FESAPI_INCLUDE_DIR variable) does not look to be a valid directory. Please modify it.")
+	endif ()
+	set (FESAPI_LIBRARY_RELEASE FESAPI_LIBRARY_RELEASE-NOTFOUND CACHE FILEPATH "Path to the file which contains the fesapi library release")
+	if (NOT EXISTS ${FESAPI_LIBRARY_RELEASE})
+		message(WARNING "The fesapi library (FESAPI_LIBRARY_RELEASE variable) does not look to be a valid file. Please modify it.")
+	endif ()
+	set (FESAPI_LIBRARY_DEBUG FESAPI_LIBRARY_DEBUG-NOTFOUND CACHE FILEPATH "Path to the file which contains the fesapi library DEBUG")
+	if (NOT EXISTS ${FESAPI_LIBRARY_DEBUG})
+		message(WARNING "The fesapi library (FESAPI_LIBRARY_DEBUG variable) does not look to be a valid file. Please modify it.")
+	endif ()
+endif (WITH_FESAPI)
+
+
 # Boost DEPENDENCY
 find_package(Boost 1.66.0 REQUIRED system)
 if (WIN32 AND (Boost_VERSION_MAJOR EQUAL 1) AND (Boost_VERSION_MINOR LESS 74) AND (Boost_VERSION_MINOR GREATER 71))
@@ -79,10 +104,18 @@ else (WIN32)
 	target_link_libraries (${LIBRARY_NAME} PRIVATE ${AVRO_LIBRARY_RELEASE})
 endif (WIN32)
 
-# SSL
-
 if (WITH_FESAPI)
-	find_package(fesapi)
+	if (WIN32)
+		if (EXISTS ${FESAPI_LIBRARY_RELEASE} AND EXISTS ${FESAPI_LIBRARY_DEBUG})
+			target_link_libraries (${LIBRARY_NAME} PRIVATE optimized ${FESAPI_LIBRARY_RELEASE} debug ${FESAPI_LIBRARY_DEBUG})
+		elseif (EXISTS ${FESAPI_LIBRARY_RELEASE})
+			target_link_libraries (${LIBRARY_NAME} PRIVATE ${FESAPI_LIBRARY_RELEASE})
+		elseif (EXISTS ${FESAPI_LIBRARY_DEBUG})
+			target_link_libraries (${LIBRARY_NAME} PRIVATE ${FESAPI_LIBRARY_DEBUG})
+		endif ()
+	else (WIN32)
+		target_link_libraries (${LIBRARY_NAME} PRIVATE ${FESAPI_LIBRARY_RELEASE})
+	endif (WIN32)
 endif (WITH_FESAPI)
 
 # ============================================================================
@@ -90,6 +123,7 @@ endif (WITH_FESAPI)
 # ============================================================================
 
 # Namespaces definitions
+set (FESAPI_COMMON_NS common CACHE STRING "Namespace for common objects")
 set (FETPAPI_ETP_NS etp CACHE STRING "Namespace for etp objects")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/nsDefinitions.h ${CMAKE_CURRENT_SOURCE_DIR}/src/nsDefinitions.h) # Overwrite if different
 
@@ -113,12 +147,13 @@ set (ALL_SOURCES_AND_HEADERS
 
 if (WITH_FESAPI)
 	file (GLOB FETPAPI_FESAPI_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/fesapi/*.cpp)
-	file (GLOB FETPAPI_FESAPI_PROTOCOL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/fesapi/ProtocolHandlers/*.cpp)
+	file (GLOB FETPAPI_FESAPI_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/fesapi/*.h)
 	set (ALL_SOURCES_AND_HEADERS
 		${ALL_SOURCES_AND_HEADERS}
-		${FETPAPI_FESAPi_SOURCES}
-		${FETPAPI_FESAPI_PROTOCOL_SOURCES}
+		${FETPAPI_FESAPI_SOURCES}
+		${FETPAPI_FESAPI_HEADERS}
 	)
+	target_include_directories(${LIBRARY_NAME} PRIVATE ${HDF5_C_INCLUDE_DIR} ${FESAPI_INCLUDE_DIR})
 endif (WITH_FESAPI)
 
 target_sources(${LIBRARY_NAME} PRIVATE ${ALL_SOURCES_AND_HEADERS})
@@ -135,6 +170,10 @@ if (WIN32)
 	set (ETP_PREFIX "etp")
 	source_group ("${ETP_PREFIX}" FILES ${FETPAPI_SOURCES} ${FETPAPI_HEADERS})
 	source_group ("${ETP_PREFIX}\\ProtocolHandlers" FILES ${FETPAPI_PROTOCOL_SOURCES} ${FETPAPI_PROTOCOL_HEADERS})
+	
+	if (WITH_FESAPI)
+		source_group ("${ETP_PREFIX}\\fesapi" FILES ${FETPAPI_FESAPI_SOURCES} ${FETPAPI_FESAPI_HEADERS})
+	endif (WITH_FESAPI)
 endif (WIN32)
 
 # ============================================================================

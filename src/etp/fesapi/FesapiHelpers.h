@@ -22,15 +22,15 @@ under the License.
 #include "../EtpMessages.h"
 
 #if defined(_WIN32) && !defined(FETPAPI_STATIC)
-	#ifndef DLL_IMPORT_OR_EXPORT
+	#ifndef FETPAPI_DLL_IMPORT_OR_EXPORT
 		#if defined(Fetpapi_EXPORTS)
-			#define DLL_IMPORT_OR_EXPORT __declspec(dllexport)
+			#define FETPAPI_DLL_IMPORT_OR_EXPORT __declspec(dllexport)
 		#else
-			#define DLL_IMPORT_OR_EXPORT __declspec(dllimport)
+			#define FETPAPI_DLL_IMPORT_OR_EXPORT __declspec(dllimport)
 		#endif
 	#endif
 #else
-	#define DLL_IMPORT_OR_EXPORT
+	#define FETPAPI_DLL_IMPORT_OR_EXPORT
 #endif
 
 namespace COMMON_NS
@@ -49,13 +49,13 @@ namespace ETP_NS
 		* @param countRels	Indicate if the returned resource contain the count of source or target relationships.
 		* @return			The ETP resource built from the Energistics object
 		*/
-		DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::Resource buildEtpResourceFromEnergisticsObject(const COMMON_NS::AbstractObject * const obj, bool countRels = true);
+		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::Resource buildEtpResourceFromEnergisticsObject(const COMMON_NS::AbstractObject * const obj, bool countRels = true);
 
 		/**
 		* Build and return an ETP data object from an Energistics object.
 		* @param obj	The input Energistics obj
 		* @return		The ETP data object built from the Energistics object
 		*/
-		DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::DataObject buildEtpDataObjectFromEnergisticsObject(COMMON_NS::AbstractObject * obj, bool includeSerialization = true);
+		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::DataObject buildEtpDataObjectFromEnergisticsObject(COMMON_NS::AbstractObject * obj, bool includeSerialization = true);
 	}
 }

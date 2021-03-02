@@ -28,14 +28,14 @@ namespace ETP_NS
 		websocket::stream<tcp::socket> ws_;
 
 	public:
-		DLL_IMPORT_OR_EXPORT PlainServerSession(tcp::socket socket);
+		FETPAPI_DLL_IMPORT_OR_EXPORT PlainServerSession(tcp::socket socket);
 
 		virtual ~PlainServerSession() {}
 
 		// Called by the base class
-		DLL_IMPORT_OR_EXPORT websocket::stream<tcp::socket>& ws() { return ws_; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT websocket::stream<tcp::socket>& ws() { return ws_; }
 
-		DLL_IMPORT_OR_EXPORT bool run(boost::beast::http::request<boost::beast::http::string_body> req) {
+		FETPAPI_DLL_IMPORT_OR_EXPORT bool run(boost::beast::http::request<boost::beast::http::string_body> req) {
 			on_handshake(boost::system::error_code(), std::move(req));
 			return true;
 		}
