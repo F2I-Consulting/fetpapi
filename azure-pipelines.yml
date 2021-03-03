@@ -554,7 +554,7 @@ jobs:
             -DWITH_FESAPI=TRUE
             -DHDF5_C_INCLUDE_DIR=/usr/include/hdf5/serial/
             -DFESAPI_INCLUDE_DIR=$(Agent.TempDirectory)/fesapi-build/install/include
-            -DFESAPI_LIBRARY_RELEASE=$(Agent.TempDirectory)/fesapi-build/install/bin/libFesapiCpp.so
+            -DFESAPI_LIBRARY_RELEASE=$(Agent.TempDirectory)/fesapi-build/install/lib/libFesapiCpp.so
             -DCMAKE_BUILD_TYPE=Release
             -S $(Build.SourcesDirectory)
             -B $(Build.BinariesDirectory)
