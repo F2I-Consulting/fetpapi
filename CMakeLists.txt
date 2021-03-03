@@ -40,7 +40,7 @@ endif (WIN32)
 # ============================================================================
 
 set (WITH_FESAPI OFF CACHE BOOL "Build Fetpapi with Fesapi support.")
-# SSL
+set (WITH_ETP_SSL OFF CACHE BOOL "Build Fesapi with ETP SSL support.")
 
 # ============================================================================
 # checking for required dependencies
@@ -98,6 +98,10 @@ if (WIN32)
 endif (WIN32)
 
 target_compile_definitions(${LIBRARY_NAME} PRIVATE BOOST_ALL_NO_LIB)
+if (WITH_ETP_SSL)
+	target_compile_definitions(${LIBRARY_NAME} PRIVATE WITH_ETP_SSL)
+endif ()
+
 target_link_libraries (${LIBRARY_NAME} PRIVATE ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 if (WIN32)
 	if (EXISTS ${AVRO_LIBRARY_RELEASE} AND EXISTS ${AVRO_LIBRARY_DEBUG})
@@ -110,6 +114,13 @@ if (WIN32)
 else (WIN32)
 	target_link_libraries (${LIBRARY_NAME} PRIVATE ${AVRO_LIBRARY_RELEASE})
 endif (WIN32)
+
+if (WITH_ETP_SSL)
+	if (NOT TARGET OpenSSL::SSL OR NOT TARGET OpenSSL::Crypto)
+		find_package(OpenSSL REQUIRED)
+	endif()
+	target_link_libraries(${LIBRARY_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+endif ()
 
 if (WITH_FESAPI)
 	if (WIN32)
@@ -150,7 +161,16 @@ set (ALL_SOURCES_AND_HEADERS
 	${FETPAPI_TOOLS_SOURCES}
 )
 
-# SSL
+if (WITH_ETP_SSL)
+	file (GLOB FETPAPI_SSL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/ssl/*.cpp)
+	file (GLOB FETPAPI_SSL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/ssl/*.h)
+	
+	set (ALL_SOURCES_AND_HEADERS
+		${ALL_SOURCES_AND_HEADERS}
+		${FETPAPI_SSL_SOURCES}
+		${FETPAPI_SSL_HEADERS}
+	)
+endif ()
 
 if (WITH_FESAPI)
 	file (GLOB FETPAPI_FESAPI_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/fesapi/*.cpp)
@@ -166,6 +186,10 @@ endif (WITH_FESAPI)
 target_sources(${LIBRARY_NAME} PRIVATE ${ALL_SOURCES_AND_HEADERS})
 
 target_include_directories(${LIBRARY_NAME} PRIVATE ${AVRO_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
+if (WITH_ETP_SSL)
+	target_include_directories(${LIBRARY_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
+endif ()
+
 target_include_directories(${LIBRARY_NAME} INTERFACE
 	$<INSTALL_INTERFACE:include>
 )
@@ -177,6 +201,10 @@ if (WIN32)
 	set (ETP_PREFIX "etp")
 	source_group ("${ETP_PREFIX}" FILES ${FETPAPI_SOURCES} ${FETPAPI_HEADERS})
 	source_group ("${ETP_PREFIX}\\ProtocolHandlers" FILES ${FETPAPI_PROTOCOL_SOURCES} ${FETPAPI_PROTOCOL_HEADERS})
+	
+	if (WITH_ETP_SSL)
+		source_group ("${ETP_PREFIX}\\ssl" FILES ${FETPAPI_SSL_SOURCES} ${FETPAPI_SSL_HEADERS})
+	endif ()
 	
 	if (WITH_FESAPI)
 		source_group ("${ETP_PREFIX}\\fesapi" FILES ${FETPAPI_FESAPI_SOURCES} ${FETPAPI_FESAPI_HEADERS})

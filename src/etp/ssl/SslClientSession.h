@@ -38,7 +38,7 @@ namespace ETP_NS
 		websocket::stream<boost::beast::ssl_stream<tcp::socket>> ws_;
 
 	public:
-		DLL_IMPORT_OR_EXPORT SslClientSession(boost::asio::ssl::context& ctx,
+		FETPAPI_DLL_IMPORT_OR_EXPORT SslClientSession(boost::asio::ssl::context& ctx,
 			const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
 			const std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> & requestedProtocols,
 			const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& supportedObjects);
@@ -46,7 +46,7 @@ namespace ETP_NS
 		virtual ~SslClientSession() {}
 
 		// Called by the base class
-		DLL_IMPORT_OR_EXPORT websocket::stream<boost::beast::ssl_stream<tcp::socket>>& ws() { return ws_; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT websocket::stream<boost::beast::ssl_stream<tcp::socket>>& ws() { return ws_; }
 
 		void on_resolve(boost::system::error_code ec, tcp::resolver::results_type results)
 		{
