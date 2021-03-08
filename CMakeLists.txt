@@ -62,8 +62,6 @@ if (NOT EXISTS ${AVRO_LIBRARY_DEBUG})
 	message(WARNING "The AVRO library (AVRO_LIBRARY_DEBUG variable) does not look to be a valid file. Please modify it.")
 endif ()
 
-# SSL
-
 if (WITH_FESAPI)
 	# hdf5
 	# FIND_PACKAGE (HDF5) is not used because we need debug and release versions of hdf5 for windows build environments. The cmake module does not provide both debug and release library cmake variables.
@@ -98,9 +96,6 @@ if (WIN32)
 endif (WIN32)
 
 target_compile_definitions(${LIBRARY_NAME} PRIVATE BOOST_ALL_NO_LIB)
-if (WITH_ETP_SSL)
-	target_compile_definitions(${LIBRARY_NAME} PRIVATE WITH_ETP_SSL)
-endif ()
 
 target_link_libraries (${LIBRARY_NAME} PRIVATE ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 if (WIN32)
@@ -116,6 +111,7 @@ else (WIN32)
 endif (WIN32)
 
 if (WITH_ETP_SSL)
+	target_compile_definitions(${LIBRARY_NAME} PRIVATE WITH_ETP_SSL)
 	if (NOT TARGET OpenSSL::SSL OR NOT TARGET OpenSSL::Crypto)
 		find_package(OpenSSL REQUIRED)
 	endif()
