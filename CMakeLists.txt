@@ -93,6 +93,20 @@ endif ()
 
 if (WIN32)
 	target_link_libraries (${LIBRARY_NAME} PRIVATE bcrypt.lib)
+	
+	set_target_properties(${LIBRARY_NAME} PROPERTIES
+		#PDB_NAME ${CPP_LIBRARY_NAME}${CMAKE_DEBUG_POSTFIX}.${Fesapi_VERSION}
+		LINK_FLAGS "/INCREMENTAL:NO /OPT:REF"
+		RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		#SUFFIX .${Fesapi_VERSION}.dll
+		#IMPORT_SUFFIX .${Fesapi_VERSION}.lib
+		#VERSION ${Fesapi_VERSION_MAJOR}.${Fesapi_VERSION_MINOR}
+	)
+ELSEIF (UNIX)
+	set_target_properties(${LIBRARY_NAME} PROPERTIES
+		COMPILE_FLAGS "-fPIC"
+		#VERSION ${Fesapi_VERSION}
+		#SOVERSION ${Fesapi_VERSION_MAJOR}.${Fesapi_VERSION_MINOR})
 endif (WIN32)
 
 target_compile_definitions(${LIBRARY_NAME} PRIVATE BOOST_ALL_NO_LIB)
