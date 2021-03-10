@@ -1,0 +1,27 @@
+from distutils.core import setup, Extension
+
+fetpapi_module = Extension('_fetpapi',
+	sources=['swigGeneratedPythonWrapper.cpp'],
+	include_dirs=[
+		'${Boost_INCLUDE_DIR}',
+		'${AVRO_INCLUDE_DIR}'
+	],
+	library_dirs=[
+		'${CMAKE_INSTALL_PREFIX}/lib',
+		'${Boost_LIBRARY_DIR_RELEASE}',
+		'${AVRO_LIBRARY_DIR_RELEASE}'
+	],
+	libraries=[
+		'${ASSEMBLY_NAME}',
+		'${AVRO_LIBRARY_RELEASE_WLE}'
+	],
+	extra_compile_args=['-std=c++11'],
+)
+
+setup (name = 'fetpapi',
+	version = '1.0',
+	author      = "F2I-CONSULTING",
+	description = """An API for the Energistics Transfert Protocol""",
+	ext_modules = [fetpapi_module],
+	py_modules = ["fetpapi"],
+)

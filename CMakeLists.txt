@@ -133,6 +133,26 @@ if (WITH_FESAPI)
 endif (WITH_FESAPI)
 
 # ============================================================================
+# SWIG wrapping
+# ============================================================================
+
+set (WITH_JAVA_WRAPPING OFF CACHE BOOL "Compile the swig cpp generated file for Java wrappers.")
+set (WITH_DOTNET_WRAPPING OFF CACHE BOOL "Compile the swig cpp generated file for .NET wrappers.")
+set (WITH_PYTHON_WRAPPING OFF CACHE BOOL "Compile the swig cpp generated file for Python wrappers.")
+
+if (WITH_JAVA_WRAPPING)
+	include(${CMAKE_SOURCE_DIR}/java/CMakeLists.txt)
+endif (WITH_JAVA_WRAPPING)
+
+if (WITH_DOTNET_WRAPPING)
+	include(${CMAKE_SOURCE_DIR}/cs/CMakeLists.txt)
+endif (WITH_DOTNET_WRAPPING)
+
+if (WITH_PYTHON_WRAPPING)
+	include(${CMAKE_SOURCE_DIR}/python/CMakeLists.txt)
+endif (WITH_PYTHON_WRAPPING)
+
+# ============================================================================
 # Getting source files
 # ============================================================================
 
