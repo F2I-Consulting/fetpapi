@@ -106,7 +106,8 @@ ELSEIF (UNIX)
 	set_target_properties(${LIBRARY_NAME} PROPERTIES
 		COMPILE_FLAGS "-fPIC"
 		#VERSION ${Fesapi_VERSION}
-		#SOVERSION ${Fesapi_VERSION_MAJOR}.${Fesapi_VERSION_MINOR})
+		#SOVERSION ${Fesapi_VERSION_MAJOR}.${Fesapi_VERSION_MINOR}
+	)
 endif (WIN32)
 
 target_compile_definitions(${LIBRARY_NAME} PRIVATE BOOST_ALL_NO_LIB)
