@@ -1,0 +1,576 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+jobs:
+  - job:
+    displayName: Windows VS2017
+    pool:
+      vmImage: 'vs2017-win2016'
+    strategy:
+      matrix:
+        64-bit Release:
+          BuildType: Release
+          Generator: '-G"Visual Studio 15 2017 Win64" -T host=x64'
+          JFlag: '-j 2'
+    timeoutInMinutes: 150
+    steps:
+      # Boost
+      # Use the boost_1_75_0-msvc-14.1-64.exe for Windows 2016
+      - powershell: |
+          $Url = "https://sourceforge.net/projects/boost/files/boost-binaries/1.75.0/boost_1_75_0-msvc-14.1-64.exe"
+          (New-Object System.Net.WebClient).DownloadFile($Url, "$env:TEMP\boost.exe")
+          Start-Process -Wait -FilePath "$env:TEMP\boost.exe" "/SILENT","/SP-","/SUPPRESSMSGBOXES","/DIR=C:\hostedtoolcache\windows\Boost\1.75.0\x86_64"  
+        displayName: 'Install Boost 1.75'
+    
+      # AVRO
+      - powershell: |
+          Invoke-WebRequest https://mirroir.wptheme.fr/apache/avro/avro-1.10.1/cpp/avro-cpp-1.10.1.tar.gz -OutFile $(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz
+      - task: ExtractFiles@1
+        inputs:
+          archiveFilePatterns: '$(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz'
+          cleanDestinationFolder: false
+      - powershell: |
+          ((Get-Content -path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt -Raw) -replace 'install \(TARGETS avrocpp avrocpp_s','install (TARGETS avrocpp_s') | Set-Content -Path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+          ((Get-Content -path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt -Raw) -replace 'install \(TARGETS avrogencpp RUNTIME DESTINATION bin\)','') | Set-Content -Path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+        displayName: 'Do not install avro non static' 
+      - task: CMake@1
+        displayName: 'CMake configure AVRO'
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs:
+            $(Build.SourcesDirectory)/avro-cpp-1.10.1
+            $(Generator)
+            -Wno-dev -Wno-deprecated
+            -DBoost_INCLUDE_DIR=C:/hostedtoolcache/windows/Boost/1.75.0/x86_64
+            -DCMAKE_INSTALL_PREFIX=$(Agent.TempDirectory)/avro-cpp-1.10.1-install
+      - task: CMake@1
+        displayName: "CMake build AVRO --config $(BuildType)"
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs: --build . --config $(BuildType) --target avrocpp_s -- /verbosity:minimal
+      - task: CMake@1
+        displayName: "CMake Install AVRO --config $(BuildType)"
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs: --install .
+          
+      - task: CMake@1
+        displayName: 'CMake .. $(Generator)'
+        inputs:
+          cmakeArgs:
+            ..
+            $(Generator)
+            -Wno-dev -Wno-deprecated
+            -DBoost_INCLUDE_DIR=C:/hostedtoolcache/windows/Boost/1.75.0/x86_64
+            -DAVRO_INCLUDE_DIR=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/include
+            -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/lib/avrocpp_s.lib
+
+      - task: CMake@1
+        displayName: "Build --config $(BuildType)"
+        inputs:
+          cmakeArgs: --build . --config $(BuildType) -- /verbosity:minimal
+
+  - job:
+    displayName: Windows VS2017 with fesapi
+    pool:
+      vmImage: 'vs2017-win2016'
+    strategy:
+      matrix:
+        64-bit Release:
+          BuildType: Release
+          Generator: '-G"Visual Studio 15 2017 Win64" -T host=x64'
+          JFlag: '-j 2'
+    timeoutInMinutes: 150
+    steps:
+      # Boost
+      # Use the boost_1_75_0-msvc-14.1-64.exe for Windows 2016
+      - powershell: |
+          $Url = "https://sourceforge.net/projects/boost/files/boost-binaries/1.75.0/boost_1_75_0-msvc-14.1-64.exe"
+          (New-Object System.Net.WebClient).DownloadFile($Url, "$env:TEMP\boost.exe")
+          Start-Process -Wait -FilePath "$env:TEMP\boost.exe" "/SILENT","/SP-","/SUPPRESSMSGBOXES","/DIR=C:\hostedtoolcache\windows\Boost\1.75.0\x86_64"  
+        displayName: 'Install Boost 1.75'
+    
+      # AVRO
+      - powershell: |
+          Invoke-WebRequest https://mirroir.wptheme.fr/apache/avro/avro-1.10.1/cpp/avro-cpp-1.10.1.tar.gz -OutFile $(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz
+      - task: ExtractFiles@1
+        inputs:
+          archiveFilePatterns: '$(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz'
+          cleanDestinationFolder: false
+      - powershell: |
+          ((Get-Content -path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt -Raw) -replace 'install \(TARGETS avrocpp avrocpp_s','install (TARGETS avrocpp_s') | Set-Content -Path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+          ((Get-Content -path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt -Raw) -replace 'install \(TARGETS avrogencpp RUNTIME DESTINATION bin\)','') | Set-Content -Path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+        displayName: 'Do not install avro non static' 
+      - task: CMake@1
+        displayName: 'CMake configure AVRO'
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs:
+            $(Build.SourcesDirectory)/avro-cpp-1.10.1
+            $(Generator)
+            -Wno-dev -Wno-deprecated
+            -DBoost_INCLUDE_DIR=C:/hostedtoolcache/windows/Boost/1.75.0/x86_64
+            -DCMAKE_INSTALL_PREFIX=$(Agent.TempDirectory)/avro-cpp-1.10.1-install
+      - task: CMake@1
+        displayName: "CMake build AVRO --config $(BuildType)"
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs: --build . --config $(BuildType) --target avrocpp_s -- /verbosity:minimal
+      - task: CMake@1
+        displayName: "CMake Install AVRO --config $(BuildType)"
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs: --install .
+          
+      # HDF5
+      - powershell: |
+          Invoke-WebRequest https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.6/bin/hdf5-1.10.6-Std-win10_64-vs15.zip -OutFile C:\hdf5-1.10.6-Std-win10_64-vs15.zip
+          Expand-Archive C:\hdf5-1.10.6-Std-win10_64-vs15.zip -DestinationPath C:\
+          msiexec.exe /i "C:\hdf\HDF5-1.10.6-win64.msi" /qn INSTALL_ROOT=C:\hdf5-1.10.6-win64-vs2017
+        displayName: 'Install HDF5 1.10.6'    
+      
+      # Minizip
+      - powershell: |
+          git clone https://github.com/F2I-Consulting/Minizip.git C:/Minizip
+        displayName: 'Cloning Minizip'
+      - task: CMake@1
+        displayName: 'CMake configure Minizip'
+        inputs:
+          workingDirectory: C:/Minizip-build
+          cmakeArgs:
+            ../Minizip
+            $(Generator)
+            -Wno-dev -Wno-deprecated
+            -DZLIB_INCLUDE_DIR=C:/hdf5-1.10.6-win64-vs2017/include
+            -DZLIB_LIBRARY_RELEASE=C:/hdf5-1.10.6-win64-vs2017/lib/hdf5.lib
+            -DCMAKE_INSTALL_PREFIX=C:/Minizip-install
+      - task: CMake@1
+        displayName: "CMake build Minizip --config $(BuildType)"
+        inputs:
+          workingDirectory: C:/Minizip-build
+          cmakeArgs: --build . --config $(BuildType) -- /verbosity:minimal
+      - task: CMake@1
+        displayName: "CMake Install Minizip --config $(BuildType)"
+        inputs:
+          workingDirectory: C:/Minizip-build
+          cmakeArgs: --build . --config $(BuildType) --target INSTALL -- /verbosity:minimal
+      
+      # fesapi 
+      - powershell: |
+          git clone https://github.com/F2I-Consulting/fesapi.git C:/fesapi
+        displayName: 'Cloning fesapi'
+      - task: CMake@1
+        displayName: 'CMake configure fesapi'
+        inputs:
+          workingDirectory: C:/fesapi-build
+          cmakeArgs:
+            ../fesapi
+            $(Generator)
+            -Wno-dev -Wno-deprecated
+            -DHDF5_BUILT_AS_DYNAMIC_LIB=TRUE
+            -DHDF5_C_INCLUDE_DIR=C:/hdf5-1.10.6-win64-vs2017/include
+            -DHDF5_C_LIBRARY_RELEASE=C:/hdf5-1.10.6-win64-vs2017/lib/hdf5.lib
+            -DMINIZIP_INCLUDE_DIR=C:/Minizip-install/include
+            -DMINIZIP_LIBRARY_RELEASE=C:/Minizip-install/lib/minizip.lib
+            -DZLIB_INCLUDE_DIR=C:/hdf5-1.10.6-win64-vs2017/include
+            -DZLIB_LIBRARY_RELEASE=C:/hdf5-1.10.6-win64-vs2017/lib/zlib.lib
+            -DSZIP_LIBRARY_RELEASE=C:/hdf5-1.10.6-win64-vs2017/lib/szip.lib
+            -DBoost_INCLUDE_DIR=C:/hostedtoolcache/windows/Boost/1.75.0/x86_64
+            -DCMAKE_INSTALL_PREFIX=C:/fesapi-install
+      - task: CMake@1
+        displayName: "CMake build fesapi --config $(BuildType)"
+        inputs:
+          workingDirectory: C:/fesapi-build
+          cmakeArgs: --build . --config $(BuildType) -- /verbosity:minimal
+      - task: CMake@1
+        displayName: "CMake Install fesapi --config $(BuildType)"
+        inputs:
+          workingDirectory: C:/fesapi-build
+          cmakeArgs: --build . --config $(BuildType) --target INSTALL -- /verbosity:minimal
+      
+      - task: CMake@1
+        displayName: 'CMake .. $(Generator)'
+        inputs:
+          cmakeArgs:
+            ..
+            $(Generator)
+            -Wno-dev -Wno-deprecated
+            -DBoost_INCLUDE_DIR=C:/hostedtoolcache/windows/Boost/1.75.0/x86_64
+            -DAVRO_INCLUDE_DIR=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/include
+            -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/lib/avrocpp_s.lib
+            -DWITH_FESAPI=TRUE
+            -DHDF5_C_INCLUDE_DIR=C:/hdf5-1.10.6-win64-vs2017/include
+            -DFESAPI_INCLUDE_DIR=C:/fesapi-install/include
+            -DFESAPI_LIBRARY_RELEASE=C:/fesapi-install/lib/FesapiCpp.2.1.0.0.lib
+
+      - task: CMake@1
+        displayName: "Build --config $(BuildType)"
+        inputs:
+          cmakeArgs: --build . --config $(BuildType) -- /verbosity:minimal
+          
+  - job:
+    displayName: Windows VS2019
+    pool:
+      vmImage: 'windows-2019'
+    timeoutInMinutes: 150
+    strategy:
+      matrix:
+        # 64-bit Debug:
+        #   BuildType: Debug
+        #   Generator: '-G"Visual Studio 16 2019" -A x64" -T host=x64'
+        #   JFlag: -j 4
+
+        64-bit Release:
+          BuildType: Release
+          Generator: '-G"Visual Studio 16 2019" -A x64 -T host=x64'
+          JFlag: '-j 2'
+    steps:  
+      # Boost
+      # Use the boost_1_75_0-msvc-14.2-64.exe for Windows 2019
+      - powershell: |
+          $Url = "https://sourceforge.net/projects/boost/files/boost-binaries/1.75.0/boost_1_75_0-msvc-14.2-64.exe"
+          (New-Object System.Net.WebClient).DownloadFile($Url, "$env:TEMP\boost.exe")
+          Start-Process -Wait -FilePath "$env:TEMP\boost.exe" "/SILENT","/SP-","/SUPPRESSMSGBOXES","/DIR=C:\hostedtoolcache\windows\Boost\1.75.0\x86_64"  
+        displayName: 'Install Boost 1.75'
+    
+      # AVRO
+      - powershell: |
+          Invoke-WebRequest https://mirroir.wptheme.fr/apache/avro/avro-1.10.1/cpp/avro-cpp-1.10.1.tar.gz -OutFile $(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz
+      - task: ExtractFiles@1
+        inputs:
+          archiveFilePatterns: '$(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz'
+          cleanDestinationFolder: false
+      - powershell: |
+          ((Get-Content -path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt -Raw) -replace 'install \(TARGETS avrocpp avrocpp_s','install (TARGETS avrocpp_s') | Set-Content -Path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+          ((Get-Content -path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt -Raw) -replace 'install \(TARGETS avrogencpp RUNTIME DESTINATION bin\)','') | Set-Content -Path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+        displayName: 'Do not install avro non static' 
+      - task: CMake@1
+        displayName: 'CMake configure AVRO'
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs:
+            $(Build.SourcesDirectory)/avro-cpp-1.10.1
+            $(Generator)
+            -Wno-dev -Wno-deprecated
+            -DBoost_INCLUDE_DIR=C:/hostedtoolcache/windows/Boost/1.75.0/x86_64
+            -DCMAKE_INSTALL_PREFIX=$(Agent.TempDirectory)/avro-cpp-1.10.1-install
+      - task: CMake@1
+        displayName: "CMake build AVRO --config $(BuildType)"
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs: --build . --config $(BuildType) --target avrocpp_s -- /verbosity:minimal
+      - task: CMake@1
+        displayName: "CMake Install AVRO --config $(BuildType)"
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs: --install .
+
+      - task: CMake@1
+        displayName: 'CMake .. $(Generator)'
+        inputs:
+          cmakeArgs:
+            ..
+            $(Generator)
+            -Wno-dev -Wno-deprecated
+            -DBoost_INCLUDE_DIR=C:/hostedtoolcache/windows/Boost/1.75.0/x86_64
+            -DAVRO_INCLUDE_DIR=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/include
+            -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/lib/avrocpp_s.lib
+
+      - task: CMake@1
+        displayName: "Build --config $(BuildType)"
+        inputs:
+          cmakeArgs: --build . --config $(BuildType) -- /verbosity:minimal
+  
+  - job:
+    displayName: Windows VS2019 with fesapi
+    pool:
+      vmImage: 'windows-2019'
+    timeoutInMinutes: 150
+    strategy:
+      matrix:
+        # 64-bit Debug:
+        #   BuildType: Debug
+        #   Generator: '-G"Visual Studio 16 2019" -A x64" -T host=x64'
+        #   JFlag: -j 4
+
+        64-bit Release:
+          BuildType: Release
+          Generator: '-G"Visual Studio 16 2019" -A x64 -T host=x64'
+          JFlag: '-j 2'
+    steps:   
+      # Boost
+      # Use the boost_1_75_0-msvc-14.2-64.exe for Windows 2019
+      - powershell: |
+          $Url = "https://sourceforge.net/projects/boost/files/boost-binaries/1.75.0/boost_1_75_0-msvc-14.2-64.exe"
+          (New-Object System.Net.WebClient).DownloadFile($Url, "$env:TEMP\boost.exe")
+          Start-Process -Wait -FilePath "$env:TEMP\boost.exe" "/SILENT","/SP-","/SUPPRESSMSGBOXES","/DIR=C:\hostedtoolcache\windows\Boost\1.75.0\x86_64"  
+        displayName: 'Install Boost 1.75'
+    
+      # AVRO
+      - powershell: |
+          Invoke-WebRequest https://mirroir.wptheme.fr/apache/avro/avro-1.10.1/cpp/avro-cpp-1.10.1.tar.gz -OutFile $(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz
+      - task: ExtractFiles@1
+        inputs:
+          archiveFilePatterns: '$(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz'
+          cleanDestinationFolder: false
+      - powershell: |
+          ((Get-Content -path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt -Raw) -replace 'install \(TARGETS avrocpp avrocpp_s','install (TARGETS avrocpp_s') | Set-Content -Path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+          ((Get-Content -path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt -Raw) -replace 'install \(TARGETS avrogencpp RUNTIME DESTINATION bin\)','') | Set-Content -Path $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+        displayName: 'Do not install avro non static' 
+      - task: CMake@1
+        displayName: 'CMake configure AVRO'
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs:
+            $(Build.SourcesDirectory)/avro-cpp-1.10.1
+            $(Generator)
+            -Wno-dev -Wno-deprecated
+            -DBoost_INCLUDE_DIR=C:/hostedtoolcache/windows/Boost/1.75.0/x86_64
+            -DCMAKE_INSTALL_PREFIX=$(Agent.TempDirectory)/avro-cpp-1.10.1-install
+      - task: CMake@1
+        displayName: "CMake build AVRO --config $(BuildType)"
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs: --build . --config $(BuildType) --target avrocpp_s -- /verbosity:minimal
+      - task: CMake@1
+        displayName: "CMake Install AVRO --config $(BuildType)"
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs: --install .
+      
+      # HDF5      
+      - powershell: |
+          Invoke-WebRequest https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.0/bin/hdf5-1.12.0-Std-win10_64-vs16.zip -OutFile C:\hdf5-1.12.0-Std-win10_64-vs16.zip
+          Expand-Archive C:\hdf5-1.12.0-Std-win10_64-vs16.zip -DestinationPath C:\
+          msiexec.exe /i "C:\hdf\HDF5-1.12.0-win64.msi" /qn INSTALL_ROOT=C:\hdf5-1.12.0-win64-vs2019
+        displayName: 'Install HDF5 1.12.0'
+
+      # Minizip
+      - powershell: |
+          git clone https://github.com/F2I-Consulting/Minizip.git C:/Minizip
+        displayName: 'Cloning Minizip'
+      - task: CMake@1
+        displayName: 'CMake configure Minizip'
+        inputs:
+          workingDirectory: C:/Minizip-build
+          cmakeArgs:
+            ../Minizip
+            $(Generator)
+            -Wno-dev -Wno-deprecated
+            -DZLIB_INCLUDE_DIR=C:/hdf5-1.12.0-win64-vs2019/include
+            -DZLIB_LIBRARY_RELEASE=C:/hdf5-1.12.0-win64-vs2019/lib/zlib.lib
+            -DCMAKE_INSTALL_PREFIX=C:/Minizip-install
+      - task: CMake@1
+        displayName: "CMake build Minizip --config $(BuildType)"
+        inputs:
+          workingDirectory: C:/Minizip-build
+          cmakeArgs: --build . --config $(BuildType) -- /verbosity:minimal
+      - task: CMake@1
+        displayName: "CMake Install Minizip --config $(BuildType)"
+        inputs:
+          workingDirectory: C:/Minizip-build
+          cmakeArgs: --build . --config $(BuildType) --target INSTALL -- /verbosity:minimal    
+          
+      # fesapi
+      - powershell: |
+          git clone https://github.com/F2I-Consulting/fesapi.git C:/fesapi
+        displayName: 'Cloning fesapi'
+      - task: CMake@1
+        displayName: 'CMake configure fesapi'
+        inputs:
+          workingDirectory: C:/fesapi-build
+          cmakeArgs:
+            ../fesapi
+            $(Generator)
+            -Wno-dev -Wno-deprecated
+            -DHDF5_BUILT_AS_DYNAMIC_LIB=TRUE
+            -DHDF5_C_INCLUDE_DIR=C:/hdf5-1.12.0-win64-vs2019/include
+            -DHDF5_C_LIBRARY_RELEASE=C:/hdf5-1.12.0-win64-vs2019/lib/hdf5.lib
+            -DMINIZIP_INCLUDE_DIR=C:/Minizip-install/include
+            -DMINIZIP_LIBRARY_RELEASE=C:/Minizip-install/lib/minizip.lib
+            -DZLIB_INCLUDE_DIR=C:/hdf5-1.12.0-win64-vs2019/include
+            -DZLIB_LIBRARY_RELEASE=C:/hdf5-1.12.0-win64-vs2019/lib/zlib.lib
+            -DSZIP_LIBRARY_RELEASE=C:/hdf5-1.12.0-win64-vs2019/lib/szip.lib
+            -DBoost_INCLUDE_DIR=C:/hostedtoolcache/windows/Boost/1.75.0/x86_64
+            -DAVRO_INCLUDE_DIR=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/include
+            -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/lib/avrocpp_s.lib
+            -DCMAKE_INSTALL_PREFIX=C:/fesapi-install
+      - task: CMake@1
+        displayName: "CMake build fesapi --config $(BuildType)"
+        inputs:
+          workingDirectory: C:/fesapi-build
+          cmakeArgs: --build . --config $(BuildType) -- /verbosity:minimal
+      - task: CMake@1
+        displayName: "CMake Install fesapi --config $(BuildType)"
+        inputs:
+          workingDirectory: C:/fesapi-build
+          cmakeArgs: --build . --config $(BuildType) --target INSTALL -- /verbosity:minimal    
+          
+      - task: CMake@1
+        displayName: 'CMake .. $(Generator)'
+        inputs:
+          cmakeArgs:
+            ..
+            $(Generator)
+            -Wno-dev -Wno-deprecated
+            -DBoost_INCLUDE_DIR=C:/hostedtoolcache/windows/Boost/1.75.0/x86_64
+            -DAVRO_INCLUDE_DIR=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/include
+            -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/lib/avrocpp_s.lib
+            -DWITH_FESAPI=TRUE
+            -DHDF5_C_INCLUDE_DIR=C:/hdf5-1.12.0-win64-vs2019/include
+            -DFESAPI_INCLUDE_DIR=C:/fesapi-install/include
+            -DFESAPI_LIBRARY_RELEASE=C:/fesapi-install/lib/FesapiCpp.2.1.0.0.lib
+
+      - task: CMake@1
+        displayName: "Build --config $(BuildType)"
+        inputs:
+          cmakeArgs: --build . --config $(BuildType) -- /verbosity:minimal
+          
+  - job:
+    displayName: Ubuntu 20.04
+    pool:
+      vmImage: 'ubuntu-20.04'
+    timeoutInMinutes: 120
+    steps:
+      # BOOST
+      - script: |
+          sudo apt install -y libboost-all-dev
+        displayName: 'APT install'
+        
+      # AVRO
+      - script: |
+          curl https://mirroir.wptheme.fr/apache/avro/avro-1.10.1/cpp/avro-cpp-1.10.1.tar.gz -o $(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz
+      - task: ExtractFiles@1
+        inputs:
+          archiveFilePatterns: '$(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz'
+          cleanDestinationFolder: false
+      - powershell: |
+          sed -i 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+          sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+        displayName: 'Do not install avro non static' 
+      - task: CMake@1
+        displayName: 'CMake configure AVRO'
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs:
+            $(Build.SourcesDirectory)/avro-cpp-1.10.1
+            -Wno-dev -Wno-deprecated
+            -DCMAKE_INSTALL_PREFIX=$(Agent.TempDirectory)/avro-cpp-1.10.1-install
+      - task: CMake@1
+        displayName: "CMake build AVRO"
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs: --build . --target avrocpp_s
+      - task: CMake@1
+        displayName: "CMake Install AVRO"
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs: --install .    
+
+      - task: CMake@1
+        displayName: 'Configure FETPAPI build'
+        inputs:
+          cmakeArgs:
+            -Wno-dev -Wno-deprecated
+            -DAVRO_INCLUDE_DIR=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/include
+            -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/lib/libavrocpp_s.a
+            -DCMAKE_BUILD_TYPE=Release
+            -S $(Build.SourcesDirectory)
+            -B $(Build.BinariesDirectory)
+
+      - task: CMake@1
+        displayName: "Build FETPAPI"
+        inputs:
+          cmakeArgs: --build $(Build.BinariesDirectory)
+          
+  - job:
+    displayName: Ubuntu 20.04 with fesapi
+    pool:
+      vmImage: 'ubuntu-20.04'
+    timeoutInMinutes: 120
+    steps:
+      # BOOST
+      - script: |
+          sudo apt install -y libboost-all-dev libhdf5-dev libminizip-dev
+        displayName: 'APT install'
+        
+      # AVRO
+      - script: |
+          curl https://mirroir.wptheme.fr/apache/avro/avro-1.10.1/cpp/avro-cpp-1.10.1.tar.gz -o $(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz
+      - task: ExtractFiles@1
+        inputs:
+          archiveFilePatterns: '$(Agent.TempDirectory)/avro-cpp-1.10.1.tar.gz'
+          cleanDestinationFolder: false
+      - powershell: |
+          sed -i 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+          sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' $(Build.SourcesDirectory)/avro-cpp-1.10.1/CMakeLists.txt
+        displayName: 'Do not install avro non static' 
+      - task: CMake@1
+        displayName: 'CMake configure AVRO'
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs:
+            $(Build.SourcesDirectory)/avro-cpp-1.10.1
+            -Wno-dev -Wno-deprecated
+            -DCMAKE_INSTALL_PREFIX=$(Agent.TempDirectory)/avro-cpp-1.10.1-install
+      - task: CMake@1
+        displayName: "CMake build AVRO"
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs: --build . --target avrocpp_s
+      - task: CMake@1
+        displayName: "CMake Install AVRO"
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/build-avro-cpp-1.10.1
+          cmakeArgs: --install .    
+       
+      # fesapi
+      - script: |
+          git clone https://github.com/F2I-Consulting/fesapi.git $(Agent.TempDirectory)/fesapi
+        displayName: 'Cloning fesapi'
+      - task: CMake@1
+        displayName: 'CMake configure fesapi'
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/fesapi-build
+          cmakeArgs:
+            ../fesapi
+            -Wno-dev -Wno-deprecated
+            -DHDF5_C_INCLUDE_DIR=/usr/include/hdf5/serial/
+            -DHDF5_C_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so
+            -DMINIZIP_INCLUDE_DIR=/usr/include/minizip
+            -DMINIZIP_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libminizip.so
+            -DZLIB_INCLUDE_DIR=/usr/include
+            -DZLIB_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libz.so
+            -DCMAKE_BUILD_TYPE=Release
+      - task: CMake@1
+        displayName: "CMake build fesapi"
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/fesapi-build
+          cmakeArgs: --build . 
+      - task: CMake@1
+        displayName: "CMake Install fesapi"
+        inputs:
+          workingDirectory: $(Agent.TempDirectory)/fesapi-build
+          cmakeArgs: --build . --target install
+
+      - task: CMake@1
+        displayName: 'Configure FETPAPI build'
+        inputs:
+          cmakeArgs:
+            -Wno-dev -Wno-deprecated
+            -DAVRO_INCLUDE_DIR=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/include
+            -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.1-install/lib/libavrocpp_s.a
+            -DWITH_FESAPI=TRUE
+            -DHDF5_C_INCLUDE_DIR=/usr/include/hdf5/serial/
+            -DFESAPI_INCLUDE_DIR=$(Agent.TempDirectory)/fesapi-build/install/include
+            -DFESAPI_LIBRARY_RELEASE=$(Agent.TempDirectory)/fesapi-build/install/lib/libFesapiCpp.so
+            -DCMAKE_BUILD_TYPE=Release
+            -S $(Build.SourcesDirectory)
+            -B $(Build.BinariesDirectory)
+
+      - task: CMake@1
+        displayName: "Build FETPAPI"
+        inputs:
+          cmakeArgs: --build $(Build.BinariesDirectory)
