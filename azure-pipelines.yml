@@ -148,7 +148,7 @@ jobs:
       
       # fesapi 
       - powershell: |
-          git clone --branch dev https://github.com/mpoudret/fesapi.git C:/fesapi
+          git clone https://github.com/F2I-Consulting/fesapi.git C:/fesapi
         displayName: 'Cloning fesapi'
       - task: CMake@1
         displayName: 'CMake configure fesapi'
@@ -358,7 +358,7 @@ jobs:
           
       # fesapi
       - powershell: |
-          git clone --branch dev https://github.com/mpoudret/fesapi.git C:/fesapi
+          git clone https://github.com/F2I-Consulting/fesapi.git C:/fesapi
         displayName: 'Cloning fesapi'
       - task: CMake@1
         displayName: 'CMake configure fesapi'
@@ -514,7 +514,7 @@ jobs:
        
       # fesapi
       - script: |
-          git clone --branch dev https://github.com/mpoudret/fesapi.git $(Agent.TempDirectory)/fesapi
+          git clone https://github.com/F2I-Consulting/fesapi.git $(Agent.TempDirectory)/fesapi
         displayName: 'Cloning fesapi'
       - task: CMake@1
         displayName: 'CMake configure fesapi'
