@@ -1,4 +1,4 @@
-# Included in ../CmakeLists.txt if Phyton build is selected.
+# Included in ../CmakeLists.txt if Python build is selected.
 
 find_package(SWIG 3.0 REQUIRED)
 
@@ -30,20 +30,12 @@ get_filename_component(AVRO_LIBRARY_DIR_RELEASE ${AVRO_LIBRARY_RELEASE} DIRECTOR
 get_filename_component(AVRO_LIBRARY_RELEASE_WLE ${AVRO_LIBRARY_RELEASE} NAME_WLE)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/setup_etp.py.in ${CMAKE_SOURCE_DIR}/swig/setup.py) # Overwrite if different
 
-set (SWIG_DEFINITIONS "")
-if (WITH_RESQML2_2)
-	string(APPEND SWIG_DEFINITIONS "-DWITH_RESQML2_2")
-endif (WITH_RESQML2_2)
-if (WITH_ETP)
-	string(APPEND SWIG_DEFINITIONS " -DWITH_ETP")
-endif (WITH_ETP)
-
 # SWIG execution
 if (WIN32)
-	set ( EXECUTE_COMMAND "${SWIG_EXECUTABLE} ${SWIG_DEFINITIONS} -v -c++ -python -builtin -py3 -o ${CMAKE_SOURCE_DIR}/swig/swigGeneratedPythonWrapper.cpp -outdir ${CMAKE_SOURCE_DIR}/python/src ${CMAKE_SOURCE_DIR}/swig/swigEtp1_2Include.i")
+	set ( EXECUTE_COMMAND "${SWIG_EXECUTABLE} -v -c++ -python -builtin -py3 -o ${CMAKE_SOURCE_DIR}/swig/swigGeneratedPythonWrapper.cpp -outdir ${CMAKE_SOURCE_DIR}/python/src ${CMAKE_SOURCE_DIR}/swig/swigEtp1_2Include.i")
 	execute_process(COMMAND powershell ${EXECUTE_COMMAND})
 elseif (UNIX)
-	set ( EXECUTE_COMMAND ${SWIG_EXECUTABLE} ${SWIG_DEFINITIONS} -v -c++ -python -builtin -py3 -o ${CMAKE_SOURCE_DIR}/swig/swigGeneratedPythonWrapper.cpp -outdir ${CMAKE_SOURCE_DIR}/python/src ${CMAKE_SOURCE_DIR}/swig/swigEtp1_2Include.i)
+	set ( EXECUTE_COMMAND ${SWIG_EXECUTABLE} -v -c++ -python -builtin -py3 -o ${CMAKE_SOURCE_DIR}/swig/swigGeneratedPythonWrapper.cpp -outdir ${CMAKE_SOURCE_DIR}/python/src ${CMAKE_SOURCE_DIR}/swig/swigEtp1_2Include.i)
 	execute_process(COMMAND ${EXECUTE_COMMAND})
 endif (WIN32)
 message("SWIG Python files have been generated.")
