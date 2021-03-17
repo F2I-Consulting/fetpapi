@@ -47,7 +47,7 @@ Fetpapi uses cmake as its build tool. A 3.12 version or later of cmake is requir
 
 Remark : you can choose where fetpapi will be installed (using "make install" on Linux or by generating the "INSTALL" project on Visual Studio) by setting the cmake variable called CMAKE_INSTALL_PREFIX
 # How to start
-As a first way to start, we advise people to look at client ([here](https://github.com/F2I-Consulting/fetpapiClient) and server ([here](https://github.com/F2I-Consulting/fetpapiServer) examples.
+As a first way to start, we advise people to look at client ([here](https://github.com/F2I-Consulting/fetpapiClient)) and server ([here](https://github.com/F2I-Consulting/fetpapiServer)) examples.
 # Credits
 This software was developed with :
 - the date library from [Howard Hinnant](https://github.com/HowardHinnant/date)
