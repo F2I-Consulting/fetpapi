@@ -1,4 +1,4 @@
-# Included in ../src/CmakeLists.txt if Phyton build is selected.
+# Included in ../CmakeLists.txt if Phyton build is selected.
 
 find_package(SWIG 3.0 REQUIRED)
 

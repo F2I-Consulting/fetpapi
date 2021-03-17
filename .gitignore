@@ -1,4 +1,5 @@
 ## Ignore the cmake generated files
+/cs/fetpapiCs.csproj
 /swig/setup.py
 /src/nsDefinitions.h
 
