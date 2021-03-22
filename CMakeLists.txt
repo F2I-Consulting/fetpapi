@@ -172,7 +172,6 @@ endif (WITH_PYTHON_WRAPPING)
 # ============================================================================
 
 # Namespaces definitions
-set (FESAPI_COMMON_NS common CACHE STRING "Namespace for common objects")
 set (FETPAPI_ETP_NS etp CACHE STRING "Namespace for etp objects")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/nsDefinitions.h ${CMAKE_CURRENT_SOURCE_DIR}/src/nsDefinitions.h) # Overwrite if different
 
