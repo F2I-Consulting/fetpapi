@@ -18,16 +18,7 @@ under the License.
 -----------------------------------------------------------------------*/
 #include "FesapiHelpers.h"
 
-#if (defined(_WIN32) || (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))))
-#include <regex>
-#endif
-
-#include "../AbstractSession.h"
-#include "../EtpException.h"
-
-#include "fesapi/common/AbstractObject.h"
-
-Energistics::Etp::v12::Datatypes::Object::Resource ETP_NS::FesapiHelpers::buildEtpResourceFromEnergisticsObject(const COMMON_NS::AbstractObject * const obj, bool countRels)
+Energistics::Etp::v12::Datatypes::Object::Resource ETP_NS::FesapiHelpers::buildEtpResourceFromEnergisticsObject(COMMON_NS::AbstractObject const* obj, bool countRels)
 {
 	if (obj == nullptr) {
 		throw std::invalid_argument("Cannot build resource from a null object.");

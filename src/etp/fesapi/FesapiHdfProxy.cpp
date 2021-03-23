@@ -20,8 +20,6 @@ under the License.
 
 #include <stdexcept>
 
-#include <hdf5.h>
-
 using namespace ETP_NS;
 using namespace std;
 
@@ -56,10 +54,10 @@ int FesapiHdfProxy::getHdfDatatypeClassInDataset(const std::string & datasetName
 }
 
 void FesapiHdfProxy::writeItemizedListOfList(const string & groupName, const std::string & name,
-	hid_t cumulativeLengthDatatype,
+	hdf5_hid_t cumulativeLengthDatatype,
 	const void * cumulativeLength,
 	unsigned long long cumulativeLengthSize,
-	hid_t elementsDatatype,
+	hdf5_hid_t elementsDatatype,
 	const void * elements,
 	unsigned long long elementsSize)
 {
@@ -159,7 +157,7 @@ void FesapiHdfProxy::writeArrayNdOfUInt64Values(const std::string & groupName,
 
 void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
 	const std::string & name,
-	hid_t datatype,
+	hdf5_hid_t datatype,
 	const void * values,
 	const unsigned long long * numValuesInEachDimension,
 	unsigned int numDimensions)
@@ -170,7 +168,7 @@ void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
 void FesapiHdfProxy::createArrayNd(
 	const std::string& groupName,
 	const std::string& datasetName,
-	hid_t datatype,
+	hdf5_hid_t datatype,
 	const unsigned long long* numValuesInEachDimension,
 	unsigned int numDimensions)
 {
@@ -181,7 +179,7 @@ void FesapiHdfProxy::createArrayNd(
 void FesapiHdfProxy::writeArrayNdSlab(
 	const string& groupName,
 	const string& datasetName,
-	hid_t datatype,
+	hdf5_hid_t datatype,
 	const void* values,
 	const unsigned long long* numValuesInEachDimension,
 	const unsigned long long* offsetInEachDimension,
@@ -227,15 +225,15 @@ void FesapiHdfProxy::selectArrayNdOfValues(
 	unsigned long long const * blockSizeInEachDimension,
 	unsigned int numDimensions,
 	bool newSelection,
-	hid_t & dataset,
-	hid_t & filespace)
+	hdf5_hid_t & dataset,
+	hdf5_hid_t & filespace)
 {
 	throw logic_error("Not implemented yet");
 }
 
 void FesapiHdfProxy::readArrayNdOfDoubleValues(
-	hid_t dataset,
-	hid_t filespace,
+	hdf5_hid_t dataset,
+	hdf5_hid_t filespace,
 	void* values,
 	unsigned long long slabSize)
 {

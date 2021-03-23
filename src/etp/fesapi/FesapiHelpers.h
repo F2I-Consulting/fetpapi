@@ -18,6 +18,8 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
+#include <fesapi/common/AbstractObject.h>
+
 #include "../../nsDefinitions.h"
 #include "../EtpMessages.h"
 
@@ -33,15 +35,8 @@ under the License.
 	#define FETPAPI_DLL_IMPORT_OR_EXPORT
 #endif
 
-namespace COMMON_NS
-{
-	class AbstractObject;
-}
-
 namespace ETP_NS
 {
-	class AbstractSession;
-
 	namespace FesapiHelpers {
 		/**
 		* Build and return an ETP resource from an Energistics object.
@@ -49,7 +44,7 @@ namespace ETP_NS
 		* @param countRels	Indicate if the returned resource contain the count of source or target relationships.
 		* @return			The ETP resource built from the Energistics object
 		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::Resource buildEtpResourceFromEnergisticsObject(const COMMON_NS::AbstractObject * const obj, bool countRels = true);
+		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::Resource buildEtpResourceFromEnergisticsObject(COMMON_NS::AbstractObject const* obj, bool countRels = true);
 
 		/**
 		* Build and return an ETP data object from an Energistics object.
