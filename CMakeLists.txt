@@ -63,13 +63,6 @@ if (NOT EXISTS ${AVRO_LIBRARY_DEBUG})
 endif ()
 
 if (WITH_FESAPI)
-	# hdf5
-	# FIND_PACKAGE (HDF5) is not used because we need debug and release versions of hdf5 for windows build environments. The cmake module does not provide both debug and release library cmake variables.
-	set (HDF5_C_INCLUDE_DIR HDF5_C_INCLUDE_DIR-NOTFOUND CACHE PATH "Path to the directory which contains the HDF5 C header files")
-	IF (NOT IS_DIRECTORY ${HDF5_C_INCLUDE_DIR})
-		MESSAGE(WARNING "The HDF5 include dir (HDF5_C_INCLUDE_DIR variable) does not look to be a valid directory. Please modify it.")
-	ENDIF ()
-
 	set (FESAPI_INCLUDE_DIR FESAPI_INCLUDE_DIR-NOTFOUND CACHE PATH "Path to the directory which contains the fesapi header files")
 	if (NOT IS_DIRECTORY ${FESAPI_INCLUDE_DIR})
 		message(WARNING "The Fesapi include dir (FESAPI_INCLUDE_DIR variable) does not look to be a valid directory. Please modify it.")
@@ -172,7 +165,6 @@ endif (WITH_PYTHON_WRAPPING)
 # ============================================================================
 
 # Namespaces definitions
-set (FESAPI_COMMON_NS common CACHE STRING "Namespace for common objects")
 set (FETPAPI_ETP_NS etp CACHE STRING "Namespace for etp objects")
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/nsDefinitions.h ${CMAKE_CURRENT_SOURCE_DIR}/src/nsDefinitions.h) # Overwrite if different
 
