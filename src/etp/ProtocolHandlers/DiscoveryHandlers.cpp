@@ -41,6 +41,24 @@ void DiscoveryHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 		session->flushReceivingBuffer();
 		on_GetResourcesResponse(msg, mh.correlationId);
 	}
+	else if (mh.messageType == Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse::messageTypeId) {
+		Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse msg;
+		avro::decode(*d, msg);
+		session->flushReceivingBuffer();
+		on_GetResourcesEdgesResponse(msg, mh.correlationId);
+	}
+	else if (mh.messageType == Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources::messageTypeId) {
+		Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources msg;
+		avro::decode(*d, msg);
+		session->flushReceivingBuffer();
+		on_GetDeletedResources(msg, mh.messageId);
+	}
+	else if (mh.messageType == Energistics::Etp::v12::Protocol::Discovery::GetDeletedResourcesResponse::messageTypeId) {
+		Energistics::Etp::v12::Protocol::Discovery::GetDeletedResourcesResponse msg;
+		avro::decode(*d, msg);
+		session->flushReceivingBuffer();
+		on_GetDeletedResourcesResponse(msg, mh.correlationId);
+	}
 	else {
 		session->flushReceivingBuffer();
 		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(3, "The message type ID " + std::to_string(mh.messageType) + " is invalid for the discovery protocol."), mh.messageId, 0x02);
@@ -56,5 +74,24 @@ void DiscoveryHandlers::on_GetResourcesResponse(const Energistics::Etp::v12::Pro
 {
 	for (const auto & resource : msg.resources) {
 		std::cout << "DISCOVERED RESOURCE (" << resource.name << ", " << resource.dataObjectType << ')' << std::endl;
+	}
+}
+
+void DiscoveryHandlers::on_GetResourcesEdgesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse & msg, int64_t correlationId)
+{
+	for (const auto & edge : msg.edges) {
+		std::cout << "DISCOVERED EDGE (" << edge.sourceUri << ", " << edge.relationshipKind << ", " << edge.targetUri << ')' << std::endl;
+	}
+}
+
+void DiscoveryHandlers::on_GetDeletedResources(const Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources &, int64_t correlationId)
+{
+	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The Discovery::on_GetDeletedResources method has not been overriden by the agent."), correlationId, 0x02);
+}
+
+void DiscoveryHandlers::on_GetDeletedResourcesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetDeletedResourcesResponse & msg, int64_t)
+{
+	for (const auto & resource : msg.deletedResources) {
+		std::cout << "DISCOVERED DELETED RESOURCE (" << resource.uri << " deleted at " << resource.deletedTime << ')' << std::endl;
 	}
 }

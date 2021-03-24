@@ -201,7 +201,6 @@ jobs:
             -DAVRO_INCLUDE_DIR=$(Agent.TempDirectory)/avro-cpp-1.10.2-install/include
             -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.2-install/lib/avrocpp_s.lib
             -DWITH_FESAPI=TRUE
-            -DHDF5_C_INCLUDE_DIR=C:/hdf5-1.10.6-win64-vs2017/include
             -DFESAPI_INCLUDE_DIR=C:/fesapi-install/include
             -DFESAPI_LIBRARY_RELEASE=C:/fesapi-install/lib/FesapiCpp.2.1.0.0.lib
 
@@ -419,7 +418,6 @@ jobs:
             -DAVRO_INCLUDE_DIR=$(Agent.TempDirectory)/avro-cpp-1.10.2-install/include
             -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.2-install/lib/avrocpp_s.lib
             -DWITH_FESAPI=TRUE
-            -DHDF5_C_INCLUDE_DIR=C:/hdf5-1.12.0-win64-vs2019/include
             -DFESAPI_INCLUDE_DIR=C:/fesapi-install/include
             -DFESAPI_LIBRARY_RELEASE=C:/fesapi-install/lib/FesapiCpp.2.1.0.0.lib
 
@@ -563,7 +561,6 @@ jobs:
             -DAVRO_INCLUDE_DIR=$(Agent.TempDirectory)/avro-cpp-1.10.2-install/include
             -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.2-install/lib/libavrocpp_s.a
             -DWITH_FESAPI=TRUE
-            -DHDF5_C_INCLUDE_DIR=/usr/include/hdf5/serial/
             -DFESAPI_INCLUDE_DIR=$(Agent.TempDirectory)/fesapi-build/install/include
             -DFESAPI_LIBRARY_RELEASE=$(Agent.TempDirectory)/fesapi-build/install/lib/libFesapiCpp.so
             -DCMAKE_BUILD_TYPE=Release

@@ -76,6 +76,18 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 		session->flushReceivingBuffer();
 		on_Pong(pong, mh.messageId);
 	}
+	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::RenewSecurityToken::messageTypeId) {
+		Energistics::Etp::v12::Protocol::Core::RenewSecurityToken msg;
+		avro::decode(*d, msg);
+		session->flushReceivingBuffer();
+		on_RenewSecurityToken(msg, mh.messageId);
+	}
+	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::RenewSecurityTokenResponse::messageTypeId) {
+		Energistics::Etp::v12::Protocol::Core::RenewSecurityTokenResponse msg;
+		avro::decode(*d, msg);
+		session->flushReceivingBuffer();
+		on_RenewSecurityTokenResponse(msg, mh.messageId);
+	}
 	else {
 		session->flushReceivingBuffer();
 		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(3, "The message type ID " + std::to_string(mh.messageType) + " is invalid for the core protocol."), mh.messageId, 0x02);
@@ -84,7 +96,7 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 
 void CoreHandlers::on_RequestSession(const Energistics::Etp::v12::Protocol::Core::RequestSession &, int64_t correlationId)
 {
-	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(2, "The Core::on_RequestSession method has not been overriden by the agent."), correlationId, 0x02);
+	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The Core::on_RequestSession method has not been overriden by the agent."), correlationId, 0x02);
 }
 
 void CoreHandlers::on_OpenSession(const Energistics::Etp::v12::Protocol::Core::OpenSession &, int64_t)
@@ -129,4 +141,14 @@ void CoreHandlers::on_Ping(const Energistics::Etp::v12::Protocol::Core::Ping &, 
 void CoreHandlers::on_Pong(const Energistics::Etp::v12::Protocol::Core::Pong & pong, int64_t correlationId)
 {
 	std::cout << "Received Pong at " << pong.currentDateTime << " with message id " << correlationId << std::endl;
+}
+
+void CoreHandlers::on_RenewSecurityToken(const Energistics::Etp::v12::Protocol::Core::RenewSecurityToken &, int64_t correlationId)
+{
+	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The Core::on_RenewSecurityToken method has not been overriden by the agent."), correlationId, 0x02);
+}
+
+void CoreHandlers::on_RenewSecurityTokenResponse(const Energistics::Etp::v12::Protocol::Core::RenewSecurityTokenResponse & msg, int64_t)
+{
+	std::cout << "Renewed token" << std::endl;
 }
