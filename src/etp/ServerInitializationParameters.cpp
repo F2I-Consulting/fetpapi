@@ -26,11 +26,15 @@ std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> ServerInitial
 
 	Energistics::Etp::v12::Datatypes::DataValue value;
 
-	value.item.set_int(16000000);
-	result["maxWebSocketMessagePayloadSize"] = value;
+	// https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/using_websocket/messages.html
+	// and https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/read_message_max/overload1.html
+	value.item.set_long(16000000);
+	result["MaxWebSocketFramePayloadSize"] = value;
+	result["MaxWebSocketMessagePayloadSize"] = value;
 
 	value.item.set_boolean(false);
 	result["SupportsAlternateRequestUris"] = value;
+	result["SupportsMessageHeaderExtension"] = value;
 
 	return result;
 }
