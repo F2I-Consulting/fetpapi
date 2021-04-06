@@ -24,10 +24,16 @@ using namespace ETP_NS;
 PlainClientSession::PlainClientSession(
 	const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
 	const std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> & requestedProtocols,
-	const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& supportedDataObjects)
+	const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& supportedDataObjects,
+	std::size_t frameSize)
 	: AbstractClientSession<PlainClientSession>(host, port, target, authorization,
 		requestedProtocols, supportedDataObjects),
 		ws_(ioc)
 {
 	ws_.binary(true);
+#if BOOST_VERSION < 107000
+	ws_.write_buffer_size(frameSize);
+#else
+	ws_.write_buffer_bytes(frameSize);
+#endif
 }

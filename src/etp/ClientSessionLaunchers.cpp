@@ -16,8 +16,11 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 -----------------------------------------------------------------------*/
-
 #include "ClientSessionLaunchers.h"
+
+#include <sstream>
+
+#include "HttpClientSession.h"
 
 namespace
 {
@@ -59,11 +62,48 @@ namespace
 
 		return requestedProtocols;
 	}
+
+	std::size_t getNegotiatedMaxWebSocketFramePayloadSize(const std::string & responseBody, std::size_t preferredMaxFrameSize) {
+		const auto maxWebSocketFramePayloadSizePos = responseBody.find("MaxWebSocketFramePayloadSize");
+		if (maxWebSocketFramePayloadSizePos != std::string::npos) {
+			std::istringstream iss(responseBody);
+			iss.seekg(maxWebSocketFramePayloadSizePos);
+
+			std::string temp;
+			std::size_t serverMaxWebSocketFramePayloadSize;
+			while (!iss.eof()) {
+
+				/* extracting word by word from stream */
+				iss >> temp;
+
+				/* Checking the given word is integer or not */
+				if (std::istringstream(temp) >> serverMaxWebSocketFramePayloadSize) {
+					return std::min(serverMaxWebSocketFramePayloadSize, preferredMaxFrameSize);
+				}
+			}
+		}
+
+		return preferredMaxFrameSize;
+	}
 }
 
-std::shared_ptr<ETP_NS::PlainClientSession> ETP_NS::ClientSessionLaunchers::createWsClientSession(const std::string & host, const std::string & port, const std::string & target, const std::string & authorization)
+std::shared_ptr<ETP_NS::PlainClientSession> ETP_NS::ClientSessionLaunchers::createWsClientSession(const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
+	std::size_t preferredMaxFrameSize)
 {
-	return std::make_shared<PlainClientSession>(host, port, target.empty() ? "/" : target, authorization, getRequestedProtocols(), std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>());
+	boost::asio::io_context ioc;
+	auto httpClientSession = std::make_shared<HttpClientSession>(ioc);
+	std::string etpServerCapTarget = target.empty() ? "/" : target;
+	if (etpServerCapTarget[etpServerCapTarget.size() - 1] != '/') {
+		etpServerCapTarget += '/';
+	}
+	etpServerCapTarget += ".well-known/etp-server-capabilities?GetVersion=etp12.energistics.org";
+	httpClientSession->run(host.c_str(), port.c_str(), etpServerCapTarget.c_str(), 11, authorization);
+	// Run the I/O service. The call will return when the get operation is complete.
+	ioc.run();
+
+	preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(httpClientSession->getResponse().body(), preferredMaxFrameSize);
+
+	return std::make_shared<PlainClientSession>(host, port, target.empty() ? "/" : target, authorization, getRequestedProtocols(), std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>(), preferredMaxFrameSize);
 }
 
 #ifdef WITH_ETP_SSL
@@ -85,6 +125,19 @@ std::shared_ptr<ETP_NS::SslClientSession> ETP_NS::ClientSessionLaunchers::create
 			return nullptr;
 		}
 	}
+
+	boost::asio::io_context ioc;
+	auto httpsClientSession = std::make_shared<HttpsClientSession>(ioc, ctx);
+	std::string etpServerCapTarget = target.empty() ? "/" : target;
+	if (etpServerCapTarget[etpServerCapTarget.size() - 1] != '/') {
+		etpServerCapTarget += '/';
+	}
+	etpServerCapTarget += ".well-known/etp-server-capabilities?GetVersion=etp12.energistics.org";
+	httpClientSession->run(host.c_str(), port.c_str(), etpServerCapTarget.c_str(), 11, authorization);
+	// Run the I/O service. The call will return when the get operation is complete.
+	ioc.run();
+
+	preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(httpsClientSession->getResponse().body(), preferredMaxFrameSize);
 
 	return std::make_shared<SslClientSession>(ctx, host, port, target.empty() ? "/" : target, authorization, getRequestedProtocols(), std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>());
 }

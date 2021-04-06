@@ -30,10 +30,14 @@ namespace ETP_NS
 	public:
 		FETPAPI_DLL_IMPORT_OR_EXPORT PlainClientSession(): ws_(ioc) {}
 
+		/*
+		* @param frameSize				Sets the size of the write buffer used by the implementation to send frames : https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/write_buffer_bytes/overload1.html.
+		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT PlainClientSession(
 			const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
 			const std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> & requestedProtocols,
-			const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& supportedDataObjects);
+			const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& supportedDataObjects,
+			std::size_t frameSize = 4096);
 
 		virtual ~PlainClientSession() = default;
 
