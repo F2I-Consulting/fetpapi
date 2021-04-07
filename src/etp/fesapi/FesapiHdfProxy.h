@@ -20,18 +20,12 @@ under the License.
 
 #include "fesapi/common/HdfProxyFactory.h"
 
-#include "../DataArrayBlockingSession.h"
+#include "../AbstractSession.h"
 
 namespace ETP_NS
 {
 	class FETPAPI_DLL_IMPORT_OR_EXPORT FesapiHdfProxy : public EML2_NS::AbstractHdfProxy
 	{
-	private:
-		std::shared_ptr<DataArrayBlockingSession> session;
-		unsigned int compressionLevel;
-
-		std::string getUri() const;
-
 	public:
 
 		/**
@@ -39,7 +33,7 @@ namespace ETP_NS
 		*/
 
 		FesapiHdfProxy(COMMON_NS::DataObjectRepository * repo, const std::string & guid, const std::string & title, const std::string & packageDirAbsolutePath, const std::string & externalFilePath, COMMON_NS::DataObjectRepository::openingMode hdfPermissionAccess) :
-			EML2_NS::AbstractHdfProxy(packageDirAbsolutePath, externalFilePath, hdfPermissionAccess) {
+			EML2_NS::AbstractHdfProxy(packageDirAbsolutePath, externalFilePath, hdfPermissionAccess), session_(nullptr), compressionLevel(0) {
 			initGsoapProxy(repo, guid, title, 20);
 		}
 
@@ -47,45 +41,43 @@ namespace ETP_NS
 		* Deserialization context
 		*/
 		FesapiHdfProxy(gsoap_resqml2_0_1::_eml20__EpcExternalPartReference* fromGsoap) :
-			EML2_NS::AbstractHdfProxy(fromGsoap), session(nullptr), compressionLevel(0) {}
+			EML2_NS::AbstractHdfProxy(fromGsoap), session_(nullptr), compressionLevel(0) {}
 
 		FesapiHdfProxy(gsoap_eml2_1::_eml21__EpcExternalPartReference* fromGsoap) :
-			EML2_NS::AbstractHdfProxy(fromGsoap), session(nullptr), compressionLevel(0) {}
+			EML2_NS::AbstractHdfProxy(fromGsoap), session_(nullptr), compressionLevel(0) {}
 
 		/**
 		* Only for partial transfer
 		*/
 		FesapiHdfProxy(gsoap_resqml2_0_1::eml20__DataObjectReference* partialObject) :
-			EML2_NS::AbstractHdfProxy(partialObject), session(nullptr), compressionLevel(0) {}
+			EML2_NS::AbstractHdfProxy(partialObject), session_(nullptr), compressionLevel(0) {}
 
 		FesapiHdfProxy(const COMMON_NS::DataObjectReference& dor) :
-			EML2_NS::AbstractHdfProxy(dor), session(nullptr), compressionLevel(0) {}
+			EML2_NS::AbstractHdfProxy(dor), session_(nullptr), compressionLevel(0) {}
 
 
 		/**
 		* Destructor.
-		* Close the hdf file.
 		*/
 		~FesapiHdfProxy() = default;
 
-		std::shared_ptr<DataArrayBlockingSession> getSession() { return session; }
-		void setSession(boost::asio::io_context& ioc, const std::string & host, const std::string & port, const std::string & target);
+		AbstractSession* getSession() { return session_; }
+		void setSession(AbstractSession* session) { session_ = session; }
 
 		/**
-		* Open the file for reading and writing.
-		* Does never overwrite an existing file but append to it if it already exists.
+		* Does nothing since the ETP session must already be opened.
 		*/
-		void open();
+		void open() {}
 
 		/**
 		* It is opened if the ETP session is opened
 		*/
-		bool isOpened() const { return session != nullptr && !session->isWebSocketSessionClosed();  }
+		bool isOpened() const { return session_ != nullptr && !session_->isWebSocketSessionClosed();  }
 
 		/**
-		* Close the file
+		* Does nothing since the ETP session can be used for other purpose.
 		*/
-		void close() { session->close(); }
+		void close() {}
 
 		/*
 		* Get the used (native) datatype in a dataset
@@ -545,6 +537,13 @@ namespace ETP_NS
 		* Get the standard XML namespace for serializing this data object.
 		*/
 		std::string getXmlNamespace() const { return XML_NS; }
+
+	private:
+		AbstractSession* session_;
+		unsigned int compressionLevel;
+
+		std::string getUri() const;
+		Energistics::Etp::v12::Protocol::DataArray::GetDataArrays buildGetDataArraysMessage(const std::string & datasetName);
 	};
 
 	class FETPAPI_DLL_IMPORT_OR_EXPORT FesapiHdfProxyFactory : public COMMON_NS::HdfProxyFactory

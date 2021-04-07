@@ -20,6 +20,8 @@ under the License.
 
 #include <stdexcept>
 
+#include "../ProtocolHandlers/BlockingDataArrayHandlers.h"
+
 using namespace ETP_NS;
 using namespace std;
 
@@ -30,17 +32,15 @@ std::string FesapiHdfProxy::getUri() const
 	return "eml:///eml20.obj_EpcExternalPartReference(" + getUuid() + ")";
 }
 
-void FesapiHdfProxy::setSession(boost::asio::io_context& ioc, const std::string & host, const std::string & port, const std::string & target)
+Energistics::Etp::v12::Protocol::DataArray::GetDataArrays FesapiHdfProxy::buildGetDataArraysMessage(const std::string & datasetName)
 {
-	session = std::make_shared<DataArrayBlockingSession>(ioc, host, port, target);
-}
+	Energistics::Etp::v12::Protocol::DataArray::GetDataArrays gda;
+	Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier dai;
+	dai.uri = getUri();
+	dai.pathInResource = datasetName;
+	gda.dataArrays["0"] = dai;
 
-void FesapiHdfProxy::open()
-{
-	if (session == nullptr) {
-		throw invalid_argument("You first need to set a session associated to this ETP hdf proxy");
-	}
-	session->run();
+	return gda;
 }
 
 COMMON_NS::AbstractObject::hdfDatatypeEnum FesapiHdfProxy::getHdfDatatypeInDataset(const std::string & datasetName)
@@ -116,7 +116,7 @@ void FesapiHdfProxy::writeArrayNdOfDoubleValues(const string & groupName,
 	data.item.set_ArrayOfDouble(arrayOfDbl);
 	pda.dataArrays["0"].array.data = data;
 
-	session->send(pda);
+	session_->send(pda);
 }
 
 void FesapiHdfProxy::writeArrayNdOfCharValues(const std::string & groupName,
@@ -190,11 +190,13 @@ void FesapiHdfProxy::writeArrayNdSlab(
 
 void FesapiHdfProxy::readArrayNdOfDoubleValues(const std::string & datasetName, double* values)
 {
-	if (!isOpened()) {
-		open();
-	}
+	const int64_t msgId = session_->sendWithSpecificHandler(
+		buildGetDataArraysMessage(datasetName),
+		std::make_shared<BlockingDataArrayHandlers<double>>(session_, values),
+		0, 0x02);
 
-	session->readArrayValues<double>(getUri(), datasetName, values);
+	// Blocking loop
+	while (session_->isMessageStillProcessing(msgId)) {}
 }
 
 void FesapiHdfProxy::readArrayNdOfDoubleValues(
@@ -242,11 +244,13 @@ void FesapiHdfProxy::readArrayNdOfDoubleValues(
 
 void FesapiHdfProxy::readArrayNdOfFloatValues(const std::string & datasetName, float* values)
 {
-	if (!isOpened()) {
-		open();
-	}
+	const int64_t msgId = session_->sendWithSpecificHandler(
+		buildGetDataArraysMessage(datasetName),
+		std::make_shared<BlockingDataArrayHandlers<float>>(session_, values),
+		0, 0x02);
 
-	session->readArrayValues<float>(getUri(), datasetName, values);
+	// Blocking loop
+	while (session_->isMessageStillProcessing(msgId)) {}
 }
 
 void FesapiHdfProxy::readArrayNdOfFloatValues(
@@ -260,11 +264,13 @@ void FesapiHdfProxy::readArrayNdOfFloatValues(
 
 void FesapiHdfProxy::readArrayNdOfInt64Values(const std::string & datasetName, int64_t* values)
 {
-	if (!isOpened()) {
-		open();
-	}
+	const int64_t msgId = session_->sendWithSpecificHandler(
+		buildGetDataArraysMessage(datasetName),
+		std::make_shared<BlockingDataArrayHandlers<int64_t>>(session_, values),
+		0, 0x02);
 
-	session->readArrayValues<int64_t>(getUri(), datasetName, values);
+	// Blocking loop
+	while (session_->isMessageStillProcessing(msgId)) {}
 }
 
 void FesapiHdfProxy::readArrayNdOfInt64Values(
@@ -278,20 +284,24 @@ void FesapiHdfProxy::readArrayNdOfInt64Values(
 
 void FesapiHdfProxy::readArrayNdOfUInt64Values(const std::string & datasetName, uint64_t* values)
 {
-	if (!isOpened()) {
-		open();
-	}
+	const int64_t msgId = session_->sendWithSpecificHandler(
+		buildGetDataArraysMessage(datasetName),
+		std::make_shared<BlockingDataArrayHandlers<uint64_t>>(session_, values),
+		0, 0x02);
 
-	session->readArrayValues<uint64_t>(getUri(), datasetName, values);
+	// Blocking loop
+	while (session_->isMessageStillProcessing(msgId)) {}
 }
 
 void FesapiHdfProxy::readArrayNdOfIntValues(const std::string & datasetName, int* values)
 {
-	if (!isOpened()) {
-		open();
-	}
+	const int64_t msgId = session_->sendWithSpecificHandler(
+		buildGetDataArraysMessage(datasetName),
+		std::make_shared<BlockingDataArrayHandlers<int32_t>>(session_, values),
+		0, 0x02);
 
-	session->readArrayValues<int>(getUri(), datasetName, values);
+	// Blocking loop
+	while (session_->isMessageStillProcessing(msgId)) {}
 }
 
 void FesapiHdfProxy::readArrayNdOfIntValues(
@@ -305,47 +315,57 @@ void FesapiHdfProxy::readArrayNdOfIntValues(
 
 void FesapiHdfProxy::readArrayNdOfUIntValues(const std::string & datasetName, unsigned int* values)
 {
-	if (!isOpened()) {
-		open();
-	}
+	const int64_t msgId = session_->sendWithSpecificHandler(
+		buildGetDataArraysMessage(datasetName),
+		std::make_shared<BlockingDataArrayHandlers<uint32_t>>(session_, values),
+		0, 0x02);
 
-	session->readArrayValues<unsigned int>(getUri(), datasetName, values);
+	// Blocking loop
+	while (session_->isMessageStillProcessing(msgId)) {}
 }
 
  void FesapiHdfProxy::readArrayNdOfShortValues(const std::string & datasetName, short* values)
 {
-	 if (!isOpened()) {
-		 open();
-	 }
+	 const int64_t msgId = session_->sendWithSpecificHandler(
+		 buildGetDataArraysMessage(datasetName),
+		 std::make_shared<BlockingDataArrayHandlers<int16_t>>(session_, values),
+		 0, 0x02);
 
-	 session->readArrayValues<short>(getUri(), datasetName, values);
+	 // Blocking loop
+	 while (session_->isMessageStillProcessing(msgId)) {}
 }
 
 void FesapiHdfProxy::readArrayNdOfUShortValues(const std::string & datasetName, unsigned short* values)
 {
-	if (!isOpened()) {
-		open();
-	}
+	const int64_t msgId = session_->sendWithSpecificHandler(
+		buildGetDataArraysMessage(datasetName),
+		std::make_shared<BlockingDataArrayHandlers<uint16_t>>(session_, values),
+		0, 0x02);
 
-	session->readArrayValues<unsigned short>(getUri(), datasetName, values);
+	// Blocking loop
+	while (session_->isMessageStillProcessing(msgId)) {}
 }
 
 void FesapiHdfProxy::readArrayNdOfCharValues(const std::string & datasetName, char* values)
 {
-	if (!isOpened()) {
-		open();
-	}
+	const int64_t msgId = session_->sendWithSpecificHandler(
+		buildGetDataArraysMessage(datasetName),
+		std::make_shared<BlockingDataArrayHandlers<char>>(session_, values),
+		0, 0x02);
 
-	session->readArrayValues<char>(getUri(), datasetName, values);
+	// Blocking loop
+	while (session_->isMessageStillProcessing(msgId)) {}
 }
 
 void FesapiHdfProxy::readArrayNdOfUCharValues(const std::string & datasetName, unsigned char* values)
 {
-	if (!isOpened()) {
-		open();
-	}
+	const int64_t msgId = session_->sendWithSpecificHandler(
+		buildGetDataArraysMessage(datasetName),
+		std::make_shared<BlockingDataArrayHandlers<unsigned char>>(session_, values),
+		0, 0x02);
 
-	session->readArrayValues<unsigned char>(getUri(), datasetName, values);
+	// Blocking loop
+	while (session_->isMessageStillProcessing(msgId)) {}
 }
 
 std::vector<unsigned long long> FesapiHdfProxy::readArrayDimensions(const std::string & datasetName)

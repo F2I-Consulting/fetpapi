@@ -1417,24 +1417,73 @@ namespace ETP_NS
 		void setStoreNotificationProtocolHandlers(std::shared_ptr<ETP_NS::StoreNotificationHandlers> storeNotificationHandlers);
 		void setDataArrayProtocolHandlers(std::shared_ptr<DataArrayHandlers> dataArrayHandlers);
 		
-		template<typename T> int64_t send(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
+		template<typename T> int64_t sendWithSpecificHandler(const T & mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
 			int64_t msgId = encode(mb, correlationId, messageFlags); // put the message to write in the queue
 
-			if(sendingQueue.size() == 1) {
+			if (sendingQueue.size() == 1) {
 				do_write();
 			}
+			specificProtocolHandlers[msgId] = specificHandler;
 
 			return msgId;
+		}		
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::RequestSession>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::OpenSession>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::CloseSession>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::ProtocolException>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::Acknowledge>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::Ping>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::Pong>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::RenewSecurityToken>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::RenewSecurityTokenResponse>;
+		
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Discovery::GetResources>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse>;
+		
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::GetDataObjects>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::PutDataObjects>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::DeleteDataObjects>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::Chunk>;
+		
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataArrays>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutDataArrays>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutDataArraysResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataSubarraysResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutDataSubarraysResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse>;	
+		
+		template<typename T> int64_t send(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
+		{
+			return sendWithSpecificHandler(mb, protocolHandlers[mb.protocolId], correlationId, messageFlags);
 		}
 		%template(send) send<Energistics::Etp::v12::Protocol::Core::RequestSession>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Core::OpenSession>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Core::CloseSession>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Core::ProtocolException>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Core::Acknowledge>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Core::Ping>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Core::Pong>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Core::RenewSecurityToken>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Core::RenewSecurityTokenResponse>;
 		
 		%template(send) send<Energistics::Etp::v12::Protocol::Discovery::GetResources>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse>;
 		
 		%template(send) send<Energistics::Etp::v12::Protocol::Store::GetDataObjects>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse>;
@@ -1442,6 +1491,7 @@ namespace ETP_NS
 		%template(send) send<Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Store::DeleteDataObjects>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Store::Chunk>;
 		
 		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::GetDataArrays>;
 		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse>;
@@ -1456,6 +1506,7 @@ namespace ETP_NS
 		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays>;
 		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse>;
 		
+		bool isMessageStillProcessing(int64_t msgId) const;
 		void close();
 	};
 

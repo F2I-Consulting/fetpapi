@@ -160,21 +160,16 @@ namespace ETP_NS
 
 		/**
 		 * Create a default ETP message header from the ETP message body.
-		 * Encode this created default ETP message header + the ETP message body into the session buffer.
-		 * Write/send this session buffer on the web socket.
+		 * Encode this created default ETP message header + the ETP message body and put the result in the sending queue.
+		 *
 		 * @param mb The ETP message body to send
-		 * @param correlationId The ID of the message which this messag is answering to.
+		 * @param correlationId The ID of the message which this message is answering to.
 		 * @param messageFlags The message flags to be sent within the header
+		 * @return The ID of the message that has been put in the sending queue.
 		 */
 		template<typename T> int64_t send(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
-			int64_t msgId = encode(mb, correlationId, messageFlags); // put the message to write in the queue
-
-			if(sendingQueue.size() == 1) {
-				do_write();
-			}
-
-			return msgId;
+			return sendWithSpecificHandler(mb, protocolHandlers[mb.protocolId], correlationId, messageFlags);
 		}
 
 		/**
@@ -182,7 +177,11 @@ namespace ETP_NS
 		*/
 		template<typename T> int64_t sendWithSpecificHandler(const T & mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
-			int64_t msgId = send(mb, correlationId, messageFlags);
+			int64_t msgId = encode(mb, correlationId, messageFlags); // put the message to write in the queue
+
+			if (sendingQueue.size() == 1) {
+				do_write();
+			}
 			specificProtocolHandlers[msgId] = specificHandler;
 
 			return msgId;
@@ -220,7 +219,7 @@ namespace ETP_NS
 			// Remove the message from the queue
 			sendingQueue.erase(sendingQueue.begin());
 
-			if(! sendingQueue.empty()) {
+			if(!sendingQueue.empty()) {
 				do_write();
 			}
 		}
@@ -231,9 +230,6 @@ namespace ETP_NS
 			}
 
 			// If we get here then the connection is closed gracefully
-#ifndef NDEBUG
-			std::cout << "!!! CLOSED !!!" << std::endl;
-#endif
 			webSocketSessionClosed = true;
 		}
 
@@ -241,6 +237,8 @@ namespace ETP_NS
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setEtpSessionClosed(bool etpSessionClosed_) { etpSessionClosed = etpSessionClosed_; }
 		FETPAPI_DLL_IMPORT_OR_EXPORT bool isEtpSessionClosed() const { return webSocketSessionClosed || etpSessionClosed; }
+
+		FETPAPI_DLL_IMPORT_OR_EXPORT bool isMessageStillProcessing(int64_t msgId) const { return specificProtocolHandlers.count(msgId) > 0; }
 
 	protected:
 		boost::beast::flat_buffer receivedBuffer;

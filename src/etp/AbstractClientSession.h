@@ -24,8 +24,6 @@ under the License.
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
-#include "DataArrayBlockingSession.h"
-
 namespace ETP_NS
 {
 	// Echoes back all received WebSocket messages.
@@ -83,7 +81,6 @@ namespace ETP_NS
 
 		bool run() {
 			// We run the io_service off in its own thread so that it operates completely asynchronously with respect to the rest of the program.
-			// This is particularly important regarding "std::future" usage in DataArrayBlockingSession
 			auto work = boost::asio::make_work_guard(ioc);
 			std::thread thread([this]() {
 				std::cerr << "Start IOC" << std::endl;
@@ -146,10 +143,6 @@ namespace ETP_NS
 					std::static_pointer_cast<AbstractClientSession>(shared_from_this()),
 					std::placeholders::_1));
 #endif
-		}
-
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<DataArrayBlockingSession> createDataArrayBlockingSession() {
-			return std::make_shared<DataArrayBlockingSession>(derived().ws().get_executor().context(), host, port, target);
 		}
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT void do_write() {

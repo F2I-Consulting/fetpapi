@@ -40,7 +40,7 @@ void DataArrayHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse gdar;
 		avro::decode(*d, gdar);
 		session->flushReceivingBuffer();
-		on_GetDataArraysResponse(gdar);
+		on_GetDataArraysResponse(gdar, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutDataArrays::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::PutDataArrays pda;
@@ -52,7 +52,7 @@ void DataArrayHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 		Energistics::Etp::v12::Protocol::DataArray::PutDataArraysResponse msg;
 		avro::decode(*d, msg);
 		session->flushReceivingBuffer();
-		on_PutDataArraysResponse(msg, mh.messageId);
+		on_PutDataArraysResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays msg;
@@ -64,7 +64,7 @@ void DataArrayHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 		Energistics::Etp::v12::Protocol::DataArray::GetDataSubarraysResponse msg;
 		avro::decode(*d, msg);
 		session->flushReceivingBuffer();
-		on_GetDataSubarraysResponse(msg);
+		on_GetDataSubarraysResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays msg;
@@ -76,7 +76,7 @@ void DataArrayHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 		Energistics::Etp::v12::Protocol::DataArray::PutDataSubarraysResponse msg;
 		avro::decode(*d, msg);
 		session->flushReceivingBuffer();
-		on_PutDataSubarraysResponse(msg, mh.messageId);
+		on_PutDataSubarraysResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata gdam;
@@ -88,7 +88,7 @@ void DataArrayHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse gdamr;
 		avro::decode(*d, gdamr);
 		session->flushReceivingBuffer();
-		on_GetDataArrayMetadataResponse(gdamr);
+		on_GetDataArrayMetadataResponse(gdamr, mh.correlationId);
 	}
 	else {
 		session->flushReceivingBuffer();
@@ -101,7 +101,7 @@ void DataArrayHandlers::on_GetDataArrays(const Energistics::Etp::v12::Protocol::
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The DataArrayHandlers::on_GetDataArrays method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void DataArrayHandlers::on_GetDataArraysResponse(Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse & gdar)
+void DataArrayHandlers::on_GetDataArraysResponse(Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse & gdar, int64_t correlationId)
 {
 	for (std::pair < std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray > element : gdar.dataArrays) {
 		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray& da = element.second;
@@ -172,7 +172,7 @@ void DataArrayHandlers::on_GetDataSubarrays(const Energistics::Etp::v12::Protoco
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The DataArrayHandlers::on_GetDataArraySlice method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void DataArrayHandlers::on_GetDataSubarraysResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataSubarraysResponse&)
+void DataArrayHandlers::on_GetDataSubarraysResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataSubarraysResponse&, int64_t)
 {
 	std::cout << "on_GetDataArraySlicesResponse : not implemented yet" << std::endl;
 }
@@ -192,7 +192,7 @@ void DataArrayHandlers::on_GetDataArrayMetadata(const Energistics::Etp::v12::Pro
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The DataArrayHandlers::on_GetDataArrayMetadata method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void DataArrayHandlers::on_GetDataArrayMetadataResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse& gdamr)
+void DataArrayHandlers::on_GetDataArrayMetadataResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse& gdamr, int64_t)
 {
 	for (std::pair < std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata > element : gdamr.arrayMetadata) {
 		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata& dam = element.second;
@@ -221,7 +221,7 @@ void DataArrayHandlers::on_PutUninitializedDataArrays(const Energistics::Etp::v1
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The DataArrayHandlers::on_PutUninitializedDataArrays method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void DataArrayHandlers::on_PutUninitializedDataArraysResponse(const Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse&)
+void DataArrayHandlers::on_PutUninitializedDataArraysResponse(const Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse&, int64_t)
 {
 	std::cout << "Received PutUninitializedDataArraysResponse." << std::endl;
 }
