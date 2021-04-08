@@ -148,7 +148,7 @@ void CoreHandlers::on_RenewSecurityToken(const Energistics::Etp::v12::Protocol::
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The Core::on_RenewSecurityToken method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void CoreHandlers::on_RenewSecurityTokenResponse(const Energistics::Etp::v12::Protocol::Core::RenewSecurityTokenResponse & msg, int64_t)
+void CoreHandlers::on_RenewSecurityTokenResponse(const Energistics::Etp::v12::Protocol::Core::RenewSecurityTokenResponse &, int64_t)
 {
 	std::cout << "Renewed token" << std::endl;
 }

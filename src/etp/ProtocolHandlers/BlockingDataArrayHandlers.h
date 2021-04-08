@@ -38,7 +38,7 @@ namespace ETP_NS
 		T* values;
 	};
 
-	template<class T> void BlockingDataArrayHandlers<T>::on_GetDataArraysResponse(Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse & gdar, int64_t correlationId) {
+	template<class T> void BlockingDataArrayHandlers<T>::on_GetDataArraysResponse(Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse & gdar, int64_t) {
 		if (gdar.dataArrays.size() == 1) {
 			auto dataArray = gdar.dataArrays.begin()->second;
 			if (dataArray.data.item.idx() == Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfBoolean) {

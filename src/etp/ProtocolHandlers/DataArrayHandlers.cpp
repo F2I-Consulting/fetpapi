@@ -101,7 +101,7 @@ void DataArrayHandlers::on_GetDataArrays(const Energistics::Etp::v12::Protocol::
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The DataArrayHandlers::on_GetDataArrays method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void DataArrayHandlers::on_GetDataArraysResponse(Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse & gdar, int64_t correlationId)
+void DataArrayHandlers::on_GetDataArraysResponse(Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse & gdar, int64_t)
 {
 	for (std::pair < std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray > element : gdar.dataArrays) {
 		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray& da = element.second;

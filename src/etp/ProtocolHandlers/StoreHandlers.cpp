@@ -111,7 +111,7 @@ void StoreHandlers::on_DeleteDataObjectsResponse(const Energistics::Etp::v12::Pr
 	std::cout << "on_DeleteDataObjectsResponse" << std::endl;
 }
 
-void StoreHandlers::on_Chunk(const Energistics::Etp::v12::Protocol::Store::Chunk&, int64_t correlationId)
+void StoreHandlers::on_Chunk(const Energistics::Etp::v12::Protocol::Store::Chunk&, int64_t)
 {
 	std::cout << "Received Store Chunk" << std::endl;
 }

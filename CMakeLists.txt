@@ -2,7 +2,18 @@ cmake_minimum_required(VERSION 3.5)
 
 project(Fetpapi)
 
-set (LIBRARY_NAME Fetpapi)
+set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "DEBUG_POSTFIX property is initialized when the target is created to the value of this variable except for executable targets")
+
+# Allow to have all executables generated in the same binary directory. Otherwise there would be in a directory different for each add_subdirectory cmake commande.
+set (FETPAPI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
+
+# version mechanism
+set (Fetpapi_VERSION_MAJOR 0)
+set (Fetpapi_VERSION_MINOR 1)
+set (Fetpapi_VERSION_PATCH 0)
+set (Fetpapi_VERSION_TWEAK 0)
+
+set (Fetpapi_VERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR}.${Fetpapi_VERSION_PATCH}.${Fetpapi_VERSION_TWEAK})
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,7 +21,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
 IF (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	set (CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/install CACHE PATH "${LIBRARY_NAME} install prefix" FORCE)
+	set (CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/install CACHE PATH "${PROJECT_NAME} install prefix" FORCE)
 ENDIF (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 # required to define CMAKE_INSTALL_BINDIR, CMAKE_INSTALL_LIBDIR and CMAKE_INSTALL_INCLUDEDIR
@@ -27,11 +38,23 @@ else (BUILD_SHARED_LIBS)
 	set (LIB_TYPE STATIC)
 endif (BUILD_SHARED_LIBS)
 
-add_library (${LIBRARY_NAME} ${LIB_TYPE} "") 
+add_library (${PROJECT_NAME} ${LIB_TYPE} "") 
+
+# Define the compile options according to the compiler
+target_compile_options(${PROJECT_NAME}	PRIVATE
+	$<$<CXX_COMPILER_ID:MSVC>:/bigobj>
+	$<$<CXX_COMPILER_ID:MSVC>:/MP>
+	$<$<CXX_COMPILER_ID:MSVC>:/W4>
+	$<$<CXX_COMPILER_ID:GNU>:-Wall>
+	$<$<CXX_COMPILER_ID:GNU>:-Wextra>
+	$<$<CXX_COMPILER_ID:GNU>:-Wcast-qual>
+	$<$<CXX_COMPILER_ID:GNU>:-pedantic>
+	$<$<CXX_COMPILER_ID:CLANG>:-Weverything>
+)
 
 if (WIN32)
 	if (NOT BUILD_SHARED_LIBS)
-		target_compile_definitions(${LIBRARY_NAME} PRIVATE FETPAPI_STATIC)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE FETPAPI_STATIC)
 	endif ()
 endif (WIN32)
 
@@ -84,59 +107,56 @@ if (WIN32 AND (Boost_VERSION_MAJOR EQUAL 1) AND (Boost_VERSION_MINOR LESS 74) AN
 		message(WARNING "You may experience min/max issue with this boost version : See https://github.com/boostorg/beast/issues/1980")
 endif ()
 
+target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ALL_NO_LIB)
+
+target_link_libraries (${PROJECT_NAME} PRIVATE ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 if (WIN32)
-	target_link_libraries (${LIBRARY_NAME} PRIVATE bcrypt.lib)
+	target_link_libraries (${PROJECT_NAME} PRIVATE bcrypt.lib)
 	
-	set_target_properties(${LIBRARY_NAME} PROPERTIES
-		#PDB_NAME ${CPP_LIBRARY_NAME}${CMAKE_DEBUG_POSTFIX}.${Fesapi_VERSION}
-		LINK_FLAGS "/INCREMENTAL:NO /OPT:REF"
-		RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		#SUFFIX .${Fesapi_VERSION}.dll
-		#IMPORT_SUFFIX .${Fesapi_VERSION}.lib
-		#VERSION ${Fesapi_VERSION_MAJOR}.${Fesapi_VERSION_MINOR}
-	)
-ELSEIF (UNIX)
-	set_target_properties(${LIBRARY_NAME} PROPERTIES
-		COMPILE_FLAGS "-fPIC"
-		#VERSION ${Fesapi_VERSION}
-		#SOVERSION ${Fesapi_VERSION_MAJOR}.${Fesapi_VERSION_MINOR}
-	)
-endif (WIN32)
-
-target_compile_definitions(${LIBRARY_NAME} PRIVATE BOOST_ALL_NO_LIB)
-
-target_link_libraries (${LIBRARY_NAME} PRIVATE ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
-if (WIN32)
 	if (EXISTS ${AVRO_LIBRARY_RELEASE} AND EXISTS ${AVRO_LIBRARY_DEBUG})
-		target_link_libraries (${LIBRARY_NAME} PRIVATE optimized ${AVRO_LIBRARY_RELEASE} debug ${AVRO_LIBRARY_DEBUG})
+		target_link_libraries (${PROJECT_NAME} PRIVATE optimized ${AVRO_LIBRARY_RELEASE} debug ${AVRO_LIBRARY_DEBUG})
 	elseif (EXISTS ${AVRO_LIBRARY_RELEASE})
-		target_link_libraries (${LIBRARY_NAME} PRIVATE ${AVRO_LIBRARY_RELEASE})
+		target_link_libraries (${PROJECT_NAME} PRIVATE ${AVRO_LIBRARY_RELEASE})
 	elseif (EXISTS ${AVRO_LIBRARY_DEBUG})
-		target_link_libraries (${LIBRARY_NAME} PRIVATE ${AVRO_LIBRARY_DEBUG})
+		target_link_libraries (${PROJECT_NAME} PRIVATE ${AVRO_LIBRARY_DEBUG})
 	endif ()
+	
+	set_target_properties(${PROJECT_NAME} PROPERTIES
+		PDB_NAME ${PROJECT_NAME}${CMAKE_DEBUG_POSTFIX}.${Fetpapi_VERSION}
+		LINK_FLAGS "/INCREMENTAL:NO /OPT:REF"
+		RUNTIME_OUTPUT_DIRECTORY ${FETPAPI_BINARY_DIR}
+		SUFFIX .${Fetpapi_VERSION}.dll
+		IMPORT_SUFFIX .${Fetpapi_VERSION}.lib
+		VERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR}
+	)
 else (WIN32)
-	target_link_libraries (${LIBRARY_NAME} PRIVATE ${AVRO_LIBRARY_RELEASE})
+	target_link_libraries (${PROJECT_NAME} PRIVATE ${AVRO_LIBRARY_RELEASE})
+	
+	set_target_properties(${PROJECT_NAME} PROPERTIES
+		COMPILE_FLAGS "-fPIC"
+		VERSION ${Fetpapi_VERSION}
+		SOVERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR})
 endif (WIN32)
 
 if (WITH_ETP_SSL)
-	target_compile_definitions(${LIBRARY_NAME} PRIVATE WITH_ETP_SSL)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE WITH_ETP_SSL)
 	if (NOT TARGET OpenSSL::SSL OR NOT TARGET OpenSSL::Crypto)
 		find_package(OpenSSL REQUIRED)
 	endif()
-	target_link_libraries(${LIBRARY_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 endif ()
 
 if (WITH_FESAPI)
 	if (WIN32)
 		if (EXISTS ${FESAPI_LIBRARY_RELEASE} AND EXISTS ${FESAPI_LIBRARY_DEBUG})
-			target_link_libraries (${LIBRARY_NAME} PRIVATE optimized ${FESAPI_LIBRARY_RELEASE} debug ${FESAPI_LIBRARY_DEBUG})
+			target_link_libraries (${PROJECT_NAME} PRIVATE optimized ${FESAPI_LIBRARY_RELEASE} debug ${FESAPI_LIBRARY_DEBUG})
 		elseif (EXISTS ${FESAPI_LIBRARY_RELEASE})
-			target_link_libraries (${LIBRARY_NAME} PRIVATE ${FESAPI_LIBRARY_RELEASE})
+			target_link_libraries (${PROJECT_NAME} PRIVATE ${FESAPI_LIBRARY_RELEASE})
 		elseif (EXISTS ${FESAPI_LIBRARY_DEBUG})
-			target_link_libraries (${LIBRARY_NAME} PRIVATE ${FESAPI_LIBRARY_DEBUG})
+			target_link_libraries (${PROJECT_NAME} PRIVATE ${FESAPI_LIBRARY_DEBUG})
 		endif ()
 	else (WIN32)
-		target_link_libraries (${LIBRARY_NAME} PRIVATE ${FESAPI_LIBRARY_RELEASE})
+		target_link_libraries (${PROJECT_NAME} PRIVATE ${FESAPI_LIBRARY_RELEASE})
 	endif (WIN32)
 endif (WITH_FESAPI)
 
@@ -203,17 +223,17 @@ if (WITH_FESAPI)
 		${FETPAPI_FESAPI_SOURCES}
 		${FETPAPI_FESAPI_HEADERS}
 	)
-	target_include_directories(${LIBRARY_NAME} PRIVATE ${HDF5_C_INCLUDE_DIR} ${FESAPI_INCLUDE_DIR})
+	target_include_directories(${PROJECT_NAME} PRIVATE ${HDF5_C_INCLUDE_DIR} ${FESAPI_INCLUDE_DIR})
 endif (WITH_FESAPI)
 
-target_sources(${LIBRARY_NAME} PRIVATE ${ALL_SOURCES_AND_HEADERS})
+target_sources(${PROJECT_NAME} PRIVATE ${ALL_SOURCES_AND_HEADERS})
 
-target_include_directories(${LIBRARY_NAME} PRIVATE ${AVRO_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${AVRO_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
 if (WITH_ETP_SSL)
-	target_include_directories(${LIBRARY_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
+	target_include_directories(${PROJECT_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
 endif ()
 
-target_include_directories(${LIBRARY_NAME} INTERFACE
+target_include_directories(${PROJECT_NAME} INTERFACE
 	$<INSTALL_INTERFACE:include>
 )
 
@@ -238,7 +258,7 @@ endif (WIN32)
 # Install Fetpapi library
 # ============================================================================
   
-install(TARGETS ${LIBRARY_NAME}
+install(TARGETS ${PROJECT_NAME}
   EXPORT Fetpapi-export
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

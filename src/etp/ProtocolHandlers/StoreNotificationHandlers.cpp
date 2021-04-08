@@ -105,7 +105,7 @@ void StoreNotificationHandlers::on_SubscribeNotifications(const Energistics::Etp
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The StoreHandlers::on_SubscribeNotifications method has not been overriden by the agent."), 0x02);
 }
 
-void StoreNotificationHandlers::on_SubscribeNotificationsResponse(const Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse& msg, int64_t correlationId)
+void StoreNotificationHandlers::on_SubscribeNotificationsResponse(const Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse&, int64_t)
 {
 	std::cout << "Received SubscribeNotificationsResponse" << std::endl;
 }
@@ -156,22 +156,22 @@ void StoreNotificationHandlers::on_ObjectChanged(const Energistics::Etp::v12::Pr
 	std::cout << std::endl;
 }
 
-void StoreNotificationHandlers::on_ObjectDeleted(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted &, int64_t correlationId)
+void StoreNotificationHandlers::on_ObjectDeleted(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted &, int64_t)
 {
 	std::cout << "on_ObjectDeleted" << std::endl;
 }
 
-void StoreNotificationHandlers::on_ObjectAccessRevoked(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked &, int64_t correlationId)
+void StoreNotificationHandlers::on_ObjectAccessRevoked(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked &, int64_t)
 {
 	std::cout << "on_ObjectAccessRevoked" << std::endl;
 }
 
-void StoreNotificationHandlers::on_ObjectActiveStatusChanged(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged&, int64_t correlationId)
+void StoreNotificationHandlers::on_ObjectActiveStatusChanged(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged&, int64_t)
 {
 	std::cout << "Received ObjectActiveStatusChanged" << std::endl;
 }
 
-void StoreNotificationHandlers::on_Chunk(const Energistics::Etp::v12::Protocol::StoreNotification::Chunk&, int64_t correlationId)
+void StoreNotificationHandlers::on_Chunk(const Energistics::Etp::v12::Protocol::StoreNotification::Chunk&, int64_t)
 {
 	std::cout << "Received StoreNotification Chunk" << std::endl;
 }

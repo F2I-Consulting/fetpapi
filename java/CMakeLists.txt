@@ -1,0 +1,76 @@
+# Included in ../src/CmakeLists.txt if java build is selected.
+
+find_package(SWIG 3.0 REQUIRED)
+
+find_package(JNI REQUIRED)
+find_package(Java REQUIRED)
+include(UseJava)
+
+set(SWIG_LINKED_TO_RELEASE ON CACHE BOOL "Is your SWIG generated library linked to the release or debug version of FesapiCpp ?")
+
+message("Generating SWIG Java files...")
+#Cleaning
+file (GLOB TO_DELETE ${CMAKE_SOURCE_DIR}/java/src/com/f2i_consulting/fetpapi/*.java)
+if (TO_DELETE)
+	file (REMOVE ${TO_DELETE})
+endif (TO_DELETE)
+file (REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/java/src/com/f2i_consulting/fetpapi/etp)
+
+# The name of the library is different on Windows because it includes the version
+if (WIN32)
+	if (SWIG_LINKED_TO_RELEASE)
+		set (ASSEMBLY_NAME ${PROJECT_NAME}${CMAKE_RELEASE_POSTFIX}.${Fetpapi_VERSION})
+	else (SWIG_LINKED_TO_RELEASE)
+		set (ASSEMBLY_NAME ${PROJECT_NAME}${CMAKE_DEBUG_POSTFIX}.${Fetpapi_VERSION})
+	endif (SWIG_LINKED_TO_RELEASE)
+else (WIN32)
+	if (SWIG_LINKED_TO_RELEASE)
+		set (ASSEMBLY_NAME ${PROJECT_NAME}${CMAKE_RELEASE_POSTFIX})
+	else (SWIG_LINKED_TO_RELEASE)
+		set (ASSEMBLY_NAME ${PROJECT_NAME}${CMAKE_DEBUG_POSTFIX})
+	endif (SWIG_LINKED_TO_RELEASE)
+endif (WIN32)
+
+# SWIG execution
+if (WIN32)
+	if ("${SWIG_VERSION}" VERSION_GREATER_EQUAL "4.0.0")
+		set ( EXECUTE_COMMAND "${SWIG_EXECUTABLE} ${SWIG_DEFINITIONS} -v -c++ -java -doxygen -package com.f2i_consulting.fetpapi -o ${CMAKE_SOURCE_DIR}/swig/swigGeneratedJavaWrapper.cpp -outdir ${CMAKE_SOURCE_DIR}/java/src/com/f2i_consulting/fetpapi/ ${CMAKE_SOURCE_DIR}/swig/swigEtp1_2Include.i")
+	else ()
+		set ( EXECUTE_COMMAND "${SWIG_EXECUTABLE} ${SWIG_DEFINITIONS} -v -c++ -java -package com.f2i_consulting.fetpapi -o ${CMAKE_SOURCE_DIR}/swig/swigGeneratedJavaWrapper.cpp -outdir ${CMAKE_SOURCE_DIR}/java/src/com/f2i_consulting/fetpapi/ ${CMAKE_SOURCE_DIR}/swig/swigEtp1_2Include.i")
+	endif ()
+	execute_process(COMMAND powershell ${EXECUTE_COMMAND})
+elseif (UNIX)
+	if ("${SWIG_VERSION}" VERSION_GREATER_EQUAL "4.0.0")
+		set ( EXECUTE_COMMAND ${SWIG_EXECUTABLE} ${SWIG_DEFINITIONS} -v -c++ -java -doxygen -package com.f2i_consulting.fetpapi -o ${CMAKE_SOURCE_DIR}/swig/swigGeneratedJavaWrapper.cpp -outdir ${CMAKE_SOURCE_DIR}/java/src/com/f2i_consulting/fetpapi/ ${CMAKE_SOURCE_DIR}/swig/swigEtp1_2Include.i)
+	else ()
+		set ( EXECUTE_COMMAND ${SWIG_EXECUTABLE} ${SWIG_DEFINITIONS} -v -c++ -java -package com.f2i_consulting.fetpapi -o ${CMAKE_SOURCE_DIR}/swig/swigGeneratedJavaWrapper.cpp -outdir ${CMAKE_SOURCE_DIR}/java/src/com/f2i_consulting/fetpapi/ ${CMAKE_SOURCE_DIR}/swig/swigEtp1_2Include.i)
+	endif ()
+	execute_process(COMMAND ${EXECUTE_COMMAND})
+endif (WIN32)
+message("SWIG Java files have been generated.")
+
+# Building the jar
+set(CMAKE_JAVA_COMPILE_FLAGS -g)
+file (GLOB_RECURSE SWIG_JAVA_FILES ${CMAKE_SOURCE_DIR}/java/src/com/f2i_consulting/fetpapi/*.java)
+if (SWIG_LINKED_TO_RELEASE)
+	add_jar(fetpapiJava${CMAKE_RELEASE_POSTFIX} ${SWIG_JAVA_FILES} VERSION ${Fetpapi_VERSION})
+else (SWIG_LINKED_TO_RELEASE)
+	add_jar(fetpapiJava${CMAKE_DEBUG_POSTFIX} ${SWIG_JAVA_FILES} VERSION ${Fetpapi_VERSION})
+endif (SWIG_LINKED_TO_RELEASE)
+
+target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/swig/swigGeneratedJavaWrapper.cpp)
+target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/swig/swigGeneratedJavaWrapper.h)
+
+target_include_directories(${PROJECT_NAME} PUBLIC ${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2})
+
+if (SWIG_LINKED_TO_RELEASE)
+	install (
+		FILES ${CMAKE_CURRENT_BINARY_DIR}/fetpapiJava${CMAKE_RELEASE_POSTFIX}-${Fetpapi_VERSION}.jar
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	)
+else (SWIG_LINKED_TO_RELEASE)
+	install (
+		FILES ${CMAKE_CURRENT_BINARY_DIR}/fetpapiJava${CMAKE_DEBUG_POSTFIX}-${Fesapi_VERSION}.jar
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	)
+endif (SWIG_LINKED_TO_RELEASE)
