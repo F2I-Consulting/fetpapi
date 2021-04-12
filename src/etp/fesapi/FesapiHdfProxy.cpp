@@ -25,11 +25,10 @@ under the License.
 using namespace ETP_NS;
 using namespace std;
 
-const char* FesapiHdfProxy::XML_NS = "eml20";
-
 std::string FesapiHdfProxy::getUri() const
 {
-	return "eml:///eml20.obj_EpcExternalPartReference(" + getUuid() + ")";
+	const std::string xmlNs = getXmlNamespace();
+	return "eml:///" + (xmlNs == "eml20" ? xmlNs + ".obj_" : xmlNs) + "EpcExternalPartReference(" + getUuid() + ")";
 }
 
 Energistics::Etp::v12::Protocol::DataArray::GetDataArrays FesapiHdfProxy::buildGetDataArraysMessage(const std::string & datasetName)

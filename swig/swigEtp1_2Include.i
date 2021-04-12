@@ -17,6 +17,11 @@ specific language governing permissions and limitations
 under the License.
 -----------------------------------------------------------------------*/
 %module(directors="1") fetpapi
+%catches(Swig::DirectorException);
+
+%import "../../fesapi-master/src/nsDefinitions.h"
+%import "../../fesapi-master/src/common/DataObjectReference.h"
+%import "../../fesapi-master/src/common/HdfProxyFactory.h"
 
 %{
 #include <stdint.h>		// Use the C99 official header
@@ -151,6 +156,7 @@ typedef long long 				time_t;
 #include "../src/etp/EtpHelpers.h"
 #include "../src/etp/PlainServerSession.h"
 #include "../src/etp/Server.h"
+#include "../src/etp/fesapi/FesapiHdfProxy.h"
 %}
 
 #if defined(SWIGJAVA) || defined(SWIGCSHARP)
@@ -164,6 +170,7 @@ typedef long long 				time_t;
 	%nspace ETP_NS::PlainClientSession;
 	%nspace ETP_NS::ServerInitializationParameters;
 	%nspace ETP_NS::Server;
+	%nspace ETP_NS::FesapiHdfProxyFactory;
 	
 	%nspace Energistics::Etp::v12::Datatypes::SupportedDataObject;
 	%nspace Energistics::Etp::v12::Datatypes::Uuid;
@@ -1350,4 +1357,8 @@ namespace ETP_NS
 		void listen(ServerInitializationParameters* serverInitializationParams, const std::string & host, unsigned short port, int threadCount);
 	};
 
+	class FesapiHdfProxyFactory : public common::HdfProxyFactory
+	{
+	public:
+	};
 }

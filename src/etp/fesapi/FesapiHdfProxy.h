@@ -31,29 +31,57 @@ namespace ETP_NS
 		/**
 		* Serialization context
 		*/
-
 		FesapiHdfProxy(COMMON_NS::DataObjectRepository * repo, const std::string & guid, const std::string & title, const std::string & packageDirAbsolutePath, const std::string & externalFilePath, COMMON_NS::DataObjectRepository::openingMode hdfPermissionAccess) :
 			EML2_NS::AbstractHdfProxy(packageDirAbsolutePath, externalFilePath, hdfPermissionAccess), session_(nullptr), compressionLevel(0) {
 			initGsoapProxy(repo, guid, title, 20);
+
+			xmlNs = repo->getDefaultEmlVersion() == COMMON_NS::DataObjectRepository::EnergisticsStandard::EML2_0 ? "eml20" : "eml23";
 		}
 
 		/**
 		* Deserialization context
 		*/
 		FesapiHdfProxy(gsoap_resqml2_0_1::_eml20__EpcExternalPartReference* fromGsoap) :
-			EML2_NS::AbstractHdfProxy(fromGsoap), session_(nullptr), compressionLevel(0) {}
+			EML2_NS::AbstractHdfProxy(fromGsoap), session_(nullptr), compressionLevel(0), xmlNs("eml20") {}
 
 		FesapiHdfProxy(gsoap_eml2_1::_eml21__EpcExternalPartReference* fromGsoap) :
-			EML2_NS::AbstractHdfProxy(fromGsoap), session_(nullptr), compressionLevel(0) {}
+			EML2_NS::AbstractHdfProxy(fromGsoap), session_(nullptr), compressionLevel(0), xmlNs("eml21") {}
 
 		/**
 		* Only for partial transfer
 		*/
 		FesapiHdfProxy(gsoap_resqml2_0_1::eml20__DataObjectReference* partialObject) :
-			EML2_NS::AbstractHdfProxy(partialObject), session_(nullptr), compressionLevel(0) {}
+			EML2_NS::AbstractHdfProxy(partialObject), session_(nullptr), compressionLevel(0) {
+			if (partialObject->ContentType.find("2.0") != std::string::npos) {
+				xmlNs = "eml20";
+			}
+			else if (partialObject->ContentType.find("2.1") != std::string::npos) {
+				xmlNs = "eml21";
+			}
+			else if (partialObject->ContentType.find("2.2") != std::string::npos) {
+				xmlNs = "eml22";
+			}
+			else if (partialObject->ContentType.find("2.3") != std::string::npos) {
+				xmlNs = "eml23";
+			}
+		}
 
 		FesapiHdfProxy(const COMMON_NS::DataObjectReference& dor) :
-			EML2_NS::AbstractHdfProxy(dor), session_(nullptr), compressionLevel(0) {}
+			EML2_NS::AbstractHdfProxy(dor), session_(nullptr), compressionLevel(0) {
+			std::string ct = dor.getContentType();
+			if (ct.find("2.0") != std::string::npos) {
+				xmlNs = "eml20";
+			}
+			else if (ct.find("2.1") != std::string::npos) {
+				xmlNs = "eml21";
+			}
+			else if (ct.find("2.2") != std::string::npos) {
+				xmlNs = "eml22";
+			}
+			else if (ct.find("2.3") != std::string::npos) {
+				xmlNs = "eml23";
+			}
+		}
 
 
 		/**
@@ -529,18 +557,14 @@ namespace ETP_NS
 		std::vector<unsigned long long> getElementCountPerChunkDimension(const std::string & datasetName) { throw std::logic_error("Not implemented yet"); }
 
 		/**
-		* The standard XML namespace for serializing this data object.
-		*/
-		static const char* XML_NS;
-
-		/**
 		* Get the standard XML namespace for serializing this data object.
 		*/
-		std::string getXmlNamespace() const { return XML_NS; }
+		std::string getXmlNamespace() const { return xmlNs; }
 
 	private:
 		AbstractSession* session_;
 		unsigned int compressionLevel;
+		std::string xmlNs;
 
 		std::string getUri() const;
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrays buildGetDataArraysMessage(const std::string & datasetName);
