@@ -63,6 +63,57 @@ namespace
 		return requestedProtocols;
 	}
 
+	std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> getSupportedDataObjects() {
+		std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> result;
+
+		Energistics::Etp::v12::Datatypes::SupportedDataObject supportedDataObject;
+		supportedDataObject.qualifiedType = "resqml20.*";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "resqml22.*";
+		result.push_back(supportedDataObject);
+
+		supportedDataObject.qualifiedType = "eml20.EpcExternalPartReference";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "eml21.PropertyKind";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "eml23.Activity";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "eml23.ActivityTemplate";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "eml23.GraphicalInformationSet";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "eml23.PropertyKind";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "eml23.TimeSeries";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "eml23.EpcExternalPartReference";
+		result.push_back(supportedDataObject);
+
+		supportedDataObject.qualifiedType = "witsml20.Channel";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "witsml20.Trajectory";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "witsml20.Well";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "witsml20.Wellbore";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "witsml20.WellboreCompletion";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "witsml20.WellboreGeometry";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "witsml20.WellCompletion";
+		result.push_back(supportedDataObject);
+
+		supportedDataObject.qualifiedType = "prodml21.FluidCharacterization";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "prodml21.FluidSystem";
+		result.push_back(supportedDataObject);
+		supportedDataObject.qualifiedType = "prodml21.TimeSeriesData";
+		result.push_back(supportedDataObject);
+
+		return result;
+	}
+
 	std::size_t getNegotiatedMaxWebSocketFramePayloadSize(const std::string & responseBody, std::size_t preferredMaxFrameSize) {
 		const auto maxWebSocketFramePayloadSizePos = responseBody.find("MaxWebSocketFramePayloadSize");
 		if (maxWebSocketFramePayloadSizePos != std::string::npos) {
@@ -103,7 +154,7 @@ std::shared_ptr<ETP_NS::PlainClientSession> ETP_NS::ClientSessionLaunchers::crea
 
 	preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(httpClientSession->getResponse().body(), preferredMaxFrameSize);
 
-	return std::make_shared<PlainClientSession>(host, port, target.empty() ? "/" : target, authorization, getRequestedProtocols(), std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>(), preferredMaxFrameSize);
+	return std::make_shared<PlainClientSession>(host, port, target.empty() ? "/" : target, authorization, getRequestedProtocols(), getSupportedDataObjects(), preferredMaxFrameSize);
 }
 
 #ifdef WITH_ETP_SSL
@@ -139,6 +190,6 @@ std::shared_ptr<ETP_NS::SslClientSession> ETP_NS::ClientSessionLaunchers::create
 
 	preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(httpsClientSession->getResponse().body(), preferredMaxFrameSize);
 
-	return std::make_shared<SslClientSession>(ctx, host, port, target.empty() ? "/" : target, authorization, getRequestedProtocols(), std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>());
+	return std::make_shared<SslClientSession>(ctx, host, port, target.empty() ? "/" : target, authorization, getRequestedProtocols(), getSupportedDataObjects());
 }
 #endif

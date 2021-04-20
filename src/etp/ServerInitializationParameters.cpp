@@ -51,45 +51,46 @@ std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> ServerInitial
 	Energistics::Etp::v12::Datatypes::SupportedDataObject supportedDataObject;
 	supportedDataObject.qualifiedType = "resqml20.*";
 	result.push_back(supportedDataObject);
-
-	supportedDataObject.qualifiedType = "eml20.*";
+	supportedDataObject.qualifiedType = "resqml22.*";
 	result.push_back(supportedDataObject);
 
-	supportedDataObject.qualifiedType = "witsml20.Well";
+	supportedDataObject.qualifiedType = "eml20.EpcExternalPartReference";
 	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml20.Wellbore";
+	supportedDataObject.qualifiedType = "eml21.PropertyKind";
+	result.push_back(supportedDataObject);
+	supportedDataObject.qualifiedType = "eml23.Activity";
+	result.push_back(supportedDataObject);
+	supportedDataObject.qualifiedType = "eml23.ActivityTemplate";
+	result.push_back(supportedDataObject);
+	supportedDataObject.qualifiedType = "eml23.GraphicalInformationSet";
+	result.push_back(supportedDataObject);
+	supportedDataObject.qualifiedType = "eml23.PropertyKind";
+	result.push_back(supportedDataObject);
+	supportedDataObject.qualifiedType = "eml23.TimeSeries";
+	result.push_back(supportedDataObject);
+	supportedDataObject.qualifiedType = "eml23.EpcExternalPartReference";
+	result.push_back(supportedDataObject);
+
+	supportedDataObject.qualifiedType = "witsml20.Channel";
 	result.push_back(supportedDataObject);
 	supportedDataObject.qualifiedType = "witsml20.Trajectory";
 	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml20.WellCompletion";
+	supportedDataObject.qualifiedType = "witsml20.Well";
+	result.push_back(supportedDataObject);
+	supportedDataObject.qualifiedType = "witsml20.Wellbore";
 	result.push_back(supportedDataObject);
 	supportedDataObject.qualifiedType = "witsml20.WellboreCompletion";
 	result.push_back(supportedDataObject);
 	supportedDataObject.qualifiedType = "witsml20.WellboreGeometry";
 	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml20.Log";
-	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml20.ChannelSet";
-	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml20.Channel";
+	supportedDataObject.qualifiedType = "witsml20.WellCompletion";
 	result.push_back(supportedDataObject);
 
-	supportedDataObject.qualifiedType = "prodml21.FluidSystem";
-	result.push_back(supportedDataObject);
 	supportedDataObject.qualifiedType = "prodml21.FluidCharacterization";
 	result.push_back(supportedDataObject);
-
-	supportedDataObject.qualifiedType = "witsml21.ErrorTerm";
+	supportedDataObject.qualifiedType = "prodml21.FluidSystem";
 	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml21.ErrorTermDictionary";
-	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml21.ToolErrorModel";
-	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml21.ToolErrorModelDictionary";
-	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml21.WeightingFunction";
-	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml21.WeightingFunctionDictionary";
+	supportedDataObject.qualifiedType = "prodml21.TimeSeriesData";
 	result.push_back(supportedDataObject);
 
 	return result;

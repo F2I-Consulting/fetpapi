@@ -31,8 +31,8 @@ namespace ETP_NS
 		/**
 		* Serialization context
 		*/
-		FesapiHdfProxy(COMMON_NS::DataObjectRepository * repo, const std::string & guid, const std::string & title, const std::string & packageDirAbsolutePath, const std::string & externalFilePath, COMMON_NS::DataObjectRepository::openingMode hdfPermissionAccess) :
-			EML2_NS::AbstractHdfProxy(packageDirAbsolutePath, externalFilePath, hdfPermissionAccess), session_(nullptr), compressionLevel(0) {
+		FesapiHdfProxy(AbstractSession* session, COMMON_NS::DataObjectRepository * repo, const std::string & guid, const std::string & title, const std::string & packageDirAbsolutePath, const std::string & externalFilePath, COMMON_NS::DataObjectRepository::openingMode hdfPermissionAccess) :
+			EML2_NS::AbstractHdfProxy(packageDirAbsolutePath, externalFilePath, hdfPermissionAccess), session_(session), compressionLevel(0) {
 			initGsoapProxy(repo, guid, title, 20);
 
 			xmlNs = repo->getDefaultEmlVersion() == COMMON_NS::DataObjectRepository::EnergisticsStandard::EML2_0 ? "eml20" : "eml23";
@@ -41,17 +41,17 @@ namespace ETP_NS
 		/**
 		* Deserialization context
 		*/
-		FesapiHdfProxy(gsoap_resqml2_0_1::_eml20__EpcExternalPartReference* fromGsoap) :
-			EML2_NS::AbstractHdfProxy(fromGsoap), session_(nullptr), compressionLevel(0), xmlNs("eml20") {}
+		FesapiHdfProxy(AbstractSession* session, gsoap_resqml2_0_1::_eml20__EpcExternalPartReference* fromGsoap) :
+			EML2_NS::AbstractHdfProxy(fromGsoap), session_(session), compressionLevel(0), xmlNs("eml20") {}
 
-		FesapiHdfProxy(gsoap_eml2_1::_eml21__EpcExternalPartReference* fromGsoap) :
-			EML2_NS::AbstractHdfProxy(fromGsoap), session_(nullptr), compressionLevel(0), xmlNs("eml21") {}
+		FesapiHdfProxy(AbstractSession* session, gsoap_eml2_1::_eml21__EpcExternalPartReference* fromGsoap) :
+			EML2_NS::AbstractHdfProxy(fromGsoap), session_(session), compressionLevel(0), xmlNs("eml21") {}
 
 		/**
 		* Only for partial transfer
 		*/
-		FesapiHdfProxy(gsoap_resqml2_0_1::eml20__DataObjectReference* partialObject) :
-			EML2_NS::AbstractHdfProxy(partialObject), session_(nullptr), compressionLevel(0) {
+		FesapiHdfProxy(AbstractSession* session, gsoap_resqml2_0_1::eml20__DataObjectReference* partialObject) :
+			EML2_NS::AbstractHdfProxy(partialObject), session_(session), compressionLevel(0) {
 			if (partialObject->ContentType.find("2.0") != std::string::npos) {
 				xmlNs = "eml20";
 			}
@@ -66,8 +66,8 @@ namespace ETP_NS
 			}
 		}
 
-		FesapiHdfProxy(const COMMON_NS::DataObjectReference& dor) :
-			EML2_NS::AbstractHdfProxy(dor), session_(nullptr), compressionLevel(0) {
+		FesapiHdfProxy(AbstractSession* session, const COMMON_NS::DataObjectReference& dor) :
+			EML2_NS::AbstractHdfProxy(dor), session_(session), compressionLevel(0) {
 			std::string ct = dor.getContentType();
 			if (ct.find("2.0") != std::string::npos) {
 				xmlNs = "eml20";
@@ -90,7 +90,6 @@ namespace ETP_NS
 		~FesapiHdfProxy() = default;
 
 		AbstractSession* getSession() { return session_; }
-		void setSession(AbstractSession* session) { session_ = session; }
 
 		/**
 		* Does nothing since the ETP session must already be opened.
@@ -573,27 +572,36 @@ namespace ETP_NS
 	class FETPAPI_DLL_IMPORT_OR_EXPORT FesapiHdfProxyFactory : public COMMON_NS::HdfProxyFactory
 	{
 	public:
+		FesapiHdfProxyFactory(AbstractSession* session) : session_(session) {}
+
 		/**
 		* Only to be used in partial transfer context
 		*/
 		EML2_NS::AbstractHdfProxy* make(gsoap_resqml2_0_1::eml20__DataObjectReference* partialObject) {
-			return new FesapiHdfProxy(partialObject);
+			FesapiHdfProxy* result = new FesapiHdfProxy(session_, partialObject);
+			return result;
 		}
 		EML2_NS::AbstractHdfProxy* make(const COMMON_NS::DataObjectReference& dor) {
-			return new FesapiHdfProxy(dor);
+			FesapiHdfProxy* result = new FesapiHdfProxy(session_, dor);
+			return result;
 		}
 
 		/**
 		* Creates an instance of this class by wrapping a gsoap instance.
 		*/
 		EML2_NS::AbstractHdfProxy* make(gsoap_resqml2_0_1::_eml20__EpcExternalPartReference* fromGsoap) {
-			return new FesapiHdfProxy(fromGsoap);
+			FesapiHdfProxy* result = new FesapiHdfProxy(session_, fromGsoap);
+			return result;
 		}
 
 		EML2_NS::AbstractHdfProxy* make(COMMON_NS::DataObjectRepository * repo, const std::string & guid, const std::string & title,
 			const std::string & packageDirAbsolutePath, const std::string & externalFilePath,
 			COMMON_NS::DataObjectRepository::openingMode hdfPermissionAccess = COMMON_NS::DataObjectRepository::openingMode::READ_ONLY) {
-			return new FesapiHdfProxy(repo, guid, title, packageDirAbsolutePath, externalFilePath, hdfPermissionAccess);
+			FesapiHdfProxy* result = new FesapiHdfProxy(session_, repo, guid, title, packageDirAbsolutePath, externalFilePath, hdfPermissionAccess);
+			return result;
 		}
+
+	private:
+		AbstractSession* session_;
 	};
 }

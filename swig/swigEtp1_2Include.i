@@ -19,9 +19,10 @@ under the License.
 %module(directors="1") fetpapi
 %catches(Swig::DirectorException);
 
-%import "../../fesapi-master/src/nsDefinitions.h"
+#ifdef WITH_FESAPI
 %import "../../fesapi-master/src/common/DataObjectReference.h"
 %import "../../fesapi-master/src/common/HdfProxyFactory.h"
+#endif
 
 %{
 #include <stdint.h>		// Use the C99 official header
@@ -156,8 +157,13 @@ typedef long long 				time_t;
 #include "../src/etp/EtpHelpers.h"
 #include "../src/etp/PlainServerSession.h"
 #include "../src/etp/Server.h"
+%}
+
+#ifdef WITH_FESAPI
+%{
 #include "../src/etp/fesapi/FesapiHdfProxy.h"
 %}
+#endif
 
 #if defined(SWIGJAVA) || defined(SWIGCSHARP)
 	%nspace ETP_NS::ProtocolHandlers;
@@ -170,7 +176,9 @@ typedef long long 				time_t;
 	%nspace ETP_NS::PlainClientSession;
 	%nspace ETP_NS::ServerInitializationParameters;
 	%nspace ETP_NS::Server;
+#ifdef WITH_FESAPI
 	%nspace ETP_NS::FesapiHdfProxyFactory;
+#endif
 	
 	%nspace Energistics::Etp::v12::Datatypes::SupportedDataObject;
 	%nspace Energistics::Etp::v12::Datatypes::Uuid;
@@ -246,14 +254,14 @@ typedef long long 				time_t;
 %include "stdint.i"
 %include "std_array.i"
 
+%typemap(javaimports) SWIGTYPE %{
+	import com.f2i_consulting.fetpapi.*;
+%}
+				
 namespace Energistics {
 	namespace Etp {	
 		namespace v12 {		
-			namespace Datatypes {
-				%typemap(javaimports) SWIGTYPE %{
-					import com.f2i_consulting.fetpapi.*;
-				%}
-				
+			namespace Datatypes {				
 				struct SupportedDataObject{				
 					std::string qualifiedType;
 					std::vector<std::string> dataObjectCapabilities;
@@ -1147,7 +1155,7 @@ namespace ETP_NS
 	{
 	public:
 		DiscoveryHandlers(AbstractSession* mySession);
-		virtual ~DiscoveryHandlers() {}
+		virtual ~DiscoveryHandlers();
 
 		virtual void on_GetResources(const Energistics::Etp::v12::Protocol::Discovery::GetResources & msg, int64_t correlationId);
 		virtual void on_GetResourcesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse & msg, int64_t correlationId);
@@ -1156,8 +1164,8 @@ namespace ETP_NS
 	class StoreHandlers : public ProtocolHandlers
 	{
 	public:
-		StoreHandlers(AbstractSession* mySession): ProtocolHandlers(mySession) {}
-		virtual ~StoreHandlers() {}
+		StoreHandlers(AbstractSession* mySession);
+		virtual ~StoreHandlers();
 
 	    virtual void on_GetDataObjects(const Energistics::Etp::v12::Protocol::Store::GetDataObjects & msg, int64_t correlationId);
 	    virtual void on_GetDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse & msg, int64_t correlationId);
@@ -1170,8 +1178,8 @@ namespace ETP_NS
 	class StoreNotificationHandlers : public ProtocolHandlers
 	{
 	public:
-		StoreNotificationHandlers(AbstractSession* mySession): ProtocolHandlers(mySession) {}
-		virtual ~StoreNotificationHandlers() {}
+		StoreNotificationHandlers(AbstractSession* mySession);
+		virtual ~StoreNotificationHandlers();
 
 	    virtual void on_SubscribeNotifications(const Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications & msg, int64_t messageId);
 	    virtual void on_UnsubscribeNotifications(const Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications & msg, int64_t messageId, int64_t correlationId);
@@ -1185,8 +1193,8 @@ namespace ETP_NS
 	class DataArrayHandlers : public ProtocolHandlers
 	{
 	public:
-		DataArrayHandlers(AbstractSession* mySession): ProtocolHandlers(mySession) {}
-		virtual ~DataArrayHandlers() {}
+		DataArrayHandlers(AbstractSession* mySession);
+		virtual ~DataArrayHandlers();
 
 	    virtual void on_GetDataArrays(const Energistics::Etp::v12::Protocol::DataArray::GetDataArrays & gda, int64_t correlationId);
 		virtual void on_GetDataArraysResponse(Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse & gdar, int64_t correlationId);
@@ -1356,9 +1364,15 @@ namespace ETP_NS
 		std::vector< std::shared_ptr<AbstractSession> >& getSessions();
 		void listen(ServerInitializationParameters* serverInitializationParams, const std::string & host, unsigned short port, int threadCount);
 	};
-
-	class FesapiHdfProxyFactory : public common::HdfProxyFactory
+	
+#ifdef WITH_FESAPI
+%typemap(javaimports) FesapiHdfProxyFactory %{
+	import com.f2i_consulting.fesapi.common.HdfProxyFactory;
+%}	
+	class FesapiHdfProxyFactory : public COMMON_NS::HdfProxyFactory
 	{
 	public:
+		FesapiHdfProxyFactory(PlainClientSession* session);
 	};
+#endif
 }

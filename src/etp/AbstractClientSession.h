@@ -33,41 +33,6 @@ namespace ETP_NS
 	{
 	public:
 
-	    /**
-	     * @param host					The IP address or server name on which the server is listening for etp (websocket) connection
-	     * @param port					The port on which the server is listening for etp (websocket) connection
-	     * @param target				usually "/" but a server can decide to serve etp on a particular target
-	     * @param authorization			The HTTP authorization attribute to send to the server. It may be empty if not needed.
-	     * @param requestedProtocols	An array of protocol IDs that the client expects to communicate on for this session. If the server does not support all of the protocols, the client may or may not continue with the protocols that are supported.
-	     * @param supportedDataObjects	A list of the Data Objects supported by the client. This list MUST be empty if the client is a customer. This field MUST be supplied if the client is a Store and is requesting a customer role for the server.
-	     */
-		AbstractClientSession(
-				const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
-				const std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> & requestedProtocols,
-				const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& supportedDataObjects) :
-			ioc(),
-			resolver(ioc),
-			host(host),
-			port(port),
-			target(target),
-			authorization(authorization),
-			successfulConnection(false)
-		{
-			messageId = 2; // The client side of the connection MUST use ONLY non-zero even-numbered messageIds. 
-
-			// Build the request session
-			requestSession.applicationName = "F2I ETP Client";
-			requestSession.applicationVersion = "0.0";
-			requestSession.requestedProtocols = requestedProtocols;
-			requestSession.supportedDataObjects = supportedDataObjects;
-			requestSession.currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-			requestSession.supportedFormats.push_back("xml");
-
-			boost::uuids::random_generator gen;
-			auto instanceUuid = gen();
-			std::copy(std::begin(instanceUuid.data), std::end(instanceUuid.data), requestSession.clientInstanceId.array.begin());
-		}
-
 		virtual ~AbstractClientSession() = default;
 
 		boost::asio::io_context& getIoContext() {
@@ -224,7 +189,7 @@ namespace ETP_NS
 		Derived& derived() { return static_cast<Derived&>(*this); }
 
 		AbstractClientSession() :
-			ioc(),
+			ioc(4),
 			resolver(ioc),
 			host(),
 			port(),
@@ -232,6 +197,42 @@ namespace ETP_NS
 			authorization(),
 			successfulConnection(false) {
 			messageId = 2; // The client side of the connection MUST use ONLY non-zero even-numbered messageIds. 
+		}
+
+		/**
+		 * @param host					The IP address or server name on which the server is listening for etp (websocket) connection
+		 * @param port					The port on which the server is listening for etp (websocket) connection
+		 * @param target				usually "/" but a server can decide to serve etp on a particular target
+		 * @param authorization			The HTTP authorization attribute to send to the server. It may be empty if not needed.
+		 * @param requestedProtocols	An array of protocol IDs that the client expects to communicate on for this session. If the server does not support all of the protocols, the client may or may not continue with the protocols that are supported.
+		 * @param supportedDataObjects	A list of the Data Objects supported by the client. This list MUST be empty if the client is a customer. This field MUST be supplied if the client is a Store and is requesting a customer role for the server.
+		 */
+		AbstractClientSession(
+			const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
+			const std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> & requestedProtocols,
+			const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& supportedDataObjects) :
+			ioc(4),
+			resolver(ioc),
+			host(host),
+			port(port),
+			target(target),
+			authorization(authorization),
+			successfulConnection(false)
+		{
+			messageId = 2; // The client side of the connection MUST use ONLY non-zero even-numbered messageIds. 
+
+			// Build the request session
+			requestSession.applicationName = "F2I ETP Client";
+			requestSession.applicationVersion = "0.0";
+
+			boost::uuids::random_generator gen;
+			auto instanceUuid = gen();
+			std::copy(std::begin(instanceUuid.data), std::end(instanceUuid.data), requestSession.clientInstanceId.array.begin());
+
+			requestSession.requestedProtocols = requestedProtocols;
+			requestSession.supportedDataObjects = supportedDataObjects;
+			requestSession.supportedFormats.push_back("xml");
+			requestSession.currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 		}
 	};
 }

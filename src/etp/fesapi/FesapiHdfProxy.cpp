@@ -28,7 +28,7 @@ using namespace std;
 std::string FesapiHdfProxy::getUri() const
 {
 	const std::string xmlNs = getXmlNamespace();
-	return "eml:///" + (xmlNs == "eml20" ? xmlNs + ".obj_" : xmlNs) + "EpcExternalPartReference(" + getUuid() + ")";
+	return "eml:///" + (xmlNs == "eml20" ? xmlNs + ".obj_" : xmlNs + ".") + "EpcExternalPartReference(" + getUuid() + ")";
 }
 
 Energistics::Etp::v12::Protocol::DataArray::GetDataArrays FesapiHdfProxy::buildGetDataArraysMessage(const std::string & datasetName)
