@@ -66,6 +66,12 @@ void StoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Me
 		session->flushReceivingBuffer();
 		on_DeleteDataObjectsResponse(msg, mh.messageId);
 	}
+	else if (mh.messageType == Energistics::Etp::v12::Protocol::Store::Chunk::messageTypeId) {
+		Energistics::Etp::v12::Protocol::Store::Chunk msg;
+		avro::decode(*d, msg);
+		session->flushReceivingBuffer();
+		on_Chunk(msg, mh.messageId);
+	}
 	else {
 		session->flushReceivingBuffer();
 		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(3, "The message type ID " + std::to_string(mh.messageType) + " is invalid for the store protocol."), mh.messageId, 0x02);
@@ -74,8 +80,6 @@ void StoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Me
 
 void StoreHandlers::on_GetDataObjects(const Energistics::Etp::v12::Protocol::Store::GetDataObjects&, int64_t correlationId)
 {
-	std::cout << "on_GetDataObjects" << std::endl;
-
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The StoreHandlers::on_GetDataObjects method has not been overriden by the agent."), correlationId, 0x02);
 }
 
@@ -89,8 +93,6 @@ void StoreHandlers::on_GetDataObjectsResponse(const Energistics::Etp::v12::Proto
 
 void StoreHandlers::on_PutDataObjects(const Energistics::Etp::v12::Protocol::Store::PutDataObjects&, int64_t correlationId)
 {
-	std::cout << "on_PutDataObject" << std::endl;
-
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The StoreHandlers::on_PutDataObject method has not been overriden by the agent."), correlationId, 0x02);
 }
 
@@ -101,12 +103,15 @@ void StoreHandlers::on_PutDataObjectsResponse(const Energistics::Etp::v12::Proto
 
 void StoreHandlers::on_DeleteDataObjects(const Energistics::Etp::v12::Protocol::Store::DeleteDataObjects&, int64_t correlationId)
 {
-	std::cout << "on_DeleteDataObject" << std::endl;
-
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The StoreHandlers::on_DeleteDataObject method has not been overriden by the agent."), correlationId, 0x02);
 }
 
 void StoreHandlers::on_DeleteDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse&, int64_t)
 {
 	std::cout << "on_DeleteDataObjectsResponse" << std::endl;
+}
+
+void StoreHandlers::on_Chunk(const Energistics::Etp::v12::Protocol::Store::Chunk&, int64_t)
+{
+	std::cout << "Received Store Chunk" << std::endl;
 }

@@ -38,6 +38,12 @@ void StoreNotificationHandlers::decodeMessageBody(const Energistics::Etp::v12::D
 		session->flushReceivingBuffer();
 		on_SubscribeNotifications(msg, mh.messageId);
 	}
+	else if (mh.messageType == Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse::messageTypeId) {
+		Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse msg;
+		avro::decode(*d, msg);
+		session->flushReceivingBuffer();
+		on_SubscribeNotificationsResponse(msg, mh.messageId);
+	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications::messageTypeId) {
 		Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications msg;
 		avro::decode(*d, msg);
@@ -74,6 +80,18 @@ void StoreNotificationHandlers::decodeMessageBody(const Energistics::Etp::v12::D
 		session->flushReceivingBuffer();
 		on_ObjectAccessRevoked(msg, mh.correlationId);
 	}
+	else if (mh.messageType == Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged::messageTypeId) {
+		Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged msg;
+		avro::decode(*d, msg);
+		session->flushReceivingBuffer();
+		on_ObjectActiveStatusChanged(msg, mh.correlationId);
+	}
+	else if (mh.messageType == Energistics::Etp::v12::Protocol::StoreNotification::Chunk::messageTypeId) {
+		Energistics::Etp::v12::Protocol::StoreNotification::Chunk msg;
+		avro::decode(*d, msg);
+		session->flushReceivingBuffer();
+		on_Chunk(msg, mh.messageId);
+	}
 	else {
 		session->flushReceivingBuffer();
 		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(3, "The message type ID " + std::to_string(mh.messageType) + " is invalid for the store notification protocol."), mh.messageId, 0x02);
@@ -85,6 +103,11 @@ void StoreNotificationHandlers::on_SubscribeNotifications(const Energistics::Etp
 	std::cout << "on_SubscribeNotifications" << std::endl;
 
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The StoreHandlers::on_SubscribeNotifications method has not been overriden by the agent."), 0x02);
+}
+
+void StoreNotificationHandlers::on_SubscribeNotificationsResponse(const Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse&, int64_t)
+{
+	std::cout << "Received SubscribeNotificationsResponse" << std::endl;
 }
 
 void StoreNotificationHandlers::on_UnsubscribeNotifications(const Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications & msg, int64_t messageId, int64_t)
@@ -133,16 +156,22 @@ void StoreNotificationHandlers::on_ObjectChanged(const Energistics::Etp::v12::Pr
 	std::cout << std::endl;
 }
 
-void StoreNotificationHandlers::on_ObjectDeleted(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted &, int64_t correlationId)
+void StoreNotificationHandlers::on_ObjectDeleted(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted &, int64_t)
 {
 	std::cout << "on_ObjectDeleted" << std::endl;
-
-	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The StoreHandlers::on_ObjectDeleted method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void StoreNotificationHandlers::on_ObjectAccessRevoked(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked &, int64_t correlationId)
+void StoreNotificationHandlers::on_ObjectAccessRevoked(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked &, int64_t)
 {
 	std::cout << "on_ObjectAccessRevoked" << std::endl;
+}
 
-	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The StoreHandlers::on_ObjectAccessRevoked method has not been overriden by the agent."), correlationId, 0x02);
+void StoreNotificationHandlers::on_ObjectActiveStatusChanged(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged&, int64_t)
+{
+	std::cout << "Received ObjectActiveStatusChanged" << std::endl;
+}
+
+void StoreNotificationHandlers::on_Chunk(const Energistics::Etp::v12::Protocol::StoreNotification::Chunk&, int64_t)
+{
+	std::cout << "Received StoreNotification Chunk" << std::endl;
 }

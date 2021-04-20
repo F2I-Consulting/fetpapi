@@ -66,72 +66,6 @@ namespace ETP_NS
 {
 	class AbstractSession : public std::enable_shared_from_this<AbstractSession>
 	{
-	protected:
-		boost::beast::flat_buffer receivedBuffer;
-	    std::vector<std::shared_ptr<ETP_NS::ProtocolHandlers>> protocolHandlers;
-		std::unordered_map<int64_t, std::shared_ptr<ETP_NS::ProtocolHandlers>> specificProtocolHandlers;
-	    bool webSocketSessionClosed; // open with the websocket handshake
-		bool etpSessionClosed; // open with the requestSession and openSession message
-		std::vector<std::vector<uint8_t> > sendingQueue;
-		int64_t messageId;
-		boost::uuids::uuid identifier;
-
-	    AbstractSession() : receivedBuffer(), protocolHandlers(), specificProtocolHandlers(),
-			webSocketSessionClosed(true), etpSessionClosed(true),
-			sendingQueue() {}
-
-		/**
-		 * Write the current buffer on the web socket
-		 */
-		virtual void do_write() = 0;
-
-		/**
-		 * Reads the message header currently stored in the decoder.
-		 * @param decoder	Must be initialized with stream containing a coded message header.
-		 */
-		Energistics::Etp::v12::Datatypes::MessageHeader decodeMessageHeader(avro::DecoderPtr decoder);
-
-		/**
-		* Return the current message id and increment it for next call.
-		*/
-		int64_t incrementMessageId() {
-			int64_t result = messageId;
-			messageId += 2;
-			return  result;
-		}
-
-		template<typename T> int64_t encode(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
-		{
-			// Build message header
-			Energistics::Etp::v12::Datatypes::MessageHeader mh;
-			mh.protocol = mb.protocolId;
-			mh.messageType = mb.messageTypeId;
-			mh.correlationId = correlationId;
-			mh.messageId = incrementMessageId();
-			mh.messageFlags = messageFlags;
-
-#ifndef NDEBUG
-			std::cout << "*************************************************" << std::endl;
-			std::cout << "Message Header sent : " << std::endl;
-			std::cout << "protocol : " << mh.protocol << std::endl;
-			std::cout << "type : " << mh.messageType << std::endl;
-			std::cout << "id : " << mh.messageId << std::endl;
-			std::cout << "correlation id : " << mh.correlationId << std::endl;
-			std::cout << "flags : " << mh.messageFlags << std::endl;
-			std::cout << "*************************************************" << std::endl;
-#endif
-
-			avro::OutputStreamPtr out = avro::memoryOutputStream();
-			avro::EncoderPtr e = avro::binaryEncoder();
-			e->init(*out);
-			avro::encode(*e, mh);
-			avro::encode(*e, mb);
-			e->flush();
-			sendingQueue.push_back(*avro::snapshot(*out).get());
-
-			return mh.messageId;
-		}
-
 	public:
 
 		virtual ~AbstractSession() = default;
@@ -226,21 +160,16 @@ namespace ETP_NS
 
 		/**
 		 * Create a default ETP message header from the ETP message body.
-		 * Encode this created default ETP message header + the ETP message body into the session buffer.
-		 * Write/send this session buffer on the web socket.
+		 * Encode this created default ETP message header + the ETP message body and put the result in the sending queue.
+		 *
 		 * @param mb The ETP message body to send
-		 * @param correlationId The ID of the message which this messag is answering to.
+		 * @param correlationId The ID of the message which this message is answering to.
 		 * @param messageFlags The message flags to be sent within the header
+		 * @return The ID of the message that has been put in the sending queue.
 		 */
 		template<typename T> int64_t send(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
-			int64_t msgId = encode(mb, correlationId, messageFlags); // put the message to write in the queue
-
-			if(sendingQueue.size() == 1) {
-				do_write();
-			}
-
-			return msgId;
+			return sendWithSpecificHandler(mb, protocolHandlers[mb.protocolId], correlationId, messageFlags);
 		}
 
 		/**
@@ -248,7 +177,11 @@ namespace ETP_NS
 		*/
 		template<typename T> int64_t sendWithSpecificHandler(const T & mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
-			int64_t msgId = send(mb, correlationId, messageFlags);
+			int64_t msgId = encode(mb, correlationId, messageFlags); // put the message to write in the queue
+
+			if (sendingQueue.size() == 1) {
+				do_write();
+			}
 			specificProtocolHandlers[msgId] = specificHandler;
 
 			return msgId;
@@ -286,7 +219,7 @@ namespace ETP_NS
 			// Remove the message from the queue
 			sendingQueue.erase(sendingQueue.begin());
 
-			if(! sendingQueue.empty()) {
+			if(!sendingQueue.empty()) {
 				do_write();
 			}
 		}
@@ -297,9 +230,6 @@ namespace ETP_NS
 			}
 
 			// If we get here then the connection is closed gracefully
-#ifndef NDEBUG
-			std::cout << "!!! CLOSED !!!" << std::endl;
-#endif
 			webSocketSessionClosed = true;
 		}
 
@@ -307,5 +237,73 @@ namespace ETP_NS
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setEtpSessionClosed(bool etpSessionClosed_) { etpSessionClosed = etpSessionClosed_; }
 		FETPAPI_DLL_IMPORT_OR_EXPORT bool isEtpSessionClosed() const { return webSocketSessionClosed || etpSessionClosed; }
+
+		FETPAPI_DLL_IMPORT_OR_EXPORT bool isMessageStillProcessing(int64_t msgId) const { return specificProtocolHandlers.count(msgId) > 0; }
+
+	protected:
+		boost::beast::flat_buffer receivedBuffer;
+		std::vector<std::shared_ptr<ETP_NS::ProtocolHandlers>> protocolHandlers;
+		std::unordered_map<int64_t, std::shared_ptr<ETP_NS::ProtocolHandlers>> specificProtocolHandlers;
+		bool webSocketSessionClosed; // open with the websocket handshake
+		bool etpSessionClosed; // open with the requestSession and openSession message
+		std::vector<std::vector<uint8_t> > sendingQueue;
+		int64_t messageId;
+		boost::uuids::uuid identifier;
+
+		AbstractSession() : receivedBuffer(), protocolHandlers(), specificProtocolHandlers(),
+			webSocketSessionClosed(true), etpSessionClosed(true),
+			sendingQueue() {}
+
+		/**
+		 * Write the current buffer on the web socket
+		 */
+		virtual void do_write() = 0;
+
+		/**
+		 * Reads the message header currently stored in the decoder.
+		 * @param decoder	Must be initialized with stream containing a coded message header.
+		 */
+		Energistics::Etp::v12::Datatypes::MessageHeader decodeMessageHeader(avro::DecoderPtr decoder);
+
+		/**
+		* Return the current message id and increment it for next call.
+		*/
+		int64_t incrementMessageId() {
+			int64_t result = messageId;
+			messageId += 2;
+			return  result;
+		}
+
+		template<typename T> int64_t encode(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
+		{
+			// Build message header
+			Energistics::Etp::v12::Datatypes::MessageHeader mh;
+			mh.protocol = mb.protocolId;
+			mh.messageType = mb.messageTypeId;
+			mh.correlationId = correlationId;
+			mh.messageId = incrementMessageId();
+			mh.messageFlags = messageFlags;
+
+#ifndef NDEBUG
+			std::cout << "*************************************************" << std::endl;
+			std::cout << "Message Header sent : " << std::endl;
+			std::cout << "protocol : " << mh.protocol << std::endl;
+			std::cout << "type : " << mh.messageType << std::endl;
+			std::cout << "id : " << mh.messageId << std::endl;
+			std::cout << "correlation id : " << mh.correlationId << std::endl;
+			std::cout << "flags : " << mh.messageFlags << std::endl;
+			std::cout << "*************************************************" << std::endl;
+#endif
+
+			avro::OutputStreamPtr out = avro::memoryOutputStream();
+			avro::EncoderPtr e = avro::binaryEncoder();
+			e->init(*out);
+			avro::encode(*e, mh);
+			avro::encode(*e, mb);
+			e->flush();
+			sendingQueue.push_back(*avro::snapshot(*out).get());
+
+			return mh.messageId;
+		}
 	};
 }

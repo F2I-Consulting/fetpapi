@@ -58,6 +58,8 @@ namespace ETP_NS
 		/**
 		* Override this method in order to register some dedicated protocol handlers for a session.
 		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT virtual void postSessionCreationOperation (AbstractSession*) const {}
+		FETPAPI_DLL_IMPORT_OR_EXPORT virtual void postSessionCreationOperation (AbstractSession* session) const {
+			session->setCoreProtocolHandlers(std::make_shared<CoreHandlers>(session));
+		}
 	};
 }

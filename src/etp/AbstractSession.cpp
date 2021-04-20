@@ -45,20 +45,25 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 {
 	boost::ignore_unused(bytes_transferred);
 
-	// This indicates that the web socket (and consequently etp) session was closed
-	if(ec == websocket::error::closed) {
-		std::cout << "The other endpoint closed the web socket (and consequently etp) connection." << std::endl;
-		webSocketSessionClosed = true;
-		flushReceivingBuffer();
+	if (ec) {
+
+		if (ec == websocket::error::closed) {
+			// This indicates that the web socket (and consequently etp) session was closed
+			std::cout << "The other endpoint closed the web socket (and consequently etp) connection." << std::endl;
+			webSocketSessionClosed = true;
+			flushReceivingBuffer();
+		}
+		else {
+			// This indicates an unexpected error
+			std::cerr << "on_read : error code number " << ec.value() << " -> " << ec.message() << std::endl;
+		}
+
 		return;
 	}
 
-	if(ec) {
-		std::cerr << "on_read : error code number " << ec.value() << " -> " << ec.message() << std::endl;
+	if (bytes_transferred == 0) {
 		return;
 	}
-
-	if (bytes_transferred == 0) return;
 
 	avro::InputStreamPtr in = avro::memoryInputStream(static_cast<const uint8_t*>(receivedBuffer.data().data()), bytes_transferred);
 	avro::DecoderPtr d = avro::binaryDecoder();
@@ -73,23 +78,29 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 		send(acknowledge, receivedMh.messageId, 0x02);
 	}
 
-	auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
-	if (receivedMh.messageType == Energistics::Etp::v12::Protocol::Core::Acknowledge::messageTypeId) { // Receive Acknowledge
+	if (receivedMh.messageType == Energistics::Etp::v12::Protocol::Core::Acknowledge::messageTypeId) {
+		// Receive Acknowledge
 		protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Core]->decodeMessageBody(receivedMh, d);
 	}
-	else if (receivedMh.messageType == Energistics::Etp::v12::Protocol::Core::ProtocolException::messageTypeId) { // Receive Protocol Exception
+	else if (receivedMh.messageType == Energistics::Etp::v12::Protocol::Core::ProtocolException::messageTypeId) {
+		// Receive Protocol Exception
 		protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Core]->decodeMessageBody(receivedMh, d);
-	}
-	else if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
-		specificProtocolHandlerIt->second->decodeMessageBody(receivedMh, d);
-		specificProtocolHandlers.erase(specificProtocolHandlerIt);
-	}
-	else if (receivedMh.protocol < protocolHandlers.size() && protocolHandlers[receivedMh.protocol] != nullptr) {
-		protocolHandlers[receivedMh.protocol]->decodeMessageBody(receivedMh, d);
 	}
 	else {
-		flushReceivingBuffer();
-		send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(4, "The agent does not support the protocol " + std::to_string(receivedMh.protocol) + " identified in a message header."), receivedMh.messageId, 0x02);
+		auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
+		if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
+			// Receive a message which has been asked to be processed with a specific protocol handler
+			specificProtocolHandlerIt->second->decodeMessageBody(receivedMh, d);
+			specificProtocolHandlers.erase(specificProtocolHandlerIt);
+		}
+		else if (receivedMh.protocol < protocolHandlers.size() && protocolHandlers[receivedMh.protocol] != nullptr) {
+			// Receive a message to be processed with a common protocol handler in case for example an unsollicited notification
+			protocolHandlers[receivedMh.protocol]->decodeMessageBody(receivedMh, d);
+		}
+		else {
+			flushReceivingBuffer();
+			send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(4, "The agent does not support the protocol " + std::to_string(receivedMh.protocol) + " identified in a message header."), receivedMh.messageId, 0x02);
+		}
 	}
 
 	do_read();
@@ -97,8 +108,5 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 
 void AbstractSession::close()
 {
-	// Build Open Session message
-	Energistics::Etp::v12::Protocol::Core::CloseSession closeSession;
-
-	send(closeSession, 0, 0x02);
+	send(Energistics::Etp::v12::Protocol::Core::CloseSession(), 0, 0x02);
 }

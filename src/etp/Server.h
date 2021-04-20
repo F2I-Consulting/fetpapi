@@ -1145,16 +1145,17 @@ namespace ETP_NS
 		};
 
 	public:
-		Server(ServerInitializationParameters* serverInitializationParams) : serverInitializationParams_(serverInitializationParams) {}
+		Server() : serverInitializationParams_(nullptr) {}
 
 		std::vector< std::shared_ptr<AbstractSession> >& getSessions() { return sessions_; }
 
 #ifdef WITH_ETP_SSL
-		void listen(const std::string & host, unsigned short port, int threadCount,
+		void listen(ServerInitializationParameters* serverInitializationParams, const std::string & host, unsigned short port, int threadCount,
 			const std::string & cert = "", const std::string & key = "", const std::string & dh = "") {
 #else
-		void listen(const std::string & host, unsigned short port, int threadCount) {
+		void listen(ServerInitializationParameters* serverInitializationParams, const std::string & host, unsigned short port, int threadCount) {
 #endif
+			serverInitializationParams_ = serverInitializationParams;
 			if (threadCount < 1) {
 				throw std::invalid_argument("You need to run your server on at least one thread.");
 			}

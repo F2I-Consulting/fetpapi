@@ -27,7 +27,13 @@ namespace ETP_NS
 {
 	namespace ClientSessionLaunchers
 	{
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::PlainClientSession> createWsClientSession(const std::string & host, const std::string & port, const std::string & target, const std::string & authorization);
+		/**
+		* @param preferredFrameSize The preferred websocket frame payload to use by this client.
+		*							If the ETP websocket server on the other end has a lower related MaxWebSocketFramePayloadSize capability, then the used websocket frame payload will be the server one.
+		*							Default value corresponds to the default Boost.Beast value : https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/write_buffer_bytes/overload1.html.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::PlainClientSession> createWsClientSession(const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
+			std::size_t preferredMaxFrameSize = 4096);
 
 #ifdef WITH_ETP_SSL
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::SslClientSession> createWssClientSession(const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
