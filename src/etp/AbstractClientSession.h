@@ -20,6 +20,8 @@ under the License.
 
 #include "AbstractSession.h"
 
+#include <thread>
+
 #include <boost/asio/connect.hpp>
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
