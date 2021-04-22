@@ -31,6 +31,8 @@ under the License.
 #include "ProtocolHandlers/StoreHandlers.h"
 #include "ProtocolHandlers/StoreNotificationHandlers.h"
 #include "ProtocolHandlers/DataArrayHandlers.h"
+#include "ProtocolHandlers/TransactionHandlers.h"
+#include "ProtocolHandlers/DataspaceHandlers.h"
 
 #include <unordered_map>
 
@@ -154,6 +156,26 @@ namespace ETP_NS
 				protocolHandlers.push_back(nullptr);
 			}
 			protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::DataArray] = dataArrayHandlers;
+		}
+
+		/**
+		 * Set the Transaction protocol handlers
+		 */
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setTransactionProtocolHandlers(std::shared_ptr<TransactionHandlers> transactionHandlers) {
+			while (protocolHandlers.size() < Energistics::Etp::v12::Datatypes::Protocol::Transaction + 1) {
+				protocolHandlers.push_back(nullptr);
+			}
+			protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Transaction] = transactionHandlers;
+		}
+
+		/**
+		 * Set the Dataspace protocol handlers
+		 */
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setDataspaceProtocolHandlers(std::shared_ptr<DataspaceHandlers> dataspaceHandlers) {
+			while (protocolHandlers.size() < Energistics::Etp::v12::Datatypes::Protocol::Dataspace + 1) {
+				protocolHandlers.push_back(nullptr);
+			}
+			protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Dataspace] = dataspaceHandlers;
 		}
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT void close();

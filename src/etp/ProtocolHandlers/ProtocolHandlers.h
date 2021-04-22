@@ -49,7 +49,7 @@ namespace ETP_NS
 		void printDataObject(const Energistics::Etp::v12::Datatypes::Object::DataObject & dataObject);
 
 	public:
-		virtual ~ProtocolHandlers() {}
+		virtual ~ProtocolHandlers() = default;
 
 	    virtual void decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader & mh, avro::DecoderPtr d) = 0;
 

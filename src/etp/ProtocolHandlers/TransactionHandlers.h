@@ -22,19 +22,19 @@ under the License.
 
 namespace ETP_NS
 {
-	class FETPAPI_DLL_IMPORT_OR_EXPORT DiscoveryHandlers : public ProtocolHandlers
+	class FETPAPI_DLL_IMPORT_OR_EXPORT TransactionHandlers : public ProtocolHandlers
 	{
 	public:
-		DiscoveryHandlers(AbstractSession* mySession): ProtocolHandlers(mySession) {}
-		virtual ~DiscoveryHandlers() = default;
+		TransactionHandlers(AbstractSession* mySession): ProtocolHandlers(mySession) {}
+		virtual ~TransactionHandlers() = default;
 
 	    void decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader & mh, avro::DecoderPtr d);
 
-		virtual void on_GetResources(const Energistics::Etp::v12::Protocol::Discovery::GetResources & msg, int64_t correlationId);
-		virtual void on_GetResourcesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse & msg, int64_t correlationId);
-		virtual void on_GetResourcesEdgesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse & msg, int64_t correlationId);
-
-		virtual void on_GetDeletedResources(const Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources & msg, int64_t correlationId);
-		virtual void on_GetDeletedResourcesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetDeletedResourcesResponse & msg, int64_t correlationId);
+	    virtual void on_StartTransaction(const Energistics::Etp::v12::Protocol::Transaction::StartTransaction & msg, int64_t correlationId);
+		virtual void on_StartTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse & msg, int64_t correlationId);
+	    virtual void on_CommitTransaction(const Energistics::Etp::v12::Protocol::Transaction::CommitTransaction & msg, int64_t correlationId);
+		virtual void on_CommitTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse & msg, int64_t correlationId);
+	    virtual void on_RollbackTransaction(const Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction & msg, int64_t correlationId);
+		virtual void on_RollbackTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse & msg, int64_t correlationId);
 	};
 }
