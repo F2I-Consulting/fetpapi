@@ -172,6 +172,7 @@ typedef long long 				time_t;
 	%nspace ETP_NS::StoreHandlers;
 	%nspace ETP_NS::StoreNotificationHandlers;
 	%nspace ETP_NS::DataArrayHandlers;
+	%nspace ETP_NS::TransactionHandlers;
 	%nspace ETP_NS::DataspaceHandlers;
 	%nspace ETP_NS::AbstractSession;
 	%nspace ETP_NS::PlainClientSession;
@@ -251,6 +252,13 @@ typedef long long 				time_t;
 	%nspace Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse;
 	%nspace Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays;
 	%nspace Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse;
+	
+	%nspace Energistics::Etp::v12::Protocol::Transaction::StartTransaction;
+	%nspace Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse;
+	%nspace Energistics::Etp::v12::Protocol::Transaction::CommitTransaction;
+	%nspace Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse;
+	%nspace Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction;
+	%nspace Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse;
 	
 	%nspace Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces;
 	%nspace Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse;
@@ -789,6 +797,56 @@ namespace Energistics {
 	}
 }
 
+/**************** TRANSACTION PROTOCOL  *****************/
+
+namespace Energistics {
+	namespace Etp {	
+		namespace v12 {		
+			namespace Protocol {			
+				namespace Transaction {				
+					struct StartTransaction{					
+						bool readOnly=false;
+						std::string message;
+						std::vector<std::string> dataspaceUris;
+						static const int messageTypeId=1;
+					};
+					
+					struct StartTransactionResponse{					
+						Energistics::Etp::v12::Datatypes::Uuid transactionUuid;
+						bool successful=false;
+						std::string failureReason;
+						static const int messageTypeId=2;
+					};
+					
+					struct CommitTransaction{					
+						Energistics::Etp::v12::Datatypes::Uuid transactionUuid;
+						static const int messageTypeId=3;
+					};
+					
+					struct RollbackTransaction{					
+						Energistics::Etp::v12::Datatypes::Uuid transactionUuid;
+						static const int messageTypeId=4;
+					};
+					
+					struct CommitTransactionResponse{					
+						Energistics::Etp::v12::Datatypes::Uuid transactionUuid;
+						bool successful=false;
+						std::string failureReason;
+						static const int messageTypeId=5;
+					};
+					
+					struct RollbackTransactionResponse{					
+						Energistics::Etp::v12::Datatypes::Uuid transactionUuid;
+						bool successful=false;
+						std::string failureReason;
+						static const int messageTypeId=6;
+					};
+				}
+			}
+		}
+	}
+}
+
 /**************** DATASPACE PROTOCOL  *****************/
 
 namespace Energistics {
@@ -838,6 +896,7 @@ namespace Energistics {
 %shared_ptr(ETP_NS::StoreHandlers)
 %shared_ptr(ETP_NS::StoreNotificationHandlers)
 %shared_ptr(ETP_NS::DataArrayHandlers)
+%shared_ptr(ETP_NS::TransactionHandlers)
 %shared_ptr(ETP_NS::DataspaceHandlers)
 %shared_ptr(ETP_NS::AbstractSession)
 %shared_ptr(ETP_NS::PlainClientSession)
@@ -847,6 +906,7 @@ namespace Energistics {
 %feature("director") ETP_NS::StoreHandlers;
 %feature("director") ETP_NS::StoreNotificationHandlers;
 %feature("director") ETP_NS::DataArrayHandlers;
+%feature("director") ETP_NS::TransactionHandlers;
 %feature("director") ETP_NS::DataspaceHandlers;
 %feature("director") ETP_NS::ServerInitializationParameters;
 
@@ -953,6 +1013,26 @@ namespace Energistics {
 %typemap(ret, fragment="data_array_handler_reference_function") void setDataArrayProtocolHandlers(std::shared_ptr<DataArrayHandlers> dataArrayHandlers) %{
 	  PyObject_SetAttr($self, data_array_handler_reference(), args);
 	%}
+}
+	
+	// Transaction	
+%fragment("transaction_handler_reference_init", "init") {
+	  transaction_handler_reference();
+}
+%fragment("transaction_handler_reference_function", "header", fragment="transaction_handler_reference_init") {
+
+	static PyObject *transaction_handler_reference() {
+	  static PyObject *transaction_handler_reference_string = SWIG_Python_str_FromChar("__transaction_handler_reference");
+	  return transaction_handler_reference_string;
+	}
+
+}
+
+%extend ETP_NS::AbstractSession {
+%typemap(ret, fragment="transaction_handler_reference_function") void setTransactionProtocolHandlers(std::shared_ptr<TransactionHandlers> transactionHandlers) %{
+	  PyObject_SetAttr($self, transaction_handler_reference(), args);
+	%}
+}
 	
 	// Dataspace	
 %fragment("dataspace_handler_reference_init", "init") {
@@ -990,6 +1070,7 @@ namespace Energistics {
   private StoreHandlers storeHandlersReference;
   private StoreNotificationHandlers storeNotificationHandlersReference;
   private DataArrayHandlers dataArrayHandlersReference;
+  private TransactionHandlers transactionHandlersReference;
   private DataspaceHandlers dataspaceHandlersReference;
 %}
 
@@ -1014,6 +1095,10 @@ namespace Energistics {
          ) std::shared_ptr<ETP_NS::DataArrayHandlers> dataArrayHandlers "DataArrayHandlers.getCPtr($csinput)"
 		 
 %typemap(csin,
+         post="      transactionHandlersReference = $csinput;"
+         ) std::shared_ptr<ETP_NS::TransactionHandlers> transactionHandlers "TransactionHandlers.getCPtr($csinput)"
+		 
+%typemap(csin,
          post="      dataspaceHandlersReference = $csinput;"
          ) std::shared_ptr<ETP_NS::DataspaceHandlers> dataspaceHandlers "DataspaceHandlers.getCPtr($csinput)"
 #endif	  
@@ -1033,6 +1118,7 @@ namespace Energistics {
   private StoreHandlers storeHandlersReference;
   private StoreNotificationHandlers storeNotificationHandlersReference;
   private DataArrayHandlers dataArrayHandlersReference;
+  private TransactionHandlers transactionHandlersReference;
   private DataspaceHandlers dataspaceHandlersReference;
 %}
 
@@ -1055,6 +1141,10 @@ namespace Energistics {
 %typemap(javain, 
          post="      dataArrayHandlersReference = $javainput;"
          ) std::shared_ptr<ETP_NS::DataArrayHandlers> dataArrayHandlers "DataArrayHandlers.getCPtr($javainput)"
+		 
+%typemap(javain,
+         post="      transactionHandlersReference = $javainput;"
+         ) std::shared_ptr<ETP_NS::TransactionHandlers> transactionHandlers "TransactionHandlers.getCPtr($javainput)"
 		 
 %typemap(javain, 
          post="      dataspaceHandlersReference = $javainput;"
@@ -1144,6 +1234,20 @@ namespace ETP_NS
 		virtual void on_PutUninitializedDataArraysResponse(const Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse & msg, int64_t correlationId);
 	};
 	
+	class TransactionHandlers : public ProtocolHandlers
+	{
+	public:
+		TransactionHandlers(AbstractSession* mySession);
+		virtual ~TransactionHandlers();
+
+	    virtual void on_StartTransaction(const Energistics::Etp::v12::Protocol::Transaction::StartTransaction & msg, int64_t correlationId);
+		virtual void on_StartTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse & msg, int64_t correlationId);
+	    virtual void on_CommitTransaction(const Energistics::Etp::v12::Protocol::Transaction::CommitTransaction & msg, int64_t correlationId);
+		virtual void on_CommitTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse & msg, int64_t correlationId);
+	    virtual void on_RollbackTransaction(const Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction & msg, int64_t correlationId);
+		virtual void on_RollbackTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse & msg, int64_t correlationId);
+	};
+	
 	class DataspaceHandlers : public ProtocolHandlers
 	{
 	public:
@@ -1167,6 +1271,7 @@ namespace ETP_NS
 		void setStoreProtocolHandlers(std::shared_ptr<StoreHandlers> storeHandlers);
 		void setStoreNotificationProtocolHandlers(std::shared_ptr<ETP_NS::StoreNotificationHandlers> storeNotificationHandlers);
 		void setDataArrayProtocolHandlers(std::shared_ptr<DataArrayHandlers> dataArrayHandlers);
+		void setTransactionProtocolHandlers(std::shared_ptr<TransactionHandlers> transactionHandlers);
 		void setDataspaceProtocolHandlers(std::shared_ptr<DataspaceHandlers> dataspaceHandlers);
 		
 		template<typename T> int64_t sendWithSpecificHandler(const T & mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
@@ -1217,6 +1322,13 @@ namespace ETP_NS
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse>;
 		
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Transaction::StartTransaction>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Transaction::CommitTransaction>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse>;
+		
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces>;
@@ -1264,6 +1376,13 @@ namespace ETP_NS
 		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse>;
 		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays>;
 		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse>;
+		
+		%template(send) send<Energistics::Etp::v12::Protocol::Transaction::StartTransaction>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Transaction::CommitTransaction>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse>;
 		
 		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse>;

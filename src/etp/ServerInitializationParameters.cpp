@@ -112,27 +112,26 @@ std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> ServerInitializ
 	result.push_back(protocol);
 
 	protocol.protocol = Energistics::Etp::v12::Datatypes::Protocol::Discovery;
-	protocol.protocolVersion = protocolVersion;
 	protocol.role = "store";
 	result.push_back(protocol);
 
 	protocol.protocol = Energistics::Etp::v12::Datatypes::Protocol::Store;
-	protocol.protocolVersion = protocolVersion;
-	protocol.role = "store";
 	result.push_back(protocol);
 
 	protocol.protocol = Energistics::Etp::v12::Datatypes::Protocol::StoreNotification;
-	protocol.protocolVersion = protocolVersion;
-	protocol.role = "store";
 	Energistics::Etp::v12::Datatypes::DataValue value;
-	value.item.set_int((std::numeric_limits<int>::max)());
+	value.item.set_long((std::numeric_limits<long>::max)());
 	protocol.protocolCapabilities["MaxDataArraySize"] = value;
 	result.push_back(protocol);
-
 	protocol.protocolCapabilities.clear();
+
 	protocol.protocol = Energistics::Etp::v12::Datatypes::Protocol::DataArray;
-	protocol.protocolVersion = protocolVersion;
-	protocol.role = "store";
+	result.push_back(protocol);
+
+	protocol.protocol = Energistics::Etp::v12::Datatypes::Protocol::Transaction;
+	result.push_back(protocol);
+
+	protocol.protocol = Energistics::Etp::v12::Datatypes::Protocol::Dataspace;
 	result.push_back(protocol);
 
 	return result;
