@@ -26,6 +26,8 @@ under the License.
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
+#include "InitializationParameters.h"
+
 namespace ETP_NS
 {
 	// Echoes back all received WebSocket messages.
@@ -41,8 +43,6 @@ namespace ETP_NS
 			return ioc;
 		}
 
-		const std::string& getHost() const { return host; }
-		const std::string& getPort() const { return port; }
 		const std::string& getTarget() const { return target; }
 		const std::string& getAuthorization() const { return authorization; }
 
@@ -58,8 +58,8 @@ namespace ETP_NS
 			successfulConnection = false;
 			// Look up the domain name
 			resolver.async_resolve(
-				host,
-				port,
+				initializationParams_->getHost(),
+				std::to_string(initializationParams_->getPort()),
 				std::bind(
 					&AbstractClientSession::on_resolve,
 					std::static_pointer_cast<AbstractClientSession>(shared_from_this()),
@@ -83,7 +83,7 @@ namespace ETP_NS
 #if BOOST_VERSION < 107000
 			// Perform the websocket handshake
 			derived().ws().async_handshake_ex(responseType,
-				host + ":" + port, target,
+				initializationParams_->getHost() + ":" + std::to_string(initializationParams_->getPort()), target,
 				[&](websocket::request_type& m)
 				{
 					m.insert(boost::beast::http::field::sec_websocket_protocol, "etp12.energistics.org");
@@ -104,7 +104,7 @@ namespace ETP_NS
 			);
 			// Perform the websocket handshake
 			derived().ws().async_handshake(responseType,
-				host + ":" + port, target,
+				initializationParams_->getHost() + ":" + std::to_string(initializationParams_->getPort()), target,
 				std::bind(
 					&AbstractClientSession::on_handshake,
 					std::static_pointer_cast<AbstractClientSession>(shared_from_this()),
@@ -179,8 +179,7 @@ namespace ETP_NS
 	protected:
 		boost::asio::io_context ioc;
 		tcp::resolver resolver;
-		std::string host;
-		std::string port;
+		InitializationParameters* initializationParams_;
 		std::string target;
 		std::string authorization;
 		websocket::response_type responseType; // In order to check handshake sec_websocket_protocol
@@ -193,8 +192,7 @@ namespace ETP_NS
 		AbstractClientSession() :
 			ioc(4),
 			resolver(ioc),
-			host(),
-			port(),
+			initializationParams_(),
 			target(),
 			authorization(),
 			successfulConnection(false) {
@@ -202,21 +200,15 @@ namespace ETP_NS
 		}
 
 		/**
-		 * @param host					The IP address or server name on which the server is listening for etp (websocket) connection
-		 * @param port					The port on which the server is listening for etp (websocket) connection
+		 * @param initializationParams  The initialization parameters of the session including IP host, port, requestedProtocols, supportedDataObjects
 		 * @param target				usually "/" but a server can decide to serve etp on a particular target
 		 * @param authorization			The HTTP authorization attribute to send to the server. It may be empty if not needed.
-		 * @param requestedProtocols	An array of protocol IDs that the client expects to communicate on for this session. If the server does not support all of the protocols, the client may or may not continue with the protocols that are supported.
-		 * @param supportedDataObjects	A list of the Data Objects supported by the client. This list MUST be empty if the client is a customer. This field MUST be supplied if the client is a Store and is requesting a customer role for the server.
 		 */
 		AbstractClientSession(
-			const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
-			const std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> & requestedProtocols,
-			const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& supportedDataObjects) :
+			InitializationParameters* initializationParams, const std::string & target, const std::string & authorization) :
 			ioc(4),
 			resolver(ioc),
-			host(host),
-			port(port),
+			initializationParams_(initializationParams),
 			target(target),
 			authorization(authorization),
 			successfulConnection(false)
@@ -224,15 +216,15 @@ namespace ETP_NS
 			messageId = 2; // The client side of the connection MUST use ONLY non-zero even-numbered messageIds. 
 
 			// Build the request session
-			requestSession.applicationName = "F2I ETP Client";
-			requestSession.applicationVersion = "0.0";
+			requestSession.applicationName = initializationParams_->getApplicationName();
+			requestSession.applicationVersion = initializationParams_->getApplicationVersion();
 
 			boost::uuids::random_generator gen;
 			auto instanceUuid = gen();
-			std::copy(std::begin(instanceUuid.data), std::end(instanceUuid.data), requestSession.clientInstanceId.array.begin());
+			std::copy(std::begin(initializationParams_->getInstanceId().data), std::end(initializationParams_->getInstanceId().data), requestSession.clientInstanceId.array.begin());
 
-			requestSession.requestedProtocols = requestedProtocols;
-			requestSession.supportedDataObjects = supportedDataObjects;
+			requestSession.requestedProtocols = initializationParams_->makeSupportedProtocols();
+			requestSession.supportedDataObjects = initializationParams_->makeSupportedDataObjects();
 			requestSession.supportedFormats.push_back("xml");
 			requestSession.currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 		}

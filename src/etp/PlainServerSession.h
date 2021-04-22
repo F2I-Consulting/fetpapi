@@ -30,7 +30,7 @@ namespace ETP_NS
 	public:
 		FETPAPI_DLL_IMPORT_OR_EXPORT PlainServerSession(tcp::socket socket);
 
-		virtual ~PlainServerSession() {}
+		virtual ~PlainServerSession() = default;
 
 		// Called by the base class
 		FETPAPI_DLL_IMPORT_OR_EXPORT websocket::stream<tcp::socket>& ws() { return ws_; }

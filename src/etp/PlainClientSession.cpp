@@ -22,12 +22,9 @@ under the License.
 using namespace ETP_NS;
 
 PlainClientSession::PlainClientSession(
-	const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
-	const std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> & requestedProtocols,
-	const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& supportedDataObjects,
-	std::size_t frameSize)
-	: AbstractClientSession<PlainClientSession>(host, port, target, authorization,
-		requestedProtocols, supportedDataObjects),
+	InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
+	std::size_t frameSize) :
+		AbstractClientSession<PlainClientSession>(initializationParams, target, authorization),
 		ws_(ioc)
 {
 	ws_.binary(true);
