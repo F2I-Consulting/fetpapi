@@ -22,19 +22,19 @@ under the License.
 
 namespace ETP_NS
 {
-	class FETPAPI_DLL_IMPORT_OR_EXPORT DiscoveryHandlers : public ProtocolHandlers
+	class FETPAPI_DLL_IMPORT_OR_EXPORT DataspaceHandlers : public ProtocolHandlers
 	{
 	public:
-		DiscoveryHandlers(AbstractSession* mySession): ProtocolHandlers(mySession) {}
-		virtual ~DiscoveryHandlers() = default;
+		DataspaceHandlers(AbstractSession* mySession): ProtocolHandlers(mySession) {}
+		virtual ~DataspaceHandlers() = default;
 
 	    void decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader & mh, avro::DecoderPtr d);
 
-		virtual void on_GetResources(const Energistics::Etp::v12::Protocol::Discovery::GetResources & msg, int64_t correlationId);
-		virtual void on_GetResourcesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse & msg, int64_t correlationId);
-		virtual void on_GetResourcesEdgesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse & msg, int64_t correlationId);
-
-		virtual void on_GetDeletedResources(const Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources & msg, int64_t correlationId);
-		virtual void on_GetDeletedResourcesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetDeletedResourcesResponse & msg, int64_t correlationId);
+	    virtual void on_GetDataspaces(const Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces & msg, int64_t correlationId);
+		virtual void on_GetDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse & msg, int64_t correlationId);
+	    virtual void on_PutDataspaces(const Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces & msg, int64_t correlationId);
+		virtual void on_PutDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse & msg, int64_t correlationId);
+	    virtual void on_DeleteDataspaces(const Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces & msg, int64_t correlationId);
+		virtual void on_DeleteDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse & msg, int64_t correlationId);
 	};
 }

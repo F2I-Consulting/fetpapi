@@ -172,6 +172,7 @@ typedef long long 				time_t;
 	%nspace ETP_NS::StoreHandlers;
 	%nspace ETP_NS::StoreNotificationHandlers;
 	%nspace ETP_NS::DataArrayHandlers;
+	%nspace ETP_NS::DataspaceHandlers;
 	%nspace ETP_NS::AbstractSession;
 	%nspace ETP_NS::PlainClientSession;
 	%nspace ETP_NS::ServerInitializationParameters;
@@ -201,6 +202,10 @@ typedef long long 				time_t;
 	%nspace Energistics::Etp::v12::Datatypes::Object::ContextScopeKind;
 	%nspace Energistics::Etp::v12::Datatypes::Object::DataObject;
 	%nspace Energistics::Etp::v12::Datatypes::Object::Resource;
+	%nspace Energistics::Etp::v12::Datatypes::Object::DeletedResource;
+	%nspace Energistics::Etp::v12::Datatypes::Object::Dataspace;
+	%nspace Energistics::Etp::v12::Datatypes::Object::Edge;
+	%nspace Energistics::Etp::v12::Datatypes::Object::RelationshipKind;
 	
 	%nspace Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier;
 	%nspace Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray;
@@ -246,6 +251,13 @@ typedef long long 				time_t;
 	%nspace Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse;
 	%nspace Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays;
 	%nspace Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse;
+	
+	%nspace Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces;
+	%nspace Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse;
+	%nspace Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces;
+	%nspace Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse;
+	%nspace Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces;
+	%nspace Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse;
 #endif
 
 %include "std_map.i"
@@ -403,10 +415,10 @@ namespace Energistics {
 					arrayOfString=5,
 					bytes=6
 				};
-			};			
-		};		
-	};	
-};
+			}
+		}
+	}
+}
 %template(SupportedDataObjectVector) std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>;
 %template(uint8_t16Array) std::array<uint8_t, 16>;
 %template(SupportedProtocolVector) std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol>;
@@ -443,42 +455,62 @@ namespace Energistics {
 						int64_t storeLastWrite;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
+					
+					struct DeletedResource{					
+						std::string uri;
+						std::string dataObjectType;
+						int64_t deletedTime;
+						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
+					};
 
 					struct DataObject{					
 						Energistics::Etp::v12::Datatypes::Object::Resource resource;
 						std::string format;
 						boost::optional<Energistics::Etp::v12::Datatypes::Uuid> blobId;
 						std::string data;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
+					};
+
+					struct Dataspace{					
+						std::string uri;
+						std::string path;
+						boost::optional<int64_t> lastChanged;
+						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
+					};
+					
+					struct Edge{					
+						std::string sourceUri;
+						std::string targetUri;
+						Energistics::Etp::v12::Datatypes::Object::RelationshipKind relationshipKind;
+						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
+					};
+					
+					enum RelationshipKind {					
+						Primary=0,
+						Secondary=1,
+						Both=2
+					};
+				}
+			}
+		}
+	}
+}
 %template(ResourceVector) std::vector<Energistics::Etp::v12::Datatypes::Object::Resource>;
+%template(DeletedResourceVector) std::vector<Energistics::Etp::v12::Datatypes::Object::DeletedResource>;
+%template(DataspaceVector) std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace>;
+%template(EdgeVector) std::vector<Energistics::Etp::v12::Datatypes::Object::Edge>;
 %template(MapStringDataObject) std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject>;
+%template(MapStringDataspace) std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace>;
 
 namespace Energistics {
 	namespace Etp {	
 		namespace v12 {		
 			namespace Datatypes {			
-				namespace DataArrayTypes {				
+				namespace DataArrayTypes {			
 					struct DataArrayIdentifier{					
 						std::string uri;
 						std::string pathInResource;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-%template(MapStringDataArrayIdentifier) std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier>;
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Datatypes {			
-				namespace DataArrayTypes {				
+					};		
+					
 					struct DataArray{					
 						std::vector<int64_t> dimensions;
 						Energistics::Etp::v12::Datatypes::AnyArray data;
@@ -511,11 +543,12 @@ namespace Energistics {
 						Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier uid;
 						Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata metadata;
 					};					
-				};				
-			};			
-		};		
-	};	
-};
+				}
+			}
+		}
+	}
+}
+%template(MapStringDataArrayIdentifier) std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier>;
 %template(MapStringDataArray) std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray>;
 %template(MapStringDataArrayMetadata) std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata>;
 %template(MapStringPutDataArraysType) std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::PutDataArraysType>;
@@ -541,17 +574,8 @@ namespace Energistics {
 						int64_t currentDateTime;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> endpointCapabilities;
 						static const int messageTypeId=1;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace Core {				
+					};
+					
 					struct OpenSession{					
 						std::string applicationName;
 						std::string applicationVersion;
@@ -564,55 +588,39 @@ namespace Energistics {
 						int64_t currentDateTime;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> endpointCapabilities;
 						static const int messageTypeId=2;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace Core {				
+					};
+					
 					struct CloseSession{					
 						std::string reason;
 						static const int messageTypeId=5;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace Core {				
+					};
+					
+					struct Ping{					
+						int64_t currentDateTime;
+						static const int messageTypeId=8;
+					};
+					
+					struct Pong{					
+						int64_t currentDateTime;
+						static const int messageTypeId=9;
+						static const int protocolId=Energistics::Etp::v12::Datatypes::Core;
+					};
+					
 					struct ProtocolException{					
 						boost::optional<Energistics::Etp::v12::Datatypes::ErrorInfo> error;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::ErrorInfo> errors;
 						static const int messageTypeId=1000;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace Core {				
+					};
+					
 					struct Acknowledge{					
 						static const int messageTypeId=1001;
 						int protocolId;
 					};
-				};				
-			};
-		};		
-	};	
-};
+				}
+			}
+		}
+	}
+}
 
 /**************** DISCOVERY PROTOCOL  *****************/
 
@@ -628,27 +636,34 @@ namespace Energistics {
 						boost::optional<int64_t> storeLastWriteFilter;
 						boost::optional<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind> activeStatusFilter;
 						static const int messageTypeId=1;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace Discovery {				
+					};
+					
 					struct GetResourcesResponse{					
 						std::vector<Energistics::Etp::v12::Datatypes::Object::Resource> resources;
 						static const int messageTypeId=4;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
+					};
+					
+					struct GetDeletedResources{					
+						std::string dataspaceUri;
+						boost::optional<int64_t> deleteTimeFilter;
+						std::vector<std::string> dataObjectTypes;
+						static const int messageTypeId=5;
+					};
+					
+					struct GetDeletedResourcesResponse{					
+						std::vector<Energistics::Etp::v12::Datatypes::Object::DeletedResource> deletedResources;
+						static const int messageTypeId=6;
+					};
+					
+					struct GetResourcesEdgesResponse{					
+						std::vector<Energistics::Etp::v12::Datatypes::Object::Edge> edges;
+						static const int messageTypeId=7;
+					};
+				}
+			}
+		}
+	}
+}
 
 /**************** STORE PROTOCOL  *****************/
 
@@ -661,89 +676,46 @@ namespace Energistics {
 						std::map<std::string, std::string> uris;
 						std::string format;
 						static const int messageTypeId=1;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace Store {				
-					struct GetDataObjectsResponse{					
-						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataObjects;
-						static const int messageTypeId=4;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace Store {				
+					};
+					
 					struct PutDataObjects{					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataObjects;
 						bool pruneContainedObjects=false;
 						static const int messageTypeId=2;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace Store {				
-					struct PutDataObjectsResponse{					
-						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::PutResponse> success;
-						static const int messageTypeId=9;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace Store {				
+					};
+					
 					struct DeleteDataObjects{					
 						std::map<std::string, std::string> uris;
 						bool pruneContainedObjects=false;
 						static const int messageTypeId=3;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace Store {				
+					};
+					
+					struct GetDataObjectsResponse{					
+						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataObjects;
+						static const int messageTypeId=4;
+					};
+					
+					struct Chunk{					
+						Energistics::Etp::v12::Datatypes::Uuid blobId;
+						std::string data;
+						bool final=false;
+						static const int messageTypeId=8;
+					};
+					
+					struct PutDataObjectsResponse{					
+						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::PutResponse> success;
+						static const int messageTypeId=9;
+					};
+					
 					struct DeleteDataObjectsResponse{					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::ArrayOfString> deletedUris;
 						static const int messageTypeId=10;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
+					};
+				}
+			}
+		}
+	}
+}
 
 /**************** DATA ARRAY PROTOCOL  *****************/
 
@@ -755,177 +727,109 @@ namespace Energistics {
 					struct GetDataArrays{					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier> dataArrays;
 						static const int messageTypeId=2;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace DataArray {				
+					};
+					
 					struct GetDataArraysResponse{					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray> dataArrays;
 						static const int messageTypeId=1;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace DataArray {				
+					};
+					
 					struct GetDataSubarrays{					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::GetDataSubarraysType> dataSubarrays;
 						static const int messageTypeId=3;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace DataArray {				
+					};
+					
 					struct GetDataSubarraysResponse{					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray> dataSubarrays;
 						static const int messageTypeId=8;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace DataArray {				
+					};
+					
 					struct PutDataArrays{					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::PutDataArraysType> dataArrays;
 						static const int messageTypeId=4;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace DataArray {				
+					};
+					
 					struct PutDataArraysResponse{					
 						std::map<std::string, std::string> success;
 						static const int messageTypeId=10;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace DataArray {				
+					};
+					
 					struct PutDataSubarrays{					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::PutDataSubarraysType> dataSubarrays;
 						static const int messageTypeId=5;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace DataArray {				
+					};
+					
 					struct PutDataSubarraysResponse{					
 						std::map<std::string, std::string> success;
 						static const int messageTypeId=11;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace DataArray {				
+					};
+					
 					struct PutUninitializedDataArrays{					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::PutUninitializedDataArrayType> dataArrays;
 						static const int messageTypeId=9;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace DataArray {				
+					};
+					
 					struct PutUninitializedDataArraysResponse{					
 						std::map<std::string, std::string> success;
 						static const int messageTypeId=12;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
-
-namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace DataArray {				
+					};
+					
 					struct GetDataArrayMetadata{					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier> dataArrays;
 						static const int messageTypeId=6;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
+					};
+					
+					struct GetDataArrayMetadataResponse{					
+						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata> arrayMetadata;
+						static const int messageTypeId=7;
+					};
+				}
+			}
+		}
+	}
+}
+
+/**************** DATASPACE PROTOCOL  *****************/
 
 namespace Energistics {
 	namespace Etp {	
 		namespace v12 {		
 			namespace Protocol {			
-				namespace DataArray {				
-					struct GetDataArrayMetadataResponse{					
-						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata> arrayMetadata;
-						static const int messageTypeId=7;
-					};					
-				};				
-			};			
-		};		
-	};	
-};
+				namespace Dataspace {				
+					struct GetDataspaces{					
+						boost::optional<int64_t> lastChangedFilter;
+						static const int messageTypeId=1;
+					};
+					
+					struct GetDataspacesResponse{					
+						std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> dataspaces;
+						static const int messageTypeId=2;
+					};
+					
+					struct PutDataspaces{					
+						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace> dataspaces;
+						static const int messageTypeId=3;
+					};
+					
+					struct PutDataspacesResponse{					
+						std::map<std::string, std::string> success;
+						static const int messageTypeId=6;
+					};
+					
+					struct DeleteDataspaces{					
+						std::map<std::string, std::string> uris;
+						static const int messageTypeId=4;
+					};
+					
+					struct DeleteDataspacesResponse{					
+						std::map<std::string, std::string> success;
+						static const int messageTypeId=5;
+					};
+				}
+			}
+		}
+	}
+}
 
 %include <std_shared_ptr.i>
 %shared_ptr(ETP_NS::ProtocolHandlers)
@@ -934,6 +838,7 @@ namespace Energistics {
 %shared_ptr(ETP_NS::StoreHandlers)
 %shared_ptr(ETP_NS::StoreNotificationHandlers)
 %shared_ptr(ETP_NS::DataArrayHandlers)
+%shared_ptr(ETP_NS::DataspaceHandlers)
 %shared_ptr(ETP_NS::AbstractSession)
 %shared_ptr(ETP_NS::PlainClientSession)
 
@@ -942,6 +847,7 @@ namespace Energistics {
 %feature("director") ETP_NS::StoreHandlers;
 %feature("director") ETP_NS::StoreNotificationHandlers;
 %feature("director") ETP_NS::DataArrayHandlers;
+%feature("director") ETP_NS::DataspaceHandlers;
 %feature("director") ETP_NS::ServerInitializationParameters;
 
 /* Following extensions aims at preventing the Python garbage collector from 
@@ -1029,25 +935,43 @@ namespace Energistics {
 	  PyObject_SetAttr($self, store_notification_handler_reference(), args);
 	%}
 	}
-	
-	%fragment("data_array_handler_reference_init", "init") {
-	  data_array_handler_reference();
-	}
 
-	%fragment("data_array_handler_reference_function", "header", fragment="data_array_handler_reference_init") {
+// DataArray	
+%fragment("data_array_handler_reference_init", "init") {
+	  data_array_handler_reference();
+}
+%fragment("data_array_handler_reference_function", "header", fragment="data_array_handler_reference_init") {
 
 	static PyObject *data_array_handler_reference() {
 	  static PyObject *data_array_handler_reference_string = SWIG_Python_str_FromChar("__data_array_handler_reference");
 	  return data_array_handler_reference_string;
 	}
 
-	}
+}
 
-	%extend ETP_NS::AbstractSession {
-	%typemap(ret, fragment="data_array_handler_reference_function") void setDataArrayProtocolHandlers(std::shared_ptr<DataArrayHandlers> dataArrayHandlers) %{
+%extend ETP_NS::AbstractSession {
+%typemap(ret, fragment="data_array_handler_reference_function") void setDataArrayProtocolHandlers(std::shared_ptr<DataArrayHandlers> dataArrayHandlers) %{
 	  PyObject_SetAttr($self, data_array_handler_reference(), args);
 	%}
+	
+	// Dataspace	
+%fragment("dataspace_handler_reference_init", "init") {
+	  dataspace_handler_reference();
+}
+%fragment("dataspace_handler_reference_function", "header", fragment="dataspace_handler_reference_init") {
+
+	static PyObject *dataspace_handler_reference() {
+	  static PyObject *dataspace_handler_reference_string = SWIG_Python_str_FromChar("__dataspace_handler_reference");
+	  return dataspace_handler_reference_string;
 	}
+
+}
+
+%extend ETP_NS::AbstractSession {
+%typemap(ret, fragment="dataspace_handler_reference_function") void setDataspaceProtocolHandlers(std::shared_ptr<DataspaceHandlers> dataspaceHandlers) %{
+	  PyObject_SetAttr($self, dataspace_handler_reference(), args);
+	%}
+}
 #endif 
 	
 #ifdef SWIGCSHARP
@@ -1066,6 +990,7 @@ namespace Energistics {
   private StoreHandlers storeHandlersReference;
   private StoreNotificationHandlers storeNotificationHandlersReference;
   private DataArrayHandlers dataArrayHandlersReference;
+  private DataspaceHandlers dataspaceHandlersReference;
 %}
 
 %typemap(csin,
@@ -1087,6 +1012,10 @@ namespace Energistics {
 %typemap(csin,
          post="      dataArrayHandlersReference = $csinput;"
          ) std::shared_ptr<ETP_NS::DataArrayHandlers> dataArrayHandlers "DataArrayHandlers.getCPtr($csinput)"
+		 
+%typemap(csin,
+         post="      dataspaceHandlersReference = $csinput;"
+         ) std::shared_ptr<ETP_NS::DataspaceHandlers> dataspaceHandlers "DataspaceHandlers.getCPtr($csinput)"
 #endif	  
 	  
 #ifdef SWIGJAVA
@@ -1104,6 +1033,7 @@ namespace Energistics {
   private StoreHandlers storeHandlersReference;
   private StoreNotificationHandlers storeNotificationHandlersReference;
   private DataArrayHandlers dataArrayHandlersReference;
+  private DataspaceHandlers dataspaceHandlersReference;
 %}
 
 %typemap(javain, 
@@ -1125,6 +1055,10 @@ namespace Energistics {
 %typemap(javain, 
          post="      dataArrayHandlersReference = $javainput;"
          ) std::shared_ptr<ETP_NS::DataArrayHandlers> dataArrayHandlers "DataArrayHandlers.getCPtr($javainput)"
+		 
+%typemap(javain, 
+         post="      dataspaceHandlersReference = $javainput;"
+         ) std::shared_ptr<ETP_NS::DataspaceHandlers> dataspaceHandlers "DataspaceHandlers.getCPtr($javainput)"
 #endif
 
 namespace ETP_NS
@@ -1209,6 +1143,20 @@ namespace ETP_NS
 		virtual void on_PutUninitializedDataArrays(const Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays & msg, int64_t correlationId);
 		virtual void on_PutUninitializedDataArraysResponse(const Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse & msg, int64_t correlationId);
 	};
+	
+	class DataspaceHandlers : public ProtocolHandlers
+	{
+	public:
+		DataspaceHandlers(AbstractSession* mySession);
+		virtual ~DataspaceHandlers();
+
+	    virtual void on_GetDataspaces(const Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces & msg, int64_t correlationId);
+		virtual void on_GetDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse & msg, int64_t correlationId);
+	    virtual void on_PutDataspaces(const Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces & msg, int64_t correlationId);
+		virtual void on_PutDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse & msg, int64_t correlationId);
+	    virtual void on_DeleteDataspaces(const Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces & msg, int64_t correlationId);
+		virtual void on_DeleteDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse & msg, int64_t correlationId);
+	};
 
 	%nodefaultctor AbstractSession;
 	class AbstractSession
@@ -1219,6 +1167,7 @@ namespace ETP_NS
 		void setStoreProtocolHandlers(std::shared_ptr<StoreHandlers> storeHandlers);
 		void setStoreNotificationProtocolHandlers(std::shared_ptr<ETP_NS::StoreNotificationHandlers> storeNotificationHandlers);
 		void setDataArrayProtocolHandlers(std::shared_ptr<DataArrayHandlers> dataArrayHandlers);
+		void setDataspaceProtocolHandlers(std::shared_ptr<DataspaceHandlers> dataspaceHandlers);
 		
 		template<typename T> int64_t sendWithSpecificHandler(const T & mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
@@ -1266,7 +1215,14 @@ namespace ETP_NS
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse>;	
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse>;
+		
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse>;
 		
 		template<typename T> int64_t send(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
@@ -1308,6 +1264,13 @@ namespace ETP_NS
 		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse>;
 		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays>;
 		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse>;
+		
+		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse>;
 		
 		bool isMessageStillProcessing(int64_t msgId) const;
 		void close();

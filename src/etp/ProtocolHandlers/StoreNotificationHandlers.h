@@ -26,7 +26,7 @@ namespace ETP_NS
 	{
 	public:
 		StoreNotificationHandlers(AbstractSession* mySession): ProtocolHandlers(mySession) {}
-		virtual ~StoreNotificationHandlers() {}
+		virtual ~StoreNotificationHandlers() = default;
 
 	    void decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader & mh, avro::DecoderPtr d);
 

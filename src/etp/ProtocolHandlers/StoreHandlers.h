@@ -26,7 +26,7 @@ namespace ETP_NS
 	{
 	public:
 		StoreHandlers(AbstractSession* mySession): ProtocolHandlers(mySession) {}
-		virtual ~StoreHandlers() {}
+		virtual ~StoreHandlers() = default;
 
 	    void decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader & mh, avro::DecoderPtr d);
 
