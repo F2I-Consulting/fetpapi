@@ -150,7 +150,7 @@ namespace ETP_NS
 
 		// Returns an unprocessable_entity response
 		auto const unprocessable_entity =
-			[&req, serverInitializationParams](beast::string_view target)
+			[&req, serverInitializationParams](beast::string_view)
 		{
 			http::response<http::string_body> res{ http::status::unprocessable_entity, req.version() };
 			res.set(http::field::server, serverInitializationParams->getApplicationName());
@@ -1150,16 +1150,16 @@ namespace ETP_NS
 		std::vector< std::shared_ptr<AbstractSession> >& getSessions() { return sessions_; }
 
 #ifdef WITH_ETP_SSL
-		void listen(ServerInitializationParameters* serverInitializationParams, const std::string & host, unsigned short port, int threadCount,
+		void listen(ServerInitializationParameters* serverInitializationParams, int threadCount,
 			const std::string & cert = "", const std::string & key = "", const std::string & dh = "") {
 #else
-		void listen(ServerInitializationParameters* serverInitializationParams, const std::string & host, unsigned short port, int threadCount) {
+		void listen(ServerInitializationParameters* serverInitializationParams, int threadCount) {
 #endif
 			serverInitializationParams_ = serverInitializationParams;
 			if (threadCount < 1) {
 				throw std::invalid_argument("You need to run your server on at least one thread.");
 			}
-			auto const address = boost::asio::ip::make_address(host);
+			auto const address = boost::asio::ip::make_address(serverInitializationParams->getHost());
 
 			// The io_context is required for all I/O
 			boost::asio::io_context ioc{ threadCount };
@@ -1194,14 +1194,14 @@ namespace ETP_NS
 				ctx.use_tmp_dh(
 					boost::asio::buffer(dh.data(), dh.size()));
 
-				std::make_shared<Server::listener>(ioc, tcp::endpoint{ address, port }, sessions_, serverInitializationParams_, ctx, true)->run();
+				std::make_shared<Server::listener>(ioc, tcp::endpoint{ address, serverInitializationParams->getPort() }, sessions_, serverInitializationParams_, ctx, true)->run();
 			}
 			else {
-				std::make_shared<Server::listener>(ioc, tcp::endpoint{ address, port }, sessions_, serverInitializationParams_, ctx, false)->run();
+				std::make_shared<Server::listener>(ioc, tcp::endpoint{ address, serverInitializationParams->getPort() }, sessions_, serverInitializationParams_, ctx, false)->run();
 			}
 #else
 				// Create and launch a listening port
-			std::make_shared<Server::listener>(ioc, tcp::endpoint{ address, port }, sessions_, serverInitializationParams_)->run();
+			std::make_shared<Server::listener>(ioc, tcp::endpoint{ address, serverInitializationParams->getPort() }, sessions_, serverInitializationParams_)->run();
 #endif
 
 			// Capture SIGINT and SIGTERM to perform a clean shutdown

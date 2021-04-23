@@ -52,7 +52,7 @@ namespace ETP_NS
 		void
 			run(
 				char const* host,
-				char const* port,
+				unsigned short port,
 				char const* target,
 				int version,
 				std::string authorization = "")
@@ -70,7 +70,7 @@ namespace ETP_NS
 			// Look up the domain name
 			resolver_.async_resolve(
 				host,
-				port,
+				std::to_string(port).c_str(),
 				std::bind(
 					&HttpClientSession::on_resolve,
 					shared_from_this(),

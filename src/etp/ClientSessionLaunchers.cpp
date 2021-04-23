@@ -123,7 +123,6 @@ namespace
 			std::string temp;
 			std::size_t serverMaxWebSocketFramePayloadSize;
 			while (!iss.eof()) {
-
 				/* extracting word by word from stream */
 				iss >> temp;
 
@@ -138,7 +137,7 @@ namespace
 	}
 }
 
-std::shared_ptr<ETP_NS::PlainClientSession> ETP_NS::ClientSessionLaunchers::createWsClientSession(const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
+std::shared_ptr<ETP_NS::PlainClientSession> ETP_NS::ClientSessionLaunchers::createWsClientSession(InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
 	std::size_t preferredMaxFrameSize)
 {
 	boost::asio::io_context ioc;
@@ -148,20 +147,22 @@ std::shared_ptr<ETP_NS::PlainClientSession> ETP_NS::ClientSessionLaunchers::crea
 		etpServerCapTarget += '/';
 	}
 	etpServerCapTarget += ".well-known/etp-server-capabilities?GetVersion=etp12.energistics.org";
-	httpClientSession->run(host.c_str(), port.c_str(), etpServerCapTarget.c_str(), 11, authorization);
+	httpClientSession->run(initializationParams->getHost().c_str(), initializationParams->getPort(), etpServerCapTarget.c_str(), 11, authorization);
 	// Run the I/O service. The call will return when the get operation is complete.
 	ioc.run();
 
 	preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(httpClientSession->getResponse().body(), preferredMaxFrameSize);
 
-	return std::make_shared<PlainClientSession>(host, port, target.empty() ? "/" : target, authorization, getRequestedProtocols(), getSupportedDataObjects(), preferredMaxFrameSize);
+	auto result = std::make_shared<PlainClientSession>(initializationParams, target.empty() ? "/" : target, authorization, preferredMaxFrameSize);
+	initializationParams->postSessionCreationOperation(result.get());
+	return result;
 }
 
 #ifdef WITH_ETP_SSL
 
 namespace ssl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
 
-std::shared_ptr<ETP_NS::SslClientSession> ETP_NS::ClientSessionLaunchers::createWssClientSession(const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
+std::shared_ptr<ETP_NS::SslClientSession> ETP_NS::ClientSessionLaunchers::createWssClientSession(InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
 	const std::string & additionalCertificates)
 {
 	// The SSL context is required, and holds certificates
@@ -184,12 +185,14 @@ std::shared_ptr<ETP_NS::SslClientSession> ETP_NS::ClientSessionLaunchers::create
 		etpServerCapTarget += '/';
 	}
 	etpServerCapTarget += ".well-known/etp-server-capabilities?GetVersion=etp12.energistics.org";
-	httpClientSession->run(host.c_str(), port.c_str(), etpServerCapTarget.c_str(), 11, authorization);
+	httpClientSession->run(initializationParams->getHost().c_str(), initializationParams->getPort().c_str(), etpServerCapTarget.c_str(), 11, authorization);
 	// Run the I/O service. The call will return when the get operation is complete.
 	ioc.run();
 
 	preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(httpsClientSession->getResponse().body(), preferredMaxFrameSize);
 
-	return std::make_shared<SslClientSession>(ctx, host, port, target.empty() ? "/" : target, authorization, getRequestedProtocols(), getSupportedDataObjects());
+	auto result = std::make_shared<SslClientSession>(ctx, initializationParams, target.empty() ? "/" : target, authorization, preferredMaxFrameSize);
+	initializationParams->postSessionCreationOperation(result.get());
+	return result;
 }
 #endif
