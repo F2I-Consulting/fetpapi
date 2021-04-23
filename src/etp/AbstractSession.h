@@ -262,17 +262,23 @@ namespace ETP_NS
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT bool isMessageStillProcessing(int64_t msgId) const { return specificProtocolHandlers.count(msgId) > 0; }
 
+		void setMaxWebSocketMessagePayloadSize(int64_t value) { maxWebSocketMessagePayloadSize = value; }
+		int64_t getMaxWebSocketMessagePayloadSize() const { return maxWebSocketMessagePayloadSize; }
+
 	protected:
 		boost::beast::flat_buffer receivedBuffer;
 		std::vector<std::shared_ptr<ETP_NS::ProtocolHandlers>> protocolHandlers;
 		std::unordered_map<int64_t, std::shared_ptr<ETP_NS::ProtocolHandlers>> specificProtocolHandlers;
+		int64_t maxWebSocketMessagePayloadSize;
 		bool webSocketSessionClosed; // open with the websocket handshake
 		bool etpSessionClosed; // open with the requestSession and openSession message
 		std::vector<std::vector<uint8_t> > sendingQueue;
 		int64_t messageId;
 		boost::uuids::uuid identifier;
 
-		AbstractSession() : receivedBuffer(), protocolHandlers(), specificProtocolHandlers(),
+		// https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/using_websocket/messages.html
+		// and https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/read_message_max/overload1.html
+		AbstractSession() : receivedBuffer(), protocolHandlers(), specificProtocolHandlers(), maxWebSocketMessagePayloadSize(16000000),
 			webSocketSessionClosed(true), etpSessionClosed(true),
 			sendingQueue() {}
 

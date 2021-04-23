@@ -77,7 +77,7 @@ void TransactionHandlers::on_StartTransaction(const Energistics::Etp::v12::Proto
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The TransactionHandlers::on_StartTransaction method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void TransactionHandlers::on_StartTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse& msg, int64_t)
+void TransactionHandlers::on_StartTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse&, int64_t)
 {
 	std::cout << "on_StartTransactionResponse" << std::endl;
 }

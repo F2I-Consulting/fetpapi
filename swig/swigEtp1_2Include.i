@@ -176,6 +176,7 @@ typedef long long 				time_t;
 	%nspace ETP_NS::DataspaceHandlers;
 	%nspace ETP_NS::AbstractSession;
 	%nspace ETP_NS::PlainClientSession;
+	%nspace ETP_NS::InitializationParameters;
 	%nspace ETP_NS::ServerInitializationParameters;
 	%nspace ETP_NS::Server;
 #ifdef WITH_FESAPI
@@ -611,7 +612,6 @@ namespace Energistics {
 					struct Pong{					
 						int64_t currentDateTime;
 						static const int messageTypeId=9;
-						static const int protocolId=Energistics::Etp::v12::Datatypes::Core;
 					};
 					
 					struct ProtocolException{					
@@ -908,6 +908,7 @@ namespace Energistics {
 %feature("director") ETP_NS::DataArrayHandlers;
 %feature("director") ETP_NS::TransactionHandlers;
 %feature("director") ETP_NS::DataspaceHandlers;
+%feature("director") ETP_NS::InitializationParameters;
 %feature("director") ETP_NS::ServerInitializationParameters;
 
 /* Following extensions aims at preventing the Python garbage collector from 
@@ -923,7 +924,7 @@ namespace Energistics {
 		}
 	}
 	%extend ETP_NS::Server {
-		%typemap(ret, fragment="server_initialization_parameters_reference_function") void listen(ServerInitializationParameters* serverInitializationParams, const std::string & host, unsigned short port, int threadCount) %{
+		%typemap(ret, fragment="server_initialization_parameters_reference_function") void listen(ServerInitializationParameters* serverInitializationParams, int threadCount) %{
 		  PyObject_SetAttr($self, server_initialization_parameters_reference(), args);
 		%}
 	}
@@ -1409,42 +1410,55 @@ namespace ETP_NS
 	public:
 		bool run();
 	};
+	
+	class InitializationParameters
+	{
+	public:
+		InitializationParameters(const std::string & instanceUuid, const std::string & host, unsigned short port);
+		virtual ~InitializationParameters();
+
+		void setMaxWebSocketMessagePayloadSize(int64_t value);
+
+		virtual std::string getApplicationName() const;
+		virtual std::string getApplicationVersion() const;
+
+		virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> makeSupportedDataObjects() const;
+		virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> makeSupportedProtocols() const;
+
+		/**
+		* Override this method in order to register some dedicated protocol handlers for a session.
+		*/
+		virtual void postSessionCreationOperation(AbstractSession* session) const;
+	};
 
 	namespace ClientSessionLaunchers
 	{
-		std::shared_ptr<ETP_NS::PlainClientSession> createWsClientSession(const std::string & host, const std::string & port, const std::string & target, const std::string & authorization);
+		std::shared_ptr<ETP_NS::PlainClientSession> createWsClientSession(InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
+			std::size_t preferredMaxFrameSize = 4096);
 	}
 	
 	/******************* SERVER ***************************/
 	
-	class ServerInitializationParameters
+	class ServerInitializationParameters : public InitializationParameters
 	{
 	public:
-		ServerInitializationParameters();
-		ServerInitializationParameters(const std::string & serverUuid);
+		ServerInitializationParameters(const std::string & serverUuid, const std::string & host, unsigned short port);
 		virtual ~ServerInitializationParameters();
 
-		virtual std::string getApplicationName() const;
-		virtual std::string getApplicationVersion() const;
 		virtual std::string getContactEmail() const;
 		virtual std::string getContactName() const;
 		virtual std::string getContactPhone() const;
 		virtual std::string getOrganizationName() const;
 
 		virtual std::vector<std::string> makeSupportedEncodings() const;
-		virtual std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> makeEndpointCapabilities() const;
-		virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> makeSupportedDataObjects() const;
-		virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> makeSupportedProtocols() const;
-
-		virtual void postSessionCreationOperation(AbstractSession* session) const;
 	};
-
+	
 	class Server
 	{
 	public:
 		Server();
 		std::vector< std::shared_ptr<AbstractSession> >& getSessions();
-		void listen(ServerInitializationParameters* serverInitializationParams, const std::string & host, unsigned short port, int threadCount);
+		void listen(ServerInitializationParameters* serverInitializationParams, int threadCount);
 	};
 	
 #ifdef WITH_FESAPI

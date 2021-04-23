@@ -43,6 +43,8 @@ namespace ETP_NS
 			return ioc;
 		}
 
+		const std::string& getHost() const { return host; }
+		const std::string& getPort() const { return port; }
 		const std::string& getTarget() const { return target; }
 		const std::string& getAuthorization() const { return authorization; }
 
@@ -58,8 +60,8 @@ namespace ETP_NS
 			successfulConnection = false;
 			// Look up the domain name
 			resolver.async_resolve(
-				initializationParams_->getHost(),
-				std::to_string(initializationParams_->getPort()),
+				host,
+				port,
 				std::bind(
 					&AbstractClientSession::on_resolve,
 					std::static_pointer_cast<AbstractClientSession>(shared_from_this()),
@@ -83,7 +85,7 @@ namespace ETP_NS
 #if BOOST_VERSION < 107000
 			// Perform the websocket handshake
 			derived().ws().async_handshake_ex(responseType,
-				initializationParams_->getHost() + ":" + std::to_string(initializationParams_->getPort()), target,
+				host + ":" + port, target,
 				[&](websocket::request_type& m)
 				{
 					m.insert(boost::beast::http::field::sec_websocket_protocol, "etp12.energistics.org");
@@ -104,7 +106,7 @@ namespace ETP_NS
 			);
 			// Perform the websocket handshake
 			derived().ws().async_handshake(responseType,
-				initializationParams_->getHost() + ":" + std::to_string(initializationParams_->getPort()), target,
+				host + ":" + port, target,
 				std::bind(
 					&AbstractClientSession::on_handshake,
 					std::static_pointer_cast<AbstractClientSession>(shared_from_this()),
@@ -179,7 +181,8 @@ namespace ETP_NS
 	protected:
 		boost::asio::io_context ioc;
 		tcp::resolver resolver;
-		InitializationParameters* initializationParams_;
+		std::string host;
+		std::string port;
 		std::string target;
 		std::string authorization;
 		websocket::response_type responseType; // In order to check handshake sec_websocket_protocol
@@ -192,7 +195,8 @@ namespace ETP_NS
 		AbstractClientSession() :
 			ioc(4),
 			resolver(ioc),
-			initializationParams_(),
+			host(),
+			port(),
 			target(),
 			authorization(),
 			successfulConnection(false) {
@@ -208,25 +212,35 @@ namespace ETP_NS
 			InitializationParameters* initializationParams, const std::string & target, const std::string & authorization) :
 			ioc(4),
 			resolver(ioc),
-			initializationParams_(initializationParams),
+			host(initializationParams->getHost()),
+			port(std::to_string(initializationParams->getPort())),
 			target(target),
 			authorization(authorization),
 			successfulConnection(false)
 		{
 			messageId = 2; // The client side of the connection MUST use ONLY non-zero even-numbered messageIds. 
 
+			initializationParams->postSessionCreationOperation(this);
+
 			// Build the request session
-			requestSession.applicationName = initializationParams_->getApplicationName();
-			requestSession.applicationVersion = initializationParams_->getApplicationVersion();
+			requestSession.applicationName = initializationParams->getApplicationName();
+			requestSession.applicationVersion = initializationParams->getApplicationVersion();
 
 			boost::uuids::random_generator gen;
 			auto instanceUuid = gen();
-			std::copy(std::begin(initializationParams_->getInstanceId().data), std::end(initializationParams_->getInstanceId().data), requestSession.clientInstanceId.array.begin());
+			std::copy(std::begin(initializationParams->getInstanceId().data), std::end(initializationParams->getInstanceId().data), requestSession.clientInstanceId.array.begin());
 
-			requestSession.requestedProtocols = initializationParams_->makeSupportedProtocols();
-			requestSession.supportedDataObjects = initializationParams_->makeSupportedDataObjects();
+			requestSession.requestedProtocols = initializationParams->makeSupportedProtocols();
+			requestSession.supportedDataObjects = initializationParams->makeSupportedDataObjects();
 			requestSession.supportedFormats.push_back("xml");
 			requestSession.currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+			auto caps = initializationParams->makeEndpointCapabilities();
+			if (!caps.empty()) {
+				requestSession.endpointCapabilities = caps;
+			}
+
+			maxWebSocketMessagePayloadSize = initializationParams->getMaxWebSocketMessagePayloadSize();
 		}
 	};
 }

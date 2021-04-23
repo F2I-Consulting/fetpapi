@@ -29,6 +29,11 @@ namespace ETP_NS
 		std::string host_;
 		unsigned short port_;
 
+		// Capabilities
+		// https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/using_websocket/messages.html
+		// and https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/read_message_max/overload1.html
+		int64_t maxWebSocketMessagePayloadSize_ = 16000000;
+
 	public:
 		/**
 		* Set the identifier of the server a default value.
@@ -44,13 +49,19 @@ namespace ETP_NS
 		}
 		virtual ~InitializationParameters() = default;
 
-		FETPAPI_DLL_IMPORT_OR_EXPORT const boost::uuids::uuid& getInstanceId() const { return identifier_; }
-		FETPAPI_DLL_IMPORT_OR_EXPORT const std::string& getHost() const { return host_; }
-		FETPAPI_DLL_IMPORT_OR_EXPORT unsigned short getPort() const { return port_; }
+		/**
+		* The default value is 16000000 according to Boost.Beast. This method allows you to modify it.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setMaxWebSocketMessagePayloadSize(int64_t value) { maxWebSocketMessagePayloadSize_ = value; }
+		int64_t getMaxWebSocketMessagePayloadSize() const { return maxWebSocketMessagePayloadSize_; }
+
+		const boost::uuids::uuid& getInstanceId() const { return identifier_; }
+		const std::string& getHost() const { return host_; }
+		unsigned short getPort() const { return port_; }
 		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getApplicationName() const { return "F2I-CONSULTING ETP CLIENT"; }
 		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getApplicationVersion() const { return "0.0"; }
 
-		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> makeEndpointCapabilities() const;
+		std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> makeEndpointCapabilities() const;
 		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> makeSupportedDataObjects() const;
 		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> makeSupportedProtocols() const;
 

@@ -123,7 +123,6 @@ namespace
 			std::string temp;
 			std::size_t serverMaxWebSocketFramePayloadSize;
 			while (!iss.eof()) {
-
 				/* extracting word by word from stream */
 				iss >> temp;
 

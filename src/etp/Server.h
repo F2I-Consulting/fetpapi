@@ -150,7 +150,7 @@ namespace ETP_NS
 
 		// Returns an unprocessable_entity response
 		auto const unprocessable_entity =
-			[&req, serverInitializationParams](beast::string_view target)
+			[&req, serverInitializationParams](beast::string_view)
 		{
 			http::response<http::string_body> res{ http::status::unprocessable_entity, req.version() };
 			res.set(http::field::server, serverInitializationParams->getApplicationName());

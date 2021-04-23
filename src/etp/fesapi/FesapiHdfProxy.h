@@ -553,7 +553,7 @@ namespace ETP_NS
 		 * If the dataset is not compressed, then it returns an empty vector.
 		 * @param datasetName	The absolute name of the dataset which we want to get the number of elements from.
 		 */
-		std::vector<unsigned long long> getElementCountPerChunkDimension(const std::string & datasetName) { throw std::logic_error("Not implemented yet"); }
+		std::vector<unsigned long long> getElementCountPerChunkDimension(const std::string& ) { return std::vector<unsigned long long>(); }
 
 		/**
 		* Get the standard XML namespace for serializing this data object.
