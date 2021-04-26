@@ -18,6 +18,8 @@ under the License.
 -----------------------------------------------------------------------*/
 #include "InitializationParameters.h"
 
+#include "AbstractSession.h"
+
 using namespace ETP_NS;
 
 std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> InitializationParameters::makeEndpointCapabilities() const
@@ -126,4 +128,8 @@ std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> InitializationP
 	result.push_back(protocol);
 
 	return result;
+}
+
+void InitializationParameters::postSessionCreationOperation(AbstractSession* session) const {
+	session->setCoreProtocolHandlers(std::make_shared<CoreHandlers>(session));
 }

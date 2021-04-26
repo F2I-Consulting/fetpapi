@@ -28,7 +28,7 @@ namespace ETP_NS
 		websocket::stream<tcp::socket> ws_;
 
 	public:
-		FETPAPI_DLL_IMPORT_OR_EXPORT PlainServerSession(tcp::socket socket);
+		FETPAPI_DLL_IMPORT_OR_EXPORT PlainServerSession(tcp::socket socket, ServerInitializationParameters* serverInitializationParams);
 
 		virtual ~PlainServerSession() = default;
 

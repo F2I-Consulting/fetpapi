@@ -473,7 +473,7 @@ namespace ETP_NS
 				std::vector< std::shared_ptr<AbstractSession> >& sessions,
 				ServerInitializationParameters* serverInitializationParams)
 		{
-			auto session = std::make_shared<PlainServerSession>(std::move(socket));
+			auto session = std::make_shared<PlainServerSession>(std::move(socket), serverInitializationParams);
 			serverInitializationParams->postSessionCreationOperation(session.get());
 			session->run(std::move(req));
 			std::cout << "Opening the plain websocket session " << sessions.size() << std::endl;
@@ -489,7 +489,7 @@ namespace ETP_NS
 				std::vector< std::shared_ptr<AbstractSession> >& sessions,
 				ServerInitializationParameters* serverInitializationParams)
 		{
-			auto session = std::make_shared<SslServerSession>(std::move(stream));
+			auto session = std::make_shared<SslServerSession>(std::move(stream), serverInitializationParams);
 			serverInitializationParams->postSessionCreationOperation(session.get());
 			session->run(std::move(req));
 			std::cout << "Opening the secured websocket session " << sessions.size() << std::endl;

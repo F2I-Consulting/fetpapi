@@ -37,7 +37,7 @@ namespace ETP_NS
 		websocket::stream<boost::beast::ssl_stream<tcp::socket>> ws_;
 
 	public:
-		FETPAPI_DLL_IMPORT_OR_EXPORT SslServerSession(boost::beast::ssl_stream<tcp::socket> stream);
+		FETPAPI_DLL_IMPORT_OR_EXPORT SslServerSession(boost::beast::ssl_stream<tcp::socket> stream, ServerInitializationParameters* serverInitializationParams);
 
 		virtual ~SslServerSession() {}
 

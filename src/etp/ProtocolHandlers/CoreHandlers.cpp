@@ -18,8 +18,12 @@ under the License.
 -----------------------------------------------------------------------*/
 #include  "CoreHandlers.h"
 
-#include "../AbstractSession.h"
+#include "../PlainServerSession.h"
+#ifdef WITH_ETP_SSL
+#include "../ssl/SslServerSession.h"
+#endif
 #include "../EtpHelpers.h"
+#include "../ServerInitializationParameters.h"
 
 using namespace ETP_NS;
 
@@ -106,9 +110,67 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 	}
 }
 
-void CoreHandlers::on_RequestSession(const Energistics::Etp::v12::Protocol::Core::RequestSession &, int64_t correlationId)
+void CoreHandlers::on_RequestSession(const Energistics::Etp::v12::Protocol::Core::RequestSession & rs, int64_t correlationId)
 {
-	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The Core::on_RequestSession method has not been overriden by the agent."), correlationId, 0x02);
+	ServerInitializationParameters const* serverInitializationParams = nullptr;
+
+	PlainServerSession* pss = dynamic_cast<PlainServerSession*>(session);
+	if (pss != nullptr) {
+		serverInitializationParams = pss->getServerInitializationParameters();
+	}
+#ifdef WITH_ETP_SSL
+	else {
+		SslServerSession* sss = dynamic_cast<SslServerSession*>(session);
+		if (sss != nullptr) {
+			serverInitializationParams = sss->getServerInitializationParameters();
+		}
+	}
+#endif
+
+	if (serverInitializationParams == nullptr) {
+		std::cerr << "Request Session message must be received on a server session." << std::endl;
+	}
+
+	auto supportedProtocols = serverInitializationParams->makeSupportedProtocols();
+
+	// Check requested protocols
+	std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> requestedAndSupportedProtocols;
+	for (auto& rp : rs.requestedProtocols) {
+		const auto validatedProtocol = std::find_if(supportedProtocols.begin(), supportedProtocols.end(),
+			[rp](const Energistics::Etp::v12::Datatypes::SupportedProtocol & sp) -> bool {
+			return sp.protocol == rp.protocol &&
+				sp.role == rp.role &&
+				sp.protocolVersion.major == rp.protocolVersion.major &&
+				sp.protocolVersion.minor == rp.protocolVersion.minor &&
+				sp.protocolVersion.patch == rp.protocolVersion.patch &&
+				sp.protocolVersion.revision == rp.protocolVersion.revision;
+		}
+		);
+		if (validatedProtocol != std::end(supportedProtocols)) {
+			requestedAndSupportedProtocols.push_back(*validatedProtocol);
+		}
+	}
+
+	if (requestedAndSupportedProtocols.empty()) {
+		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The server does not support any of the requested protocols."), correlationId, 0x02);
+		return;
+	}
+
+	// Build Open Session message
+	Energistics::Etp::v12::Protocol::Core::OpenSession openSession;
+	openSession.applicationName = serverInitializationParams->getApplicationName();
+	openSession.applicationVersion = serverInitializationParams->getApplicationVersion();
+	std::copy(std::begin(session->getIdentifier().data), std::end(session->getIdentifier().data), openSession.sessionId.array.begin());
+	std::copy(std::begin(serverInitializationParams->getInstanceId().data), std::end(serverInitializationParams->getInstanceId().data), openSession.serverInstanceId.array.begin());
+	openSession.supportedFormats.push_back("xml");
+	openSession.supportedProtocols = requestedAndSupportedProtocols;
+	openSession.endpointCapabilities = serverInitializationParams->makeEndpointCapabilities();
+	openSession.supportedDataObjects = serverInitializationParams->makeSupportedDataObjects();
+	openSession.currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+	session->send(openSession, correlationId, 0x02);
+
+	std::cout << "A new websocket session " + to_string(session->getIdentifier()) + " has been opened";
 }
 
 void CoreHandlers::on_OpenSession(const Energistics::Etp::v12::Protocol::Core::OpenSession &, int64_t)
