@@ -21,8 +21,8 @@ under the License.
 
 using namespace ETP_NS;
 
-PlainServerSession::PlainServerSession(tcp::socket socket)
-	: AbstractPlainOrSslServerSession<PlainServerSession>(static_cast<boost::asio::io_context&>(socket.get_executor().context())),
+PlainServerSession::PlainServerSession(tcp::socket socket, ServerInitializationParameters* serverInitializationParams)
+	: AbstractPlainOrSslServerSession<PlainServerSession>(static_cast<boost::asio::io_context&>(socket.get_executor().context()), serverInitializationParams),
 	ws_(std::move(socket))
 {
 	ws_.binary(true);

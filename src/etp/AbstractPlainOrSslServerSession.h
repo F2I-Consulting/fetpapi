@@ -26,6 +26,8 @@ under the License.
 #include <boost/asio/bind_executor.hpp>
 #include <boost/uuid/random_generator.hpp>
 
+#include "ServerInitializationParameters.h"
+
 namespace ETP_NS
 {
 	// Echoes back all received WebSocket messages.
@@ -39,9 +41,12 @@ namespace ETP_NS
 
 	protected:
 		boost::asio::strand<boost::asio::io_context::executor_type> strand;
+		ServerInitializationParameters* serverInitializationParams_;
 
 	public:
-		AbstractPlainOrSslServerSession(boost::asio::io_context& ioc) : strand(ioc.get_executor())
+		AbstractPlainOrSslServerSession(boost::asio::io_context& ioc, ServerInitializationParameters* serverInitializationParams) :
+			strand(ioc.get_executor()),
+			serverInitializationParams_(serverInitializationParams)
 		{
 			messageId = 1; // The client side of the connection MUST use ONLY non-zero even-numbered messageIds.
 			boost::uuids::random_generator gen;
@@ -53,6 +58,8 @@ namespace ETP_NS
 		boost::asio::io_context& getIoContext() {
 			return static_cast<boost::asio::io_context&> (derived().ws().get_executor().context());
 		}
+
+		ServerInitializationParameters const* getServerInitializationParameters() const { return serverInitializationParams_; }
 
 		/**
 		* The key is the UUID of the subscription.

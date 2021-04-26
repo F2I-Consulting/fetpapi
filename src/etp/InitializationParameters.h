@@ -18,7 +18,22 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
-#include "AbstractSession.h"
+#include <boost/uuid/uuid_io.hpp>
+
+#include "../nsDefinitions.h"
+#include "EtpMessages.h"
+
+#if defined(_WIN32) && !defined(FETPAPI_STATIC)
+#ifndef FETPAPI_DLL_IMPORT_OR_EXPORT
+#if defined(Fetpapi_EXPORTS)
+#define FETPAPI_DLL_IMPORT_OR_EXPORT __declspec(dllexport)
+#else
+#define FETPAPI_DLL_IMPORT_OR_EXPORT __declspec(dllimport)
+#endif
+#endif
+#else
+#define FETPAPI_DLL_IMPORT_OR_EXPORT
+#endif
 
 namespace ETP_NS
 {
@@ -61,15 +76,13 @@ namespace ETP_NS
 		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getApplicationName() const { return "F2I-CONSULTING ETP CLIENT"; }
 		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getApplicationVersion() const { return "0.0"; }
 
-		std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> makeEndpointCapabilities() const;
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> makeEndpointCapabilities() const;
 		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> makeSupportedDataObjects() const;
 		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> makeSupportedProtocols() const;
 
 		/**
 		* Override this method in order to register some dedicated protocol handlers for a session.
 		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT virtual void postSessionCreationOperation (AbstractSession* session) const {
-			session->setCoreProtocolHandlers(std::make_shared<CoreHandlers>(session));
-		}
+		FETPAPI_DLL_IMPORT_OR_EXPORT virtual void postSessionCreationOperation(class AbstractSession* session) const;
 	};
 }
