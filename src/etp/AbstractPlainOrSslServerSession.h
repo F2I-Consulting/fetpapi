@@ -196,5 +196,10 @@ namespace ETP_NS
 						std::placeholders::_1,
 						std::placeholders::_2)));
 		}
+		
+		void setMaxWebSocketMessagePayloadSize(int64_t value) final {
+			maxWebSocketMessagePayloadSize = value;
+			derived().ws().read_message_max(value);
+		}
 	};
 }

@@ -131,20 +131,26 @@ void CoreHandlers::on_RequestSession(const Energistics::Etp::v12::Protocol::Core
 		std::cerr << "Request Session message must be received on a server session." << std::endl;
 	}
 
-	auto supportedProtocols = serverInitializationParams->makeSupportedProtocols();
+	// Check format
+	if (std::find(rs.supportedFormats.begin(), rs.supportedFormats.end(), "xml") == rs.supportedFormats.end()) {
+		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(21, "Per the ETP1.2 official specification, \"xml\" format MUST BE supported."), correlationId, 0x02);
+		session->close();
+		return;
+	}
 
 	// Check requested protocols
+	auto supportedProtocols = serverInitializationParams->makeSupportedProtocols();
 	std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> requestedAndSupportedProtocols;
 	for (auto& rp : rs.requestedProtocols) {
 		const auto validatedProtocol = std::find_if(supportedProtocols.begin(), supportedProtocols.end(),
 			[rp](const Energistics::Etp::v12::Datatypes::SupportedProtocol & sp) -> bool {
-			return sp.protocol == rp.protocol &&
-				sp.role == rp.role &&
-				sp.protocolVersion.major == rp.protocolVersion.major &&
-				sp.protocolVersion.minor == rp.protocolVersion.minor &&
-				sp.protocolVersion.patch == rp.protocolVersion.patch &&
-				sp.protocolVersion.revision == rp.protocolVersion.revision;
-		}
+				return sp.protocol == rp.protocol &&
+					sp.role == rp.role &&
+					sp.protocolVersion.major == rp.protocolVersion.major &&
+					sp.protocolVersion.minor == rp.protocolVersion.minor &&
+					sp.protocolVersion.patch == rp.protocolVersion.patch &&
+					sp.protocolVersion.revision == rp.protocolVersion.revision;
+			}
 		);
 		if (validatedProtocol != std::end(supportedProtocols)) {
 			requestedAndSupportedProtocols.push_back(*validatedProtocol);
@@ -152,8 +158,38 @@ void CoreHandlers::on_RequestSession(const Energistics::Etp::v12::Protocol::Core
 	}
 
 	if (requestedAndSupportedProtocols.empty()) {
-		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The server does not support any of the requested protocols."), correlationId, 0x02);
+		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(2, "The server does not support any of the requested protocols."), correlationId, 0x02);
+		session->close();
 		return;
+	}
+
+	// Check requested dataobjects
+	auto supportedDataobjects = serverInitializationParams->makeSupportedDataObjects();
+	std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> requestedAndSupportedDataObjects;
+	for (auto& rd : rs.supportedDataObjects) {
+		const auto validatedDataObject = std::find_if(supportedDataobjects.begin(), supportedDataobjects.end(),
+			[rd](const Energistics::Etp::v12::Datatypes::SupportedDataObject & sd) -> bool {
+				return sd.qualifiedType == rd.qualifiedType;
+			}
+		);
+		if (validatedDataObject != std::end(supportedDataobjects)) {
+			requestedAndSupportedDataObjects.push_back(*validatedDataObject);
+		}
+	}
+
+	// Check MaxWebSocketMessagePayloadSize endpoint capability
+	auto supportedEndPointCaps = serverInitializationParams->makeEndpointCapabilities();
+	const auto requestedMaxWebSocketMessagePayloadSizeIt = rs.endpointCapabilities.find("MaxWebSocketMessagePayloadSize");
+	if (requestedMaxWebSocketMessagePayloadSizeIt != rs.endpointCapabilities.end() && requestedMaxWebSocketMessagePayloadSizeIt->second.item.idx() == 3) {
+		const int64_t requestedMaxWebSocketMessagePayloadSize = requestedMaxWebSocketMessagePayloadSizeIt->second.item.get_long();
+		if (requestedMaxWebSocketMessagePayloadSize > 0 && requestedMaxWebSocketMessagePayloadSize != session->getMaxWebSocketMessagePayloadSize()) {
+			session->setMaxWebSocketMessagePayloadSize(requestedMaxWebSocketMessagePayloadSize);
+
+			Energistics::Etp::v12::Datatypes::DataValue value;
+			value.item.set_long(requestedMaxWebSocketMessagePayloadSize);
+			supportedEndPointCaps["MaxWebSocketFramePayloadSize"] = value;
+			supportedEndPointCaps["MaxWebSocketMessagePayloadSize"] = value;
+		}
 	}
 
 	// Build Open Session message
@@ -164,8 +200,8 @@ void CoreHandlers::on_RequestSession(const Energistics::Etp::v12::Protocol::Core
 	std::copy(std::begin(serverInitializationParams->getInstanceId().data), std::end(serverInitializationParams->getInstanceId().data), openSession.serverInstanceId.array.begin());
 	openSession.supportedFormats.push_back("xml");
 	openSession.supportedProtocols = requestedAndSupportedProtocols;
-	openSession.endpointCapabilities = serverInitializationParams->makeEndpointCapabilities();
-	openSession.supportedDataObjects = serverInitializationParams->makeSupportedDataObjects();
+	openSession.endpointCapabilities = supportedEndPointCaps;
+	openSession.supportedDataObjects = requestedAndSupportedDataObjects;
 	openSession.currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
 	session->send(openSession, correlationId, 0x02);
