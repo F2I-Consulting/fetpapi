@@ -24,9 +24,6 @@ namespace ETP_NS
 {
 	class PlainClientSession : public AbstractClientSession<PlainClientSession>
 	{
-	private:
-		websocket::stream<tcp::socket> ws_;
-
 	public:
 		FETPAPI_DLL_IMPORT_OR_EXPORT PlainClientSession(): ws_(ioc) {}
 
@@ -58,5 +55,8 @@ namespace ETP_NS
 					std::static_pointer_cast<AbstractClientSession>(shared_from_this()),
 					std::placeholders::_1));
 		}
+
+	private:
+		websocket::stream<tcp::socket> ws_;
 	};
 }

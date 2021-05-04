@@ -178,6 +178,11 @@ namespace ETP_NS
 			do_read();
 		}
 
+		void setMaxWebSocketMessagePayloadSize(int64_t value) final {
+			maxWebSocketMessagePayloadSize = value;
+			derived().ws().read_message_max(value);
+		}
+
 	protected:
 		boost::asio::io_context ioc;
 		tcp::resolver resolver;

@@ -262,7 +262,7 @@ namespace ETP_NS
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT bool isMessageStillProcessing(int64_t msgId) const { return specificProtocolHandlers.count(msgId) > 0; }
 
-		void setMaxWebSocketMessagePayloadSize(int64_t value) { maxWebSocketMessagePayloadSize = value; }
+		virtual void setMaxWebSocketMessagePayloadSize(int64_t value) = 0;
 		int64_t getMaxWebSocketMessagePayloadSize() const { return maxWebSocketMessagePayloadSize; }
 
 	protected:
