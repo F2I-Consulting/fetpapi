@@ -117,7 +117,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ALL_NO_LIB)
 target_link_libraries (${PROJECT_NAME} PRIVATE ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
 if (WIN32)
 	target_link_libraries (${PROJECT_NAME} PRIVATE bcrypt.lib)
-	
+
 	if (EXISTS ${AVRO_LIBRARY_RELEASE} AND EXISTS ${AVRO_LIBRARY_DEBUG})
 		target_link_libraries (${PROJECT_NAME} PRIVATE optimized ${AVRO_LIBRARY_RELEASE} debug ${AVRO_LIBRARY_DEBUG})
 	elseif (EXISTS ${AVRO_LIBRARY_RELEASE})
@@ -125,7 +125,7 @@ if (WIN32)
 	elseif (EXISTS ${AVRO_LIBRARY_DEBUG})
 		target_link_libraries (${PROJECT_NAME} PRIVATE ${AVRO_LIBRARY_DEBUG})
 	endif ()
-	
+
 	set_target_properties(${PROJECT_NAME} PROPERTIES
 		PDB_NAME ${PROJECT_NAME}${CMAKE_DEBUG_POSTFIX}.${Fetpapi_VERSION}
 		LINK_FLAGS "/INCREMENTAL:NO /OPT:REF"
@@ -136,9 +136,8 @@ if (WIN32)
 	)
 else (WIN32)
 	target_link_libraries (${PROJECT_NAME} PRIVATE ${AVRO_LIBRARY_RELEASE})
-	
+
 	set_target_properties(${PROJECT_NAME} PROPERTIES
-		COMPILE_FLAGS "-fPIC"
 		VERSION ${Fetpapi_VERSION}
 		SOVERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR})
 endif (WIN32)
@@ -165,6 +164,10 @@ if (WITH_FESAPI)
 	endif (WIN32)
 endif (WITH_FESAPI)
 
+# Namespaces definitions
+set (FETPAPI_ETP_NS etp CACHE STRING "Namespace for etp objects")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/nsDefinitions.h ${CMAKE_CURRENT_SOURCE_DIR}/src/nsDefinitions.h) # Overwrite if different
+
 # ============================================================================
 # SWIG wrapping
 # ============================================================================
@@ -189,10 +192,6 @@ endif (WITH_PYTHON_WRAPPING)
 # Getting source files
 # ============================================================================
 
-# Namespaces definitions
-set (FETPAPI_ETP_NS etp CACHE STRING "Namespace for etp objects")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/nsDefinitions.h ${CMAKE_CURRENT_SOURCE_DIR}/src/nsDefinitions.h) # Overwrite if different
-
 file (GLOB FETPAPI_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/*.cpp)
 file (GLOB FETPAPI_PROTOCOL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/ProtocolHandlers/*.cpp)
 file (GLOB FETPAPI_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/*.h)
@@ -203,8 +202,8 @@ set (ALL_SOURCES_AND_HEADERS
 	${ALL_SOURCES_AND_HEADERS}
 	${FETPAPI_SOURCES}
 	${FETPAPI_PROTOCOL_SOURCES}
-	${FETPAPI_HEADERS}	
-	${FETPAPI_PROTOCOL_HEADERS}	
+	${FETPAPI_HEADERS}
+	${FETPAPI_PROTOCOL_HEADERS}
 	${FETPAPI_TOOLS_HEADERS}
 	${FETPAPI_TOOLS_SOURCES}
 )
@@ -212,7 +211,7 @@ set (ALL_SOURCES_AND_HEADERS
 if (WITH_ETP_SSL)
 	file (GLOB FETPAPI_SSL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/ssl/*.cpp)
 	file (GLOB FETPAPI_SSL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/ssl/*.h)
-	
+
 	set (ALL_SOURCES_AND_HEADERS
 		${ALL_SOURCES_AND_HEADERS}
 		${FETPAPI_SSL_SOURCES}
@@ -245,15 +244,15 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 # organizing sources and headers in the Visual Studio Project
 if (WIN32)
 	source_group ("tools" FILES ${FETPAPI_TOOLS_SOURCES} ${FETPAPI_TOOLS_HEADERS})
-	
+
 	set (ETP_PREFIX "etp")
 	source_group ("${ETP_PREFIX}" FILES ${FETPAPI_SOURCES} ${FETPAPI_HEADERS})
 	source_group ("${ETP_PREFIX}\\ProtocolHandlers" FILES ${FETPAPI_PROTOCOL_SOURCES} ${FETPAPI_PROTOCOL_HEADERS})
-	
+
 	if (WITH_ETP_SSL)
 		source_group ("${ETP_PREFIX}\\ssl" FILES ${FETPAPI_SSL_SOURCES} ${FETPAPI_SSL_HEADERS})
 	endif ()
-	
+
 	if (WITH_FESAPI)
 		source_group ("${ETP_PREFIX}\\fesapi" FILES ${FETPAPI_FESAPI_SOURCES} ${FETPAPI_FESAPI_HEADERS})
 	endif (WITH_FESAPI)
