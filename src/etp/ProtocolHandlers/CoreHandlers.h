@@ -31,14 +31,49 @@ namespace ETP_NS
 
 	    void decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader & mh, avro::DecoderPtr d) override;
 
+		/**
+		* @param correlationId It is the correlationId to use if a response is need to this message
+		*/
 	    virtual void on_RequestSession(const Energistics::Etp::v12::Protocol::Core::RequestSession & rs, int64_t correlationId);
+
+		/**
+		* @param correlationId It is the correlationId to use if a response is need to this message
+		*/
 	    virtual void on_OpenSession(const Energistics::Etp::v12::Protocol::Core::OpenSession & os, int64_t correlationId);
+
+		/**
+		* @param correlationId It is the correlationId to use if a response is need to this message
+		*/
 	    virtual void on_CloseSession(const Energistics::Etp::v12::Protocol::Core::CloseSession & cs, int64_t correlationId);
+
+		/**
+		* @param correlationId It is the correlationId of the exception message
+		*/
 	    virtual void on_ProtocolException(const Energistics::Etp::v12::Protocol::Core::ProtocolException & pe, int64_t correlationId);
+
+		/**
+		* @param correlationId It is the correlationId of the ackknowledged message
+		*/
 		virtual void on_Acknowledge(const Energistics::Etp::v12::Protocol::Core::Acknowledge & ack, int64_t correlationId);
+
+		/**
+		* @param correlationId It is the correlationId to use if a response is need to this message
+		*/
 		virtual void on_Ping(const Energistics::Etp::v12::Protocol::Core::Ping & ping, int64_t correlationId);
+		
+		/**
+		* @param correlationId It is the correlationId to use if a response is need to this message
+		*/
 		virtual void on_Pong(const Energistics::Etp::v12::Protocol::Core::Pong & pong, int64_t correlationId);
+
+		/**
+		* @param correlationId It is the correlationId to use if a response is need to this message
+		*/
 		virtual void on_Authorize(const Energistics::Etp::v12::Protocol::Core::Authorize& msg, int64_t correlationId);
+
+		/**
+		* @param correlationId It is the correlationId to use if a response is need to this message
+		*/
 		virtual void on_AuthorizeResponse(const Energistics::Etp::v12::Protocol::Core::AuthorizeResponse& msg, int64_t correlationId);
 
 	};

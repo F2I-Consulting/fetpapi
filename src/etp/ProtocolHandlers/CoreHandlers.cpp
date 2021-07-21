@@ -72,13 +72,13 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 		Energistics::Etp::v12::Protocol::Core::ProtocolException pe;
 		avro::decode(*d, pe);
 		session->flushReceivingBuffer();
-		on_ProtocolException(pe, mh.messageId);
+		on_ProtocolException(pe, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::Acknowledge::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Core::Acknowledge ack;
 		avro::decode(*d, ack);
 		session->flushReceivingBuffer();
-		on_Acknowledge(ack, mh.messageId);
+		on_Acknowledge(ack, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::Ping::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Core::Ping ping;
