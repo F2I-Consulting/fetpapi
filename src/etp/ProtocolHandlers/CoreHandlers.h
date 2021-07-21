@@ -38,8 +38,8 @@ namespace ETP_NS
 		virtual void on_Acknowledge(const Energistics::Etp::v12::Protocol::Core::Acknowledge & ack, int64_t correlationId);
 		virtual void on_Ping(const Energistics::Etp::v12::Protocol::Core::Ping & ping, int64_t correlationId);
 		virtual void on_Pong(const Energistics::Etp::v12::Protocol::Core::Pong & pong, int64_t correlationId);
-		virtual void on_RenewSecurityToken(const Energistics::Etp::v12::Protocol::Core::RenewSecurityToken & ping, int64_t correlationId);
-		virtual void on_RenewSecurityTokenResponse(const Energistics::Etp::v12::Protocol::Core::RenewSecurityTokenResponse & pong, int64_t correlationId);
+		virtual void on_Authorize(const Energistics::Etp::v12::Protocol::Core::Authorize& msg, int64_t correlationId);
+		virtual void on_AuthorizeResponse(const Energistics::Etp::v12::Protocol::Core::AuthorizeResponse& msg, int64_t correlationId);
 
 	};
 }

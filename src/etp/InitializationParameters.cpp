@@ -103,28 +103,28 @@ std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> InitializationP
 	protocolVersion.revision = 0;
 
 	Energistics::Etp::v12::Datatypes::SupportedProtocol protocol;
-	protocol.protocol = Energistics::Etp::v12::Datatypes::Protocol::Core;
+	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Core);
 	protocol.protocolVersion = protocolVersion;
 	protocol.role = "server";
 	result.push_back(protocol);
 
-	protocol.protocol = Energistics::Etp::v12::Datatypes::Protocol::Discovery;
+	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
 	protocol.role = "store";
 	result.push_back(protocol);
 
-	protocol.protocol = Energistics::Etp::v12::Datatypes::Protocol::Store;
+	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Store);
 	result.push_back(protocol);
 
-	protocol.protocol = Energistics::Etp::v12::Datatypes::Protocol::StoreNotification;
+	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
 	result.push_back(protocol);
 
-	protocol.protocol = Energistics::Etp::v12::Datatypes::Protocol::DataArray;
+	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
 	result.push_back(protocol);
 
-	protocol.protocol = Energistics::Etp::v12::Datatypes::Protocol::Transaction;
+	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
 	result.push_back(protocol);
 
-	protocol.protocol = Energistics::Etp::v12::Datatypes::Protocol::Dataspace;
+	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
 	result.push_back(protocol);
 
 	return result;

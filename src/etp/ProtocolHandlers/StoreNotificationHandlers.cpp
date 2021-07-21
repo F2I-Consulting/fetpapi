@@ -27,7 +27,7 @@ using namespace ETP_NS;
 
 void StoreNotificationHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader & mh, avro::DecoderPtr d)
 {
-	if (mh.protocol != Energistics::Etp::v12::Datatypes::Protocol::StoreNotification) {
+	if (mh.protocol != static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification)) {
 		std::cerr << "Error : This message header does not belong to the protocol Store" << std::endl;
 		return;
 	}

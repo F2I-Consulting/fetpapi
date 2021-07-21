@@ -35,7 +35,6 @@ void ProtocolHandlers::printDataObject(const Energistics::Etp::v12::Datatypes::O
 		}
 		std::cout << std::endl;
 	}
-	std::cout << "contentType : " << dataObject.resource.dataObjectType << std::endl;
 	std::cout << "name : " << dataObject.resource.name << std::endl;
 	if (dataObject.resource.sourceCount) {
 		std::cout << "source count : " << dataObject.resource.sourceCount.get() << std::endl;

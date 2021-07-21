@@ -96,7 +96,7 @@ namespace ETP_NS
 	    		protocolHandlers.push_back(coreHandlers);
 	    	}
 	    	else {
-	    		protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Core] = coreHandlers;
+	    		protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Core)] = coreHandlers;
 	    	}
 	    }
 
@@ -104,15 +104,15 @@ namespace ETP_NS
 		 * Set the Discovery protocol handlers
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setDiscoveryProtocolHandlers(std::shared_ptr<DiscoveryHandlers> discoveryHandlers) {
-			while (protocolHandlers.size() < Energistics::Etp::v12::Datatypes::Protocol::Discovery + 1) {
+			while (protocolHandlers.size() < static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery) + 1) {
 				protocolHandlers.push_back(nullptr);
 			}
-			protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Discovery] = discoveryHandlers;
+			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery)] = discoveryHandlers;
 		}
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ProtocolHandlers> getDiscoveryProtocolHandlers() {
-			return protocolHandlers.size() > Energistics::Etp::v12::Datatypes::Protocol::Discovery ?
-				protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Discovery] :
+			return protocolHandlers.size() > static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery) ?
+				protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery)] :
 				nullptr;
 		}
 
@@ -120,15 +120,15 @@ namespace ETP_NS
 		 * Set the Store protocol handlers
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setStoreProtocolHandlers(std::shared_ptr<StoreHandlers> storeHandlers) {
-			while (protocolHandlers.size() < Energistics::Etp::v12::Datatypes::Protocol::Store + 1) {
+			while (protocolHandlers.size() < static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Store) + 1) {
 				protocolHandlers.push_back(nullptr);
 			}
-			protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Store] = storeHandlers;
+			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Store)] = storeHandlers;
 		}
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ProtocolHandlers> getStoreProtocolHandlers() {
-			return protocolHandlers.size() > Energistics::Etp::v12::Datatypes::Protocol::Store ?
-				protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Store] :
+			return protocolHandlers.size() > static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Store) ?
+				protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Store)] :
 				nullptr;
 		}
 
@@ -136,15 +136,15 @@ namespace ETP_NS
 		* Set the StoreNotification protocol handlers
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setStoreNotificationProtocolHandlers(std::shared_ptr<ETP_NS::StoreNotificationHandlers> storeNotificationHandlers) {
-			while (protocolHandlers.size() < Energistics::Etp::v12::Datatypes::Protocol::StoreNotification + 1) {
+			while (protocolHandlers.size() < static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification) + 1) {
 				protocolHandlers.push_back(nullptr);
 			}
-			protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::StoreNotification] = storeNotificationHandlers;
+			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification)] = storeNotificationHandlers;
 		}
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ProtocolHandlers> getStoreNotificationProtocolHandlers() {
-			return protocolHandlers.size() > Energistics::Etp::v12::Datatypes::Protocol::StoreNotification ?
-				protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::StoreNotification] :
+			return protocolHandlers.size() > static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification) ?
+				protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification)] :
 				nullptr;
 		}
 
@@ -152,30 +152,30 @@ namespace ETP_NS
 		 * Set the Data Array protocol handlers
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setDataArrayProtocolHandlers(std::shared_ptr<DataArrayHandlers> dataArrayHandlers) {
-			while (protocolHandlers.size() < Energistics::Etp::v12::Datatypes::Protocol::DataArray + 1) {
+			while (protocolHandlers.size() < static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::DataArray) + 1) {
 				protocolHandlers.push_back(nullptr);
 			}
-			protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::DataArray] = dataArrayHandlers;
+			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::DataArray)] = dataArrayHandlers;
 		}
 
 		/**
 		 * Set the Transaction protocol handlers
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setTransactionProtocolHandlers(std::shared_ptr<TransactionHandlers> transactionHandlers) {
-			while (protocolHandlers.size() < Energistics::Etp::v12::Datatypes::Protocol::Transaction + 1) {
+			while (protocolHandlers.size() < static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction) + 1) {
 				protocolHandlers.push_back(nullptr);
 			}
-			protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Transaction] = transactionHandlers;
+			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction)] = transactionHandlers;
 		}
 
 		/**
 		 * Set the Dataspace protocol handlers
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setDataspaceProtocolHandlers(std::shared_ptr<DataspaceHandlers> dataspaceHandlers) {
-			while (protocolHandlers.size() < Energistics::Etp::v12::Datatypes::Protocol::Dataspace + 1) {
+			while (protocolHandlers.size() < static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace) + 1) {
 				protocolHandlers.push_back(nullptr);
 			}
-			protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Dataspace] = dataspaceHandlers;
+			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace)] = dataspaceHandlers;
 		}
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT void close();

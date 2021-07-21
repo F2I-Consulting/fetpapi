@@ -35,17 +35,17 @@ namespace ETP_NS
 			EML2_NS::AbstractHdfProxy(packageDirAbsolutePath, externalFilePath, hdfPermissionAccess), session_(session), compressionLevel(0) {
 			initGsoapProxy(repo, guid, title, 20);
 
-			xmlNs = repo->getDefaultEmlVersion() == COMMON_NS::DataObjectRepository::EnergisticsStandard::EML2_0 ? "eml20" : "eml23";
+			xmlNs_ = repo->getDefaultEmlVersion() == COMMON_NS::DataObjectRepository::EnergisticsStandard::EML2_0 ? "eml20" : "eml23";
 		}
 
 		/**
 		* Deserialization context
 		*/
 		FesapiHdfProxy(AbstractSession* session, gsoap_resqml2_0_1::_eml20__EpcExternalPartReference* fromGsoap) :
-			EML2_NS::AbstractHdfProxy(fromGsoap), session_(session), compressionLevel(0), xmlNs("eml20") {}
+			EML2_NS::AbstractHdfProxy(fromGsoap), session_(session), compressionLevel(0), xmlNs_("eml20") {}
 
 		FesapiHdfProxy(AbstractSession* session, gsoap_eml2_1::_eml21__EpcExternalPartReference* fromGsoap) :
-			EML2_NS::AbstractHdfProxy(fromGsoap), session_(session), compressionLevel(0), xmlNs("eml21") {}
+			EML2_NS::AbstractHdfProxy(fromGsoap), session_(session), compressionLevel(0), xmlNs_("eml21") {}
 
 		/**
 		* Only for partial transfer
@@ -53,16 +53,16 @@ namespace ETP_NS
 		FesapiHdfProxy(AbstractSession* session, gsoap_resqml2_0_1::eml20__DataObjectReference* partialObject) :
 			EML2_NS::AbstractHdfProxy(partialObject), session_(session), compressionLevel(0) {
 			if (partialObject->ContentType.find("2.0") != std::string::npos) {
-				xmlNs = "eml20";
+				xmlNs_ = "eml20";
 			}
 			else if (partialObject->ContentType.find("2.1") != std::string::npos) {
-				xmlNs = "eml21";
+				xmlNs_ = "eml21";
 			}
 			else if (partialObject->ContentType.find("2.2") != std::string::npos) {
-				xmlNs = "eml22";
+				xmlNs_ = "eml22";
 			}
 			else if (partialObject->ContentType.find("2.3") != std::string::npos) {
-				xmlNs = "eml23";
+				xmlNs_ = "eml23";
 			}
 		}
 
@@ -70,16 +70,16 @@ namespace ETP_NS
 			EML2_NS::AbstractHdfProxy(dor), session_(session), compressionLevel(0) {
 			std::string ct = dor.getContentType();
 			if (ct.find("2.0") != std::string::npos) {
-				xmlNs = "eml20";
+				xmlNs_ = "eml20";
 			}
 			else if (ct.find("2.1") != std::string::npos) {
-				xmlNs = "eml21";
+				xmlNs_ = "eml21";
 			}
 			else if (ct.find("2.2") != std::string::npos) {
-				xmlNs = "eml22";
+				xmlNs_ = "eml22";
 			}
 			else if (ct.find("2.3") != std::string::npos) {
-				xmlNs = "eml23";
+				xmlNs_ = "eml23";
 			}
 		}
 
@@ -558,12 +558,12 @@ namespace ETP_NS
 		/**
 		* Get the standard XML namespace for serializing this data object.
 		*/
-		std::string getXmlNamespace() const { return xmlNs; }
+		std::string getXmlNamespace() const { return xmlNs_; }
 
 	private:
 		AbstractSession* session_;
 		unsigned int compressionLevel;
-		std::string xmlNs;
+		std::string xmlNs_;
 
 		std::string getUri() const;
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrays buildGetDataArraysMessage(const std::string & datasetName);

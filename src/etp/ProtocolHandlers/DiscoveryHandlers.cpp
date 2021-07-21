@@ -25,7 +25,7 @@ using namespace ETP_NS;
 
 void DiscoveryHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader & mh, avro::DecoderPtr d)
 {
-	if (mh.protocol != Energistics::Etp::v12::Datatypes::Protocol::Discovery) {
+	if (mh.protocol != static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery)) {
 		std::cerr << "Error : This message header does not belong to the protocol Discovery" << std::endl;
 		return;
 	}
@@ -72,15 +72,15 @@ void DiscoveryHandlers::on_GetResources(const Energistics::Etp::v12::Protocol::D
 
 void DiscoveryHandlers::on_GetResourcesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse & msg, int64_t)
 {
-	for (const auto & resource : msg.resources) {
-		std::cout << "DISCOVERED RESOURCE (" << resource.name << ", " << resource.dataObjectType << ')' << std::endl;
+	for (const auto& resource : msg.resources) {
+		std::cout << "DISCOVERED RESOURCE (" << resource.name << ", " << resource.uri << ')' << std::endl;
 	}
 }
 
 void DiscoveryHandlers::on_GetResourcesEdgesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse & msg, int64_t)
 {
-	for (const auto & edge : msg.edges) {
-		std::cout << "DISCOVERED EDGE (" << edge.sourceUri << ", " << edge.relationshipKind << ", " << edge.targetUri << ')' << std::endl;
+	for (const auto& edge : msg.edges) {
+		std::cout << "DISCOVERED EDGE (" << edge.sourceUri << " -> " << edge.targetUri << ')' << std::endl;
 	}
 }
 

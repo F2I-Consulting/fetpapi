@@ -31,7 +31,7 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 {
 	if (mh.messageType != Energistics::Etp::v12::Protocol::Core::ProtocolException::messageTypeId &&
 		mh.messageType != Energistics::Etp::v12::Protocol::Core::Acknowledge::messageTypeId &&
-		mh.protocol != Energistics::Etp::v12::Datatypes::Protocol::Core) {
+		mh.protocol != static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Core)) {
 		std::cerr << "Error : This message header does not belong to the protocol Core" << std::endl;
 		return;
 	}
@@ -92,17 +92,17 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 		session->flushReceivingBuffer();
 		on_Pong(pong, mh.messageId);
 	}
-	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::RenewSecurityToken::messageTypeId) {
-		Energistics::Etp::v12::Protocol::Core::RenewSecurityToken msg;
+	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::Authorize::messageTypeId) {
+		Energistics::Etp::v12::Protocol::Core::Authorize msg;
 		avro::decode(*d, msg);
 		session->flushReceivingBuffer();
-		on_RenewSecurityToken(msg, mh.messageId);
+		on_Authorize(msg, mh.messageId);
 	}
-	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::RenewSecurityTokenResponse::messageTypeId) {
-		Energistics::Etp::v12::Protocol::Core::RenewSecurityTokenResponse msg;
+	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::AuthorizeResponse::messageTypeId) {
+		Energistics::Etp::v12::Protocol::Core::AuthorizeResponse msg;
 		avro::decode(*d, msg);
 		session->flushReceivingBuffer();
-		on_RenewSecurityTokenResponse(msg, mh.messageId);
+		on_AuthorizeResponse(msg, mh.messageId);
 	}
 	else {
 		session->flushReceivingBuffer();
@@ -253,12 +253,12 @@ void CoreHandlers::on_Pong(const Energistics::Etp::v12::Protocol::Core::Pong & p
 	std::cout << "Received Pong at " << pong.currentDateTime << " with message id " << correlationId << std::endl;
 }
 
-void CoreHandlers::on_RenewSecurityToken(const Energistics::Etp::v12::Protocol::Core::RenewSecurityToken &, int64_t correlationId)
+void CoreHandlers::on_Authorize(const Energistics::Etp::v12::Protocol::Core::Authorize &, int64_t correlationId)
 {
-	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The Core::on_RenewSecurityToken method has not been overriden by the agent."), correlationId, 0x02);
+	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The Core::on_Authorize method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void CoreHandlers::on_RenewSecurityTokenResponse(const Energistics::Etp::v12::Protocol::Core::RenewSecurityTokenResponse &, int64_t)
+void CoreHandlers::on_AuthorizeResponse(const Energistics::Etp::v12::Protocol::Core::AuthorizeResponse &, int64_t)
 {
 	std::cout << "Renewed token" << std::endl;
 }

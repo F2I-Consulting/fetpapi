@@ -80,11 +80,11 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 
 	if (receivedMh.messageType == Energistics::Etp::v12::Protocol::Core::Acknowledge::messageTypeId) {
 		// Receive Acknowledge
-		protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Core]->decodeMessageBody(receivedMh, d);
+		protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Core)]->decodeMessageBody(receivedMh, d);
 	}
 	else if (receivedMh.messageType == Energistics::Etp::v12::Protocol::Core::ProtocolException::messageTypeId) {
 		// Receive Protocol Exception
-		protocolHandlers[Energistics::Etp::v12::Datatypes::Protocol::Core]->decodeMessageBody(receivedMh, d);
+		protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Core)]->decodeMessageBody(receivedMh, d);
 	}
 	else {
 		auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);

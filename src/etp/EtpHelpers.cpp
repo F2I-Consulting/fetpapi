@@ -25,6 +25,15 @@ under the License.
 #include "AbstractSession.h"
 #include "EtpException.h"
 
+std::string ETP_NS::EtpHelpers::getDataObjectType(const std::string& uri)
+{
+	const std::size_t lastSlash = uri.find_last_of("/");
+	const std::size_t lastOpenParenthesis = uri.find_last_of("(");
+	return lastSlash != std::string::npos && lastOpenParenthesis != std::string::npos
+		? uri.substr(lastSlash + 1, lastOpenParenthesis - lastSlash - 1)
+		: "";
+}
+
 Energistics::Etp::v12::Datatypes::ErrorInfo ETP_NS::EtpHelpers::validateUri(const std::string & uri, ETP_NS::AbstractSession* session)
 {
 	Energistics::Etp::v12::Datatypes::ErrorInfo errorInfo;

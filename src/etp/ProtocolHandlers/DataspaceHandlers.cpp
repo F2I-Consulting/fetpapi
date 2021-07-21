@@ -25,7 +25,7 @@ using namespace ETP_NS;
 
 void DataspaceHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader& mh, avro::DecoderPtr d)
 {
-	if (mh.protocol != Energistics::Etp::v12::Datatypes::Protocol::Dataspace) {
+	if (mh.protocol != static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace)) {
 		std::cerr << "Error : This message header does not belong to the protocol Dataspace" << std::endl;
 		return;
 	}

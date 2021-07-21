@@ -45,6 +45,12 @@ namespace ETP_NS
 	namespace EtpHelpers {
 
 		/**
+		* Get the dataobject type from an URI
+		* @return empty string if the operation cannot succeed
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::string getDataObjectType(const std::string& uri);
+
+		/**
 		* Provide a session if you want to send a protocol exception in case of non validation.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::ErrorInfo validateUri(const std::string & uri, AbstractSession* session = nullptr);
