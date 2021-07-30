@@ -21,6 +21,7 @@ under the License.
 #include <fesapi/common/HdfProxyFactory.h>
 
 #include "../AbstractSession.h"
+#include "../ProtocolHandlers/GetFullDataArrayHandlers.h"
 
 namespace ETP_NS
 {
@@ -361,7 +362,7 @@ namespace ETP_NS
 		* @param datasetName	The absolute dataset name where to read the values
 		* @param values 		The values must be pre-allocated.
 		*/
-		void readArrayNdOfDoubleValues(const std::string & datasetName, double* values);
+		void readArrayNdOfDoubleValues(const std::string & datasetName, double* values) { readArrayNdOfValues(datasetName, values); }
 
 		/**
 		 * Find the array associated with @p datasetName and read from it.
@@ -426,7 +427,7 @@ namespace ETP_NS
 		* @param datasetName	The absolute dataset name where to read the values
 		* @param values 		The values must be pre-allocated.
 		*/
-		void readArrayNdOfFloatValues(const std::string & datasetName, float* values);
+		void readArrayNdOfFloatValues(const std::string & datasetName, float* values) { readArrayNdOfValues(datasetName, values); }
 
 		/**
 		* Find the array associated with @p datasetName and read from it.
@@ -449,7 +450,7 @@ namespace ETP_NS
 		* @param datasetName	The absolute dataset name where to read the values
 		* @param values 		The values must be pre-allocated.
 		*/
-		void readArrayNdOfInt64Values(const std::string & datasetName, int64_t* values);
+		void readArrayNdOfInt64Values(const std::string & datasetName, int64_t* values) { readArrayNdOfValues(datasetName, values); }
 
 		/**
 		* Find the array associated with datasetName and read from it.
@@ -472,14 +473,14 @@ namespace ETP_NS
 		* @param datasetName	The absolute dataset name where to read the values
 		* @param values 		The values must be pre-allocated.
 		*/
-		void readArrayNdOfUInt64Values(const std::string & datasetName, uint64_t* values);
+		void readArrayNdOfUInt64Values(const std::string & datasetName, uint64_t* values) { readArrayNdOfValues(datasetName, values); }
 
 		/**
 		* Read an array Nd of int values stored in a specific dataset.
 		* @param datasetName	The absolute dataset name where to read the values
 		* @param values 		The values must be pre-allocated.
 		*/
-		void readArrayNdOfIntValues(const std::string & datasetName, int* values);
+		void readArrayNdOfIntValues(const std::string & datasetName, int* values) { readArrayNdOfValues(datasetName, values); }
 
 		/**
 		* Find the array associated with datasetName and read from it.
@@ -502,7 +503,7 @@ namespace ETP_NS
 		* Don"t forget to delete the allocated pointer when no more necessary.
 		* @param datasetName	The absolute dataset name where to read the values
 		*/
-		void readArrayNdOfUIntValues(const std::string & datasetName, unsigned int* values);
+		void readArrayNdOfUIntValues(const std::string & datasetName, unsigned int* values) { readArrayNdOfValues(datasetName, values); }
 
 		/**
 		* Read an array Nd of short values stored in a specific dataset
@@ -510,27 +511,27 @@ namespace ETP_NS
 		* @param datasetName	The absolute dataset name where to read the values
 		* @param values 		The values must be pre-allocated.
 		*/
-		void readArrayNdOfShortValues(const std::string & datasetName, short* values);
+		void readArrayNdOfShortValues(const std::string & datasetName, short* values) { readArrayNdOfValues(datasetName, values); }
 
 		/**
 		* Read an array Nd of unsigned short values stored in a specific dataset.
 		* @param datasetName	The absolute dataset name where to read the values
 		* @param values 		The values must be pre-allocated.
 		*/
-		void readArrayNdOfUShortValues(const std::string & datasetName, unsigned short* values);
+		void readArrayNdOfUShortValues(const std::string & datasetName, unsigned short* values) { readArrayNdOfValues(datasetName, values); }
 
 		/**
 		* Read an array Nd of char values stored in a specific dataset.
 		* @param datasetName	The absolute dataset name where to read the values
 		* @param values 		The values must be pre-allocated.
 		*/
-		void readArrayNdOfCharValues(const std::string & datasetName, char* values);
+		void readArrayNdOfCharValues(const std::string & datasetName, char* values) { readArrayNdOfValues(datasetName, values); }
 
 		/**
 		* Read an array Nd of unsigned char values stored in a specific dataset.
 		* @param datasetName	The absolute dataset name where to read the values
 		*/
-		void readArrayNdOfUCharValues(const std::string & datasetName, unsigned char* values);
+		void readArrayNdOfUCharValues(const std::string & datasetName, unsigned char* values) { readArrayNdOfValues(datasetName, values); }
 
 		/**
 		* Read the dimensions of an array stored in a specific dataset
@@ -566,7 +567,115 @@ namespace ETP_NS
 		std::string xmlNs_;
 
 		std::string getUri() const;
-		Energistics::Etp::v12::Protocol::DataArray::GetDataArrays buildGetDataArraysMessage(const std::string & datasetName);
+		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier buildDataArrayIdentifier(const std::string & datasetName) const;
+		Energistics::Etp::v12::Protocol::DataArray::GetDataArrays buildGetDataArraysMessage(const std::string & datasetName) const;
+		Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata buildGetDataArrayMetadataMessage(const std::string & datasetName) const;
+
+		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata getDataArrayMetadata(const std::string & datasetName) const;
+
+		template<typename T> void readArrayNdOfValues(const std::string & datasetName, T* values)
+		{
+			// First get metadata about the data array
+			std::vector<unsigned long long> dimensions;
+
+			const auto daMetadata = getDataArrayMetadata(datasetName);
+			size_t valueCount = 1;
+			for (auto dim : daMetadata.dimensions) {
+				valueCount *= dim;
+			}
+
+			size_t valueSize = 1;
+			switch (daMetadata.transportArrayType) {
+			case Energistics::Etp::v12::Datatypes::AnyArrayType::bytes:
+			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfBoolean: break;
+			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt:
+			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfFloat: valueSize = 4; break;
+			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong:
+			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble: valueSize = 8; break;
+			default: throw std::logic_error("Array of strings are not implemented yet");
+			}
+			size_t wholeSize = valueCount * valueSize;
+
+			// maxAllowedDataArraySize is the maximum serialized size of the array (including avro extra longs for array blocks)
+			const size_t maxAllowedDataArraySize = session_->getMaxWebSocketMessagePayloadSize()
+				- sizeof(Energistics::Etp::v12::Datatypes::MessageHeader)
+				- (daMetadata.dimensions.size() * 2 + 1) * 8; // *2 because the array can contain a maximum of element count block, +1 for the length of the last block : https://avro.apache.org/docs/1.10.2/spec.html#binary_encode_complex
+
+			// Now get values of the data array
+			if (wholeSize + (valueCount + 1) * 8 <= maxAllowedDataArraySize) { // There can be valueCount array block and there is the length of the last array block
+				// Get all values at once
+				const int64_t msgId = session_->sendWithSpecificHandler(
+					buildGetDataArraysMessage(datasetName),
+					std::make_shared<GetFullDataArrayHandlers<T>>(session_, values),
+					0, 0x02);
+
+				// Blocking loop
+				while (session_->isMessageStillProcessing(msgId)) {}
+			}
+			else {
+				// Get all values using several data subarrays allowing more granular streaming
+				std::vector<int64_t> counts(daMetadata.dimensions.size(), 1);
+
+				// Compute the dimensions of the subArrays to get
+				size_t subArrayValueCount = 1;
+				for (int64_t dimIndex = daMetadata.dimensions.size() - 1; dimIndex >= 0; --dimIndex) {
+					int64_t maxCountOnDim = daMetadata.preferredSubarrayDimensions.empty()
+						? daMetadata.dimensions[dimIndex]
+						: daMetadata.preferredSubarrayDimensions[dimIndex];
+					subArrayValueCount *= maxCountOnDim;
+					int64_t allowedCountOnDim = maxCountOnDim;
+					while (subArrayValueCount * valueSize + (subArrayValueCount + 1) * 8 > maxAllowedDataArraySize) {
+						subArrayValueCount /= allowedCountOnDim;
+						allowedCountOnDim /= 2;
+						subArrayValueCount *= allowedCountOnDim;
+					}
+					counts[dimIndex] = allowedCountOnDim;
+					if (allowedCountOnDim != maxCountOnDim) {
+						break;
+					}
+				}
+
+				// Build the message
+				Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays msg;
+				size_t subArrayIndex = 0;
+				std::vector<int64_t> starts(daMetadata.dimensions.size(), 0);
+				std::vector<int64_t> currentCounts = counts;
+				bool hasParsedAllArray = false;
+				while (!hasParsedAllArray) {
+					msg.dataSubarrays[std::to_string(subArrayIndex)].uid = buildDataArrayIdentifier(datasetName);
+					msg.dataSubarrays[std::to_string(subArrayIndex)].counts = currentCounts;
+					msg.dataSubarrays[std::to_string(subArrayIndex)].starts = starts;
+
+					// next sub array to get
+					++subArrayIndex;
+					hasParsedAllArray = true;
+					for (int64_t dimIndex = daMetadata.dimensions.size() - 1; dimIndex >= 0; --dimIndex) {
+						if (starts[dimIndex] + currentCounts[dimIndex] < daMetadata.dimensions[dimIndex]) {
+							starts[dimIndex] += currentCounts[dimIndex];
+							if (starts[dimIndex] + currentCounts[dimIndex] > daMetadata.dimensions[dimIndex]) {
+								currentCounts[dimIndex] = daMetadata.dimensions[dimIndex] - starts[dimIndex];
+							}
+
+							for (int64_t dimIndex2 = dimIndex + 1; dimIndex2 < daMetadata.dimensions.size(); ++dimIndex2) {
+								starts[dimIndex2] = 0;
+								currentCounts[dimIndex2] = counts[dimIndex2];
+							}
+							hasParsedAllArray = false;
+							break;
+						}
+					}
+				}
+
+				// Send message
+				const int64_t msgId = session_->sendWithSpecificHandler(
+					msg,
+					std::make_shared<GetFullDataArrayHandlers<T>>(session_, values),
+					0, 0x02);
+
+				// Blocking loop
+				while (session_->isMessageStillProcessing(msgId)) {}
+			}
+		}
 	};
 
 	class FETPAPI_DLL_IMPORT_OR_EXPORT FesapiHdfProxyFactory : public COMMON_NS::HdfProxyFactory

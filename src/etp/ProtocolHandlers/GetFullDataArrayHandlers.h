@@ -22,25 +22,52 @@ under the License.
 
 namespace ETP_NS
 {
+	/**
+	* These specialized protocol handlers offer a way to fill in a provided full data array with the ETP store values thanks to ETP data array protocol.
+	*/
 	template<class T>
-	class FETPAPI_DLL_IMPORT_OR_EXPORT BlockingDataArrayHandlers : public DataArrayHandlers
+	class GetFullDataArrayHandlers : public DataArrayHandlers
 	{
 	public:
-		BlockingDataArrayHandlers(AbstractSession* mySession, T* values): DataArrayHandlers(mySession), values(values) {}
-		virtual ~BlockingDataArrayHandlers() = default;
+		GetFullDataArrayHandlers(AbstractSession* mySession, T* values): DataArrayHandlers(mySession), values(values) {}
+		virtual ~GetFullDataArrayHandlers() = default;
 
-		void on_GetDataArraysResponse(Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse & gdar, int64_t correlationId) final;
+		/**
+		* @param msg			The ETP message boday which has been received and which is to be processed.
+		* @param correlationId	It is the correlation ID to use if a response is needed to this message. It corresponds to the message ID of the received ETP message.
+		*/
+		void on_GetDataArraysResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse & msg, int64_t correlationId) final;
+		
+		/**
+		* @param msg			The ETP message boday which has been received and which is to be processed.
+		* @param correlationId	It is the correlation ID to use if a response is needed to this message. It corresponds to the message ID of the received ETP message.
+		*/
+		void on_GetDataArrayMetadataResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse& msg, int64_t) final
+		{
+			if (msg.arrayMetadata.size() == 1) {
+				dataArrayMetadata = msg.arrayMetadata.begin()->second;
+			}
+			else {
+				throw std::range_error("These handlers can only work with a single DataArray in GetDataArrayMetadataResponse");
+			}
+		}
+
+		/**
+		* Get the latest read DataArray metadata in on_GetDataArrayMetadata callback
+		*/
+		const Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata& getDataArrayMetadata() const { return dataArrayMetadata; }
 
 	private:
 		/** 
-		*	The pointer must have been allocated with sufficient size and won't be deallocate by these protocol handlers.
+		*	The pointer must have been allocated with sufficient size and won't be deallocated by these protocol handlers.
 		*/
-		T* values;
+		T* const values;
+		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata dataArrayMetadata;
 	};
 
-	template<class T> void BlockingDataArrayHandlers<T>::on_GetDataArraysResponse(Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse & gdar, int64_t) {
-		if (gdar.dataArrays.size() == 1) {
-			auto dataArray = gdar.dataArrays.begin()->second;
+	template<class T> void GetFullDataArrayHandlers<T>::on_GetDataArraysResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse & msg, int64_t) {
+		if (msg.dataArrays.size() == 1) {
+			auto dataArray = msg.dataArrays.begin()->second;
 			if (dataArray.data.item.idx() == 0) {
 				Energistics::Etp::v12::Datatypes::ArrayOfBoolean& avroArray = dataArray.data.item.get_ArrayOfBoolean();
 				for (auto i = 0; i < avroArray.values.size(); ++i) {
@@ -85,6 +112,9 @@ namespace ETP_NS
 					values[i] = avroValues[i];
 				}
 			}
+		}
+		else {
+			throw std::range_error("These handlers can only work with a single DataArray in GetDataArraysResponse");
 		}
 	}
 }

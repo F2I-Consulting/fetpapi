@@ -25,7 +25,7 @@ under the License.
 
 #include "../nsDefinitions.h"
 
-#include "EtpMessages.h"
+#include "EtpHelpers.h"
 #include "ProtocolHandlers/CoreHandlers.h"
 #include "ProtocolHandlers/DiscoveryHandlers.h"
 #include "ProtocolHandlers/StoreHandlers.h"
@@ -35,18 +35,6 @@ under the License.
 #include "ProtocolHandlers/DataspaceHandlers.h"
 
 #include <unordered_map>
-
-#if defined(_WIN32) && !defined(FETPAPI_STATIC)
-	#ifndef FETPAPI_DLL_IMPORT_OR_EXPORT
-		#if defined(Fetpapi_EXPORTS)
-			#define FETPAPI_DLL_IMPORT_OR_EXPORT __declspec(dllexport)
-		#else
-			#define FETPAPI_DLL_IMPORT_OR_EXPORT __declspec(dllimport)
-		#endif
-	#endif
-#else
-	#define FETPAPI_DLL_IMPORT_OR_EXPORT
-#endif
 
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
@@ -312,24 +300,38 @@ namespace ETP_NS
 			mh.messageId = incrementMessageId();
 			mh.messageFlags = messageFlags;
 
-#ifndef NDEBUG
-			std::cout << "*************************************************" << std::endl;
-			std::cout << "Message Header sent : " << std::endl;
-			std::cout << "protocol : " << mh.protocol << std::endl;
-			std::cout << "type : " << mh.messageType << std::endl;
-			std::cout << "id : " << mh.messageId << std::endl;
-			std::cout << "correlation id : " << mh.correlationId << std::endl;
-			std::cout << "flags : " << mh.messageFlags << std::endl;
-			std::cout << "*************************************************" << std::endl;
-#endif
-
 			avro::OutputStreamPtr out = avro::memoryOutputStream();
 			avro::EncoderPtr e = avro::binaryEncoder();
 			e->init(*out);
 			avro::encode(*e, mh);
 			avro::encode(*e, mb);
 			e->flush();
-			sendingQueue.push_back(*avro::snapshot(*out).get());
+			int64_t byteCount = e->byteCount();
+
+			if (byteCount < maxWebSocketMessagePayloadSize) {
+				sendingQueue.push_back(*avro::snapshot(*out).get());
+
+				std::cout << "*************************************************" << std::endl;
+				std::cout << "Message Header sent : " << std::endl;
+				std::cout << "protocol : " << mh.protocol << std::endl;
+				std::cout << "type : " << mh.messageType << std::endl;
+				std::cout << "id : " << mh.messageId << std::endl;
+				std::cout << "correlation id : " << mh.correlationId << std::endl;
+				std::cout << "flags : " << mh.messageFlags << std::endl;
+				std::cout << "Whole message size : " << e->byteCount() << " bytes." << std::endl;
+				std::cout << "*************************************************" << std::endl;
+			}
+			else {
+				messageId -= 2;
+				if (correlationId != 0) {
+					encode(EtpHelpers::buildSingleMessageProtocolException(17, "I try to send you a too big message response of protocol "
+						+ std::to_string(mb.protocolId) + " and type id " + std::to_string(mb.messageTypeId) + " and size " + std::to_string(byteCount)
+						+ " bytes according to our negotiated size capability which is " + std::to_string(maxWebSocketMessagePayloadSize) + " bytes."), correlationId, 0x02);
+				}
+				else {
+					return -1; // You cannot send a message which is too big. Please use message part or chunk or whatever else.
+				}
+			}
 
 			return mh.messageId;
 		}

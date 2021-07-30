@@ -85,13 +85,21 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 	else if (receivedMh.messageType == Energistics::Etp::v12::Protocol::Core::ProtocolException::messageTypeId) {
 		// Receive Protocol Exception
 		protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Core)]->decodeMessageBody(receivedMh, d);
+		if ((receivedMh.messageFlags & 0x02) != 0) {
+			auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
+			if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
+				specificProtocolHandlers.erase(specificProtocolHandlerIt);
+			}
+		}
 	}
 	else {
 		auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
 		if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
 			// Receive a message which has been asked to be processed with a specific protocol handler
 			specificProtocolHandlerIt->second->decodeMessageBody(receivedMh, d);
-			specificProtocolHandlers.erase(specificProtocolHandlerIt);
+			if ((receivedMh.messageFlags & 0x02) != 0) {
+				specificProtocolHandlers.erase(specificProtocolHandlerIt);
+			}
 		}
 		else if (receivedMh.protocol < protocolHandlers.size() && protocolHandlers[receivedMh.protocol] != nullptr) {
 			// Receive a message to be processed with a common protocol handler in case for example an unsollicited notification

@@ -88,6 +88,40 @@ void DataArrayHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse gdamr;
 		avro::decode(*d, gdamr);
 		session->flushReceivingBuffer();
+
+		// Validation
+		bool valid = true;
+		for (const auto& element : gdamr.arrayMetadata) {
+			const Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata& daMetadata = element.second;
+			if (daMetadata.storeLastWrite < daMetadata.storeCreated) {
+				session->send(EtpHelpers::buildSingleMessageProtocolException(5, "The data array storeLastWrite cannot be inferior to the data array storeCreated"), mh.messageId, 0x02);
+				valid = false;
+			}
+			if (daMetadata.dimensions.empty()) {
+				session->send(EtpHelpers::buildSingleMessageProtocolException(5, "The data array dimensions cannot be empty"), mh.messageId, 0x02);
+				valid = false;
+			}
+			for (auto dimIndex = 0; dimIndex < daMetadata.dimensions.size(); ++dimIndex) {
+				if (daMetadata.dimensions[dimIndex] <= 0) {
+					session->send(EtpHelpers::buildSingleMessageProtocolException(5, "The data array dimension " + std::to_string(dimIndex) + " cannot be <= 0"), mh.messageId, 0x02);
+					valid = false;
+				}
+			}
+			if (!daMetadata.preferredSubarrayDimensions.empty() && daMetadata.preferredSubarrayDimensions.size() != daMetadata.dimensions.size()) {
+				session->send(EtpHelpers::buildSingleMessageProtocolException(5, "The data array preferredSubarrayDimensions must be the same count as the data array dimensions"), mh.messageId, 0x02);
+				valid = false;
+			}
+			for (auto dimIndex = 0; dimIndex < daMetadata.preferredSubarrayDimensions.size(); ++dimIndex) {
+				if (daMetadata.preferredSubarrayDimensions[dimIndex] <= 0 || daMetadata.preferredSubarrayDimensions[dimIndex] > daMetadata.dimensions[dimIndex]) {
+					session->send(EtpHelpers::buildSingleMessageProtocolException(5, "The data array preferredSubarrayDimension " + std::to_string(dimIndex) + " is <=0 or > to the corresponding data array dimension"), mh.messageId, 0x02);
+					valid = false;
+				}
+			}
+		}
+
+		if (!valid) {
+			return;
+		}
 		on_GetDataArrayMetadataResponse(gdamr, mh.correlationId);
 	}
 	else {
@@ -101,10 +135,10 @@ void DataArrayHandlers::on_GetDataArrays(const Energistics::Etp::v12::Protocol::
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The DataArrayHandlers::on_GetDataArrays method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void DataArrayHandlers::on_GetDataArraysResponse(Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse & gdar, int64_t)
+void DataArrayHandlers::on_GetDataArraysResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse& msg, int64_t)
 {
-	for (std::pair < std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray > element : gdar.dataArrays) {
-		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray& da = element.second;
+	for (const auto& element : msg.dataArrays) {
+		const Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray& da = element.second;
 		std::cout << "*************************************************" << std::endl;
 		std::cout << "Data Array received : " << std::endl;
 		std::cout << "Dimension count : " << da.dimensions.size() << std::endl;
@@ -199,14 +233,15 @@ void DataArrayHandlers::on_GetDataArrayMetadata(const Energistics::Etp::v12::Pro
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The DataArrayHandlers::on_GetDataArrayMetadata method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void DataArrayHandlers::on_GetDataArrayMetadataResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse& gdamr, int64_t)
+void DataArrayHandlers::on_GetDataArrayMetadataResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse& gdamr, int64_t correlationID)
 {
-	for (std::pair < std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata > element : gdamr.arrayMetadata) {
-		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata& dam = element.second;
+	for (const auto& element : gdamr.arrayMetadata) {
+		const Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata& daMetadata = element.second;
+
 		std::cout << "*************************************************" << std::endl;
 		std::cout << "Data Array Metadata received : " << std::endl;
 		std::cout << "Array transport type : ";
-		switch (dam.transportArrayType) {
+		switch (daMetadata.transportArrayType) {
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfBoolean : std::cout << "arrayOfBoolean"; break;
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt: std::cout << "arrayOfInt"; break;
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong: std::cout << "arrayOfLong"; break;
@@ -217,7 +252,7 @@ void DataArrayHandlers::on_GetDataArrayMetadataResponse(const Energistics::Etp::
 			default : std::cout << "unrecognized transportArrayType";
 		}
 		std::cout << "Array logical type : ";
-		switch (dam.logicalArrayType) {
+		switch (daMetadata.logicalArrayType) {
 			case Energistics::Etp::v12::Datatypes::AnyLogicalArrayType::arrayOfBoolean : std::cout << "arrayOfBoolean"; break;
 			case Energistics::Etp::v12::Datatypes::AnyLogicalArrayType::arrayOfDouble64BE : std::cout << "arrayOfDouble64BE"; break;
 			case Energistics::Etp::v12::Datatypes::AnyLogicalArrayType::arrayOfDouble64LE : std::cout << "arrayOfDouble64LE"; break;
@@ -241,8 +276,8 @@ void DataArrayHandlers::on_GetDataArrayMetadataResponse(const Energistics::Etp::
 			default: std::cout << "unrecognized logicalArrayType";
 		}
 		std::cout << std::endl;
-		for (auto i = 0; i < dam.dimensions.size(); ++i) {
-			std::cout << "Dimension " << i << " with count : " << dam.dimensions[i] << std::endl;
+		for (auto i = 0; i < daMetadata.dimensions.size(); ++i) {
+			std::cout << "Dimension " << i << " with count : " << daMetadata.dimensions[i] << std::endl;
 		}
 		std::cout << "*************************************************" << std::endl;
 	}
