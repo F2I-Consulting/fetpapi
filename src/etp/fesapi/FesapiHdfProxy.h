@@ -588,9 +588,9 @@ namespace ETP_NS
 			switch (daMetadata.transportArrayType) {
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::bytes:
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfBoolean: break;
-			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt:
+			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt: valueSize = 6; break; // 25% more because of zig zag encoding wort case scenario
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfFloat: valueSize = 4; break;
-			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong:
+			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong:  valueSize = 10; break; // 25% more because of zig zag encoding wort case scenario
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble: valueSize = 8; break;
 			default: throw std::logic_error("Array of strings are not implemented yet");
 			}
@@ -602,11 +602,12 @@ namespace ETP_NS
 				- (daMetadata.dimensions.size() * 2 + 1) * 8; // *2 because the array can contain a maximum of element count block, +1 for the length of the last block : https://avro.apache.org/docs/1.10.2/spec.html#binary_encode_complex
 
 			// Now get values of the data array
+			auto specializedHandler = std::make_shared<GetFullDataArrayHandlers<T>>(session_, values);
 			if (wholeSize + (valueCount + 1) * 8 <= maxAllowedDataArraySize) { // There can be valueCount array block and there is the length of the last array block
 				// Get all values at once
 				const int64_t msgId = session_->sendWithSpecificHandler(
 					buildGetDataArraysMessage(datasetName),
-					std::make_shared<GetFullDataArrayHandlers<T>>(session_, values),
+					specializedHandler,
 					0, 0x02);
 
 				// Blocking loop
@@ -642,9 +643,10 @@ namespace ETP_NS
 				std::vector<int64_t> currentCounts = counts;
 				bool hasParsedAllArray = false;
 				while (!hasParsedAllArray) {
-					msg.dataSubarrays[std::to_string(subArrayIndex)].uid = buildDataArrayIdentifier(datasetName);
-					msg.dataSubarrays[std::to_string(subArrayIndex)].counts = currentCounts;
-					msg.dataSubarrays[std::to_string(subArrayIndex)].starts = starts;
+					std::string subArrayIndexStr = std::to_string(subArrayIndex);
+					msg.dataSubarrays[subArrayIndexStr].uid = buildDataArrayIdentifier(datasetName);
+					msg.dataSubarrays[subArrayIndexStr].counts = currentCounts;
+					msg.dataSubarrays[subArrayIndexStr].starts = starts;
 
 					// next sub array to get
 					++subArrayIndex;
@@ -664,12 +666,14 @@ namespace ETP_NS
 							break;
 						}
 					}
+
+					specializedHandler->setDataSubarrays(subArrayIndexStr, msg.dataSubarrays[subArrayIndexStr]);
 				}
 
 				// Send message
 				const int64_t msgId = session_->sendWithSpecificHandler(
 					msg,
-					std::make_shared<GetFullDataArrayHandlers<T>>(session_, values),
+					specializedHandler,
 					0, 0x02);
 
 				// Blocking loop
