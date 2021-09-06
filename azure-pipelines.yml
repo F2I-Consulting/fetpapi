@@ -418,6 +418,7 @@ jobs:
             -DAVRO_INCLUDE_DIR=$(Agent.TempDirectory)/avro-cpp-1.10.2-install/include
             -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.2-install/lib/avrocpp_s.lib
             -DWITH_FESAPI=TRUE
+            -DWITH_DOTNET_WRAPPING=TRUE
             -DFESAPI_INCLUDE_DIR=C:/fesapi-install/include
             -DFESAPI_LIBRARY_RELEASE=C:/fesapi-install/lib/FesapiCpp.2.1.1.0.lib
 

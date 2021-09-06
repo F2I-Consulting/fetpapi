@@ -191,6 +191,7 @@ typedef long long 				time_t;
 	%nspace Energistics::Etp::v12::Datatypes::DataValueitem_t;
 	%nspace Energistics::Etp::v12::Datatypes::ErrorInfo;
 	%nspace Energistics::Etp::v12::Datatypes::AnyArrayType;
+	%nspace Energistics::Etp::v12::Datatypes::AnyLogicalArrayType;
 	%nspace Energistics::Etp::v12::Datatypes::AnyArray;
 	%nspace Energistics::Etp::v12::Datatypes::AnyArrayitem_t;
 	%nspace Energistics::Etp::v12::Datatypes::ArrayOfBoolean;
@@ -224,8 +225,8 @@ typedef long long 				time_t;
 	%nspace Energistics::Etp::v12::Protocol::Core::Acknowledge;
 	%nspace Energistics::Etp::v12::Protocol::Core::Ping;
 	%nspace Energistics::Etp::v12::Protocol::Core::Pong;
-	%nspace Energistics::Etp::v12::Protocol::Core::RenewSecurityToken;
-	%nspace Energistics::Etp::v12::Protocol::Core::RenewSecurityTokenResponse;
+	%nspace Energistics::Etp::v12::Protocol::Core::Authorize;
+	%nspace Energistics::Etp::v12::Protocol::Core::AuthorizeResponse;
 	
 	%nspace Energistics::Etp::v12::Protocol::Discovery::GetResources;
 	%nspace Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse;
@@ -285,7 +286,7 @@ namespace Energistics {
 			namespace Datatypes {				
 				struct SupportedDataObject{				
 					std::string qualifiedType;
-					std::vector<std::string> dataObjectCapabilities;
+					std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> dataObjectCapabilities;
 				};
 				
 				struct Uuid{				
@@ -411,11 +412,11 @@ namespace Energistics {
 					void set_bytes(const std::string& v);
 				};
 				
-				struct AnyArray{				
+				struct AnyArray{
 					Energistics::Etp::v12::Datatypes::AnyArrayitem_t item;
 				};	
 				
-				enum AnyArrayType {				
+				enum AnyArrayType {
 					arrayOfBoolean=0,
 					arrayOfInt=1,
 					arrayOfLong=2,
@@ -423,7 +424,31 @@ namespace Energistics {
 					arrayOfDouble=4,
 					arrayOfString=5,
 					bytes=6
-				};
+				};	
+				
+				enum class AnyLogicalArrayType {
+					arrayOfBoolean=0,
+					arrayOfInt8=1,
+					arrayOfUInt8=2,
+					arrayOfInt16LE=3,
+					arrayOfInt32LE=4,
+					arrayOfInt64LE=5,
+					arrayOfUInt16LE=6,
+					arrayOfUInt32LE=7,
+					arrayOfUInt64LE=8,
+					arrayOfFloat32LE=9,
+					arrayOfDouble64LE=10,
+					arrayOfInt16BE=11,
+					arrayOfInt32BE=12,
+					arrayOfInt64BE=13,
+					arrayOfUInt16BE=14,
+					arrayOfUInt32BE=15,
+					arrayOfUInt64BE=16,
+					arrayOfFloat32BE=17,
+					arrayOfDouble64BE=18,
+					arrayOfString=19,
+					arrayOfCustom=20
+				};				
 			}
 		}
 	}
@@ -453,47 +478,47 @@ namespace Energistics {
 						targetsOrSelf=4
 					};
 
-					struct Resource{					
+					struct Resource{
 						std::string uri;
 						std::vector<std::string> alternateUris;
-						std::string dataObjectType;
 						std::string name;
 						boost::optional<int32_t> sourceCount;
 						boost::optional<int32_t> targetCount;
 						int64_t lastChanged;
 						int64_t storeLastWrite;
+						int64_t storeCreated;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
 					
-					struct DeletedResource{					
+					struct DeletedResource{
 						std::string uri;
-						std::string dataObjectType;
 						int64_t deletedTime;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
 
-					struct DataObject{					
+					struct DataObject{
 						Energistics::Etp::v12::Datatypes::Object::Resource resource;
 						std::string format;
 						boost::optional<Energistics::Etp::v12::Datatypes::Uuid> blobId;
 						std::string data;
 					};
 
-					struct Dataspace{					
+					struct Dataspace{
 						std::string uri;
 						std::string path;
-						boost::optional<int64_t> lastChanged;
+						int64_t storeLastWrite;
+						int64_t storeCreated;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
 					
-					struct Edge{					
+					struct Edge{
 						std::string sourceUri;
 						std::string targetUri;
 						Energistics::Etp::v12::Datatypes::Object::RelationshipKind relationshipKind;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
 					
-					enum RelationshipKind {					
+					enum RelationshipKind {
 						Primary=0,
 						Secondary=1,
 						Both=2
@@ -527,7 +552,12 @@ namespace Energistics {
 
 					struct DataArrayMetadata{					
 						std::vector<int64_t> dimensions;
-						Energistics::Etp::v12::Datatypes::AnyArrayType arrayType;
+						std::vector<int64_t> preferredSubarrayDimensions;
+						Energistics::Etp::v12::Datatypes::AnyArrayType transportArrayType;
+						Energistics::Etp::v12::Datatypes::AnyLogicalArrayType logicalArrayType;
+						int64_t storeLastWrite;
+						int64_t storeCreated;
+						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
 
 					struct PutDataArraysType{
@@ -855,7 +885,7 @@ namespace Energistics {
 			namespace Protocol {			
 				namespace Dataspace {				
 					struct GetDataspaces{					
-						boost::optional<int64_t> lastChangedFilter;
+						boost::optional<int64_t> storeLastWriteFilter;
 						static const int messageTypeId=1;
 					};
 					
@@ -1293,8 +1323,8 @@ namespace ETP_NS
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::Acknowledge>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::Ping>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::Pong>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::RenewSecurityToken>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::RenewSecurityTokenResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::Authorize>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::AuthorizeResponse>;
 		
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Discovery::GetResources>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse>;
@@ -1348,8 +1378,8 @@ namespace ETP_NS
 		%template(send) send<Energistics::Etp::v12::Protocol::Core::Acknowledge>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Core::Ping>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Core::Pong>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Core::RenewSecurityToken>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Core::RenewSecurityTokenResponse>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Core::Authorize>;
+		%template(send) send<Energistics::Etp::v12::Protocol::Core::AuthorizeResponse>;
 		
 		%template(send) send<Energistics::Etp::v12::Protocol::Discovery::GetResources>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse>;
