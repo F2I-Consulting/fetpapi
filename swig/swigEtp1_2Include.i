@@ -1427,6 +1427,7 @@ namespace ETP_NS
 	};
 
 	namespace EtpHelpers {
+		std::string getDataObjectType(const std::string& uri);
 		Energistics::Etp::v12::Datatypes::ErrorInfo validateUri(const std::string & uri, ETP_NS::AbstractSession* session = nullptr);
 		Energistics::Etp::v12::Datatypes::ErrorInfo validateDataObjectUri(const std::string & uri, ETP_NS::AbstractSession* session = nullptr);
 		Energistics::Etp::v12::Protocol::Core::ProtocolException buildSingleMessageProtocolException(int32_t m_code, const std::string & m_message);
