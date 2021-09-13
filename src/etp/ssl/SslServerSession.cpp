@@ -22,7 +22,7 @@ under the License.
 using namespace ETP_NS;
 
 SslServerSession::SslServerSession(boost::beast::ssl_stream<tcp::socket> stream, ServerInitializationParameters* serverInitializationParams)
-	: AbstractPlainOrSslServerSession<SslServerSession>(stream.get_executor().context(), serverInitializationParams),
+	: AbstractPlainOrSslServerSession<SslServerSession>(static_cast<boost::asio::io_context&>(stream.get_executor().context()), serverInitializationParams),
 	ws_(std::move(stream))
 {
 	ws_.binary(true);

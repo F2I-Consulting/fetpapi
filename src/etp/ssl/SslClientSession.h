@@ -42,9 +42,7 @@ namespace ETP_NS
 		* @param frameSize				Sets the size of the write buffer used by the implementation to send frames : https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/write_buffer_bytes/overload1.html.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT SslClientSession(boost::asio::ssl::context& ctx,
-			const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
-			const std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> & requestedProtocols,
-			const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& supportedObjects,
+			InitializationParameters* initializationParams, const std::string& target, const std::string& authorization,
 			std::size_t frameSize = 4096);
 
 		virtual ~SslClientSession() {}

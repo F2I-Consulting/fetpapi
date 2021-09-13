@@ -39,7 +39,7 @@ namespace ETP_NS
 
 #ifdef WITH_ETP_SSL
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::SslClientSession> createWssClientSession(InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
-			const std::string & additionalCertificates = "");
+			std::size_t preferredMaxFrameSize = 4096, const std::string & additionalCertificates = "");
 #endif
 
 	}

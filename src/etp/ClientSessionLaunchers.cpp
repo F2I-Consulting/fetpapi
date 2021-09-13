@@ -160,10 +160,12 @@ std::shared_ptr<ETP_NS::PlainClientSession> ETP_NS::ClientSessionLaunchers::crea
 
 #ifdef WITH_ETP_SSL
 
+#include "ssl/HttpsClientSession.h"
+
 namespace ssl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
 
 std::shared_ptr<ETP_NS::SslClientSession> ETP_NS::ClientSessionLaunchers::createWssClientSession(InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
-	const std::string & additionalCertificates)
+	std::size_t preferredMaxFrameSize, const std::string & additionalCertificates)
 {
 	// The SSL context is required, and holds certificates
 	ssl::context ctx{ ssl::context::sslv23_client };
@@ -185,7 +187,7 @@ std::shared_ptr<ETP_NS::SslClientSession> ETP_NS::ClientSessionLaunchers::create
 		etpServerCapTarget += '/';
 	}
 	etpServerCapTarget += ".well-known/etp-server-capabilities?GetVersion=etp12.energistics.org";
-	httpClientSession->run(initializationParams->getHost().c_str(), initializationParams->getPort().c_str(), etpServerCapTarget.c_str(), 11, authorization);
+	httpsClientSession->run(initializationParams->getHost().c_str(), initializationParams->getPort(), etpServerCapTarget.c_str(), 11, authorization);
 	// Run the I/O service. The call will return when the get operation is complete.
 	ioc.run();
 

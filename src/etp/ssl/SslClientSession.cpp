@@ -22,12 +22,9 @@ under the License.
 using namespace ETP_NS;
 
 SslClientSession::SslClientSession(boost::asio::ssl::context& ctx,
-	const std::string & host, const std::string & port, const std::string & target, const std::string & authorization,
-	const std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> & requestedProtocols,
-	const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& supportedObjects,
+	InitializationParameters* initializationParams, const std::string& target, const std::string& authorization,
 	std::size_t frameSize)
-	: AbstractClientSession<SslClientSession>(host, port, target, authorization,
-		requestedProtocols, supportedObjects),
+	: AbstractClientSession<SslClientSession>(initializationParams, target, authorization),
 		ws_(ioc, ctx)
 {
 	ws_.binary(true);
