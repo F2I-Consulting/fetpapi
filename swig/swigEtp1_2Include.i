@@ -182,6 +182,9 @@ typedef long long 				time_t;
 #ifdef WITH_FESAPI
 	%nspace ETP_NS::FesapiHdfProxyFactory;
 #endif
+#ifdef WITH_ETP_SSL
+	%nspace ETP_NS::SslClientSession;
+#endif
 	
 	%nspace Energistics::Etp::v12::Datatypes::SupportedDataObject;
 	%nspace Energistics::Etp::v12::Datatypes::Uuid;
@@ -930,6 +933,9 @@ namespace Energistics {
 %shared_ptr(ETP_NS::DataspaceHandlers)
 %shared_ptr(ETP_NS::AbstractSession)
 %shared_ptr(ETP_NS::PlainClientSession)
+#ifdef WITH_ETP_SSL
+%shared_ptr(ETP_NS::SslClientSession)
+#endif
 
 %feature("director") ETP_NS::CoreHandlers;
 %feature("director") ETP_NS::DiscoveryHandlers;
@@ -1441,7 +1447,16 @@ namespace ETP_NS
 	public:
 		bool run();
 	};
-	
+
+#ifdef WITH_ETP_SSL
+	%nodefaultctor SslClientSession;
+	class SslClientSession : public AbstractSession
+	{
+	public:
+		bool run();
+	};
+#endif
+
 	class InitializationParameters
 	{
 	public:
@@ -1466,6 +1481,11 @@ namespace ETP_NS
 	{
 		std::shared_ptr<ETP_NS::PlainClientSession> createWsClientSession(InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
 			std::size_t preferredMaxFrameSize = 4096);
+
+#ifdef WITH_ETP_SSL
+		std::shared_ptr<ETP_NS::SslClientSession> createWssClientSession(InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
+			std::size_t preferredMaxFrameSize = 4096, const std::string & additionalCertificates = "");
+#endif
 	}
 	
 	/******************* SERVER ***************************/
