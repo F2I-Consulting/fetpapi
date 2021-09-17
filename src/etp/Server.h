@@ -35,7 +35,10 @@ under the License.
 
 #include "avro/Compiler.hh"
 
-#include "ServerInitializationParameters.h"
+#include "PlainServerSession.h"
+#ifdef WITH_ETP_SSL
+#include "ssl/SslServerSession.h"
+#endif
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
 namespace http = beast::http;                   // from <boost/beast/http.hpp>
@@ -899,12 +902,20 @@ namespace ETP_NS
 				std::vector< std::shared_ptr<AbstractSession> >& sessions,
 				ServerInitializationParameters* serverInitializationParams)
 				: http_session<ssl_http_session>(
+#if BOOST_VERSION < 107000
 					socket.get_executor().context(),
+#else
+					static_cast<boost::asio::io_context&>(socket.get_executor().context()),
+#endif
 					doc_root,
 					sessions,
 					serverInitializationParams)
 				, stream_(std::move(socket), ctx)
+#if BOOST_VERSION < 107000
 				, strand_(stream_.get_executor())
+#else
+				, strand_(static_cast<boost::asio::io_context&>(stream_.get_executor().context()).get_executor())
+#endif
 			{
 			}
 
