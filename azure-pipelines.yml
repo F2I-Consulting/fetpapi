@@ -343,68 +343,68 @@ jobs:
       - powershell: |
           Invoke-WebRequest https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.0/bin/hdf5-1.12.0-Std-win10_64-vs16.zip -OutFile C:\hdf5-1.12.0-Std-win10_64-vs16.zip
           Expand-Archive C:\hdf5-1.12.0-Std-win10_64-vs16.zip -DestinationPath C:\
-          msiexec.exe /i "C:\hdf\HDF5-1.12.0-win64.msi" /qn INSTALL_ROOT=C:\hdf5-1.12.0-win64-vs2019
+          msiexec.exe /i "C:\hdf\HDF5-1.12.0-win64.msi" /qn INSTALL_ROOT=$(Agent.TempDirectory)\hdf5-1.12.0-win64-vs2019
         displayName: 'Install HDF5 1.12.0'
 
       # Minizip
       - powershell: |
-          git clone https://github.com/F2I-Consulting/Minizip.git C:/Minizip
+          git clone https://github.com/F2I-Consulting/Minizip.git $(Build.SourcesDirectory)/../Minizip
         displayName: 'Cloning Minizip'
       - task: CMake@1
         displayName: 'CMake configure Minizip'
         inputs:
-          workingDirectory: C:/Minizip-build
+          workingDirectory: $(Agent.TempDirectory)/Minizip-build
           cmakeArgs:
-            ../Minizip
+            $(Build.SourcesDirectory)/../Minizip
             $(Generator)
             -Wno-dev -Wno-deprecated
-            -DZLIB_INCLUDE_DIR=C:/hdf5-1.12.0-win64-vs2019/include
-            -DZLIB_LIBRARY_RELEASE=C:/hdf5-1.12.0-win64-vs2019/lib/zlib.lib
-            -DCMAKE_INSTALL_PREFIX=C:/Minizip-install
+            -DZLIB_INCLUDE_DIR=$(Agent.TempDirectory)/hdf5-1.12.0-win64-vs2019/include
+            -DZLIB_LIBRARY_RELEASE=$(Agent.TempDirectory)/hdf5-1.12.0-win64-vs2019/lib/zlib.lib
+            -DCMAKE_INSTALL_PREFIX=$(Agent.TempDirectory)/Minizip-install
       - task: CMake@1
         displayName: "CMake build Minizip --config $(BuildType)"
         inputs:
-          workingDirectory: C:/Minizip-build
+          workingDirectory: $(Agent.TempDirectory)/Minizip-build
           cmakeArgs: --build . --config $(BuildType) -- /verbosity:minimal
       - task: CMake@1
         displayName: "CMake Install Minizip --config $(BuildType)"
         inputs:
-          workingDirectory: C:/Minizip-build
+          workingDirectory: $(Agent.TempDirectory)/Minizip-build
           cmakeArgs: --build . --config $(BuildType) --target INSTALL -- /verbosity:minimal    
           
       # fesapi
       - powershell: |
-          git clone https://github.com/F2I-Consulting/fesapi.git -b v2.2.0.0 C:/fesapi
-        displayName: 'Cloning fesapi'
+          git clone https://github.com/F2I-Consulting/fesapi.git -b v2.2.0.0 $(Build.SourcesDirectory)/../fesapi-2.2.0.0
+        displayName: 'Cloning FESAPI'
       - task: CMake@1
         displayName: 'CMake configure fesapi'
         inputs:
-          workingDirectory: C:/fesapi-build
+          workingDirectory: $(Agent.TempDirectory)/fesapi-build
           cmakeArgs:
-            ../fesapi
+            $(Build.SourcesDirectory)/../fesapi-2.2.0.0
             $(Generator)
             -Wno-dev -Wno-deprecated
             -DHDF5_BUILT_AS_DYNAMIC_LIB=TRUE
-            -DHDF5_C_INCLUDE_DIR=C:/hdf5-1.12.0-win64-vs2019/include
-            -DHDF5_C_LIBRARY_RELEASE=C:/hdf5-1.12.0-win64-vs2019/lib/hdf5.lib
-            -DMINIZIP_INCLUDE_DIR=C:/Minizip-install/include
-            -DMINIZIP_LIBRARY_RELEASE=C:/Minizip-install/lib/minizip.lib
-            -DZLIB_INCLUDE_DIR=C:/hdf5-1.12.0-win64-vs2019/include
-            -DZLIB_LIBRARY_RELEASE=C:/hdf5-1.12.0-win64-vs2019/lib/zlib.lib
-            -DSZIP_LIBRARY_RELEASE=C:/hdf5-1.12.0-win64-vs2019/lib/szip.lib
+            -DHDF5_C_INCLUDE_DIR=$(Agent.TempDirectory)/hdf5-1.12.0-win64-vs2019/include
+            -DHDF5_C_LIBRARY_RELEASE=$(Agent.TempDirectory)/hdf5-1.12.0-win64-vs2019/lib/hdf5.lib
+            -DMINIZIP_INCLUDE_DIR=$(Agent.TempDirectory)/Minizip-install/include
+            -DMINIZIP_LIBRARY_RELEASE=$(Agent.TempDirectory)/Minizip-install/lib/minizip.lib
+            -DZLIB_INCLUDE_DIR=$(Agent.TempDirectory)/hdf5-1.12.0-win64-vs2019/include
+            -DZLIB_LIBRARY_RELEASE=$(Agent.TempDirectory)/hdf5-1.12.0-win64-vs2019/lib/zlib.lib
+            -DSZIP_LIBRARY_RELEASE=$(Agent.TempDirectory)/hdf5-1.12.0-win64-vs2019/lib/szip.lib
             -DBoost_INCLUDE_DIR=C:/hostedtoolcache/windows/Boost/1.75.0/x86_64
             -DAVRO_INCLUDE_DIR=$(Agent.TempDirectory)/avro-cpp-1.10.2-install/include
             -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.2-install/lib/avrocpp_s.lib
-            -DCMAKE_INSTALL_PREFIX=C:/fesapi-install
+            -DCMAKE_INSTALL_PREFIX=$(Agent.TempDirectory)/fesapi-install
       - task: CMake@1
         displayName: "CMake build fesapi --config $(BuildType)"
         inputs:
-          workingDirectory: C:/fesapi-build
+          workingDirectory: $(Agent.TempDirectory)/fesapi-build
           cmakeArgs: --build . --config $(BuildType) -- /verbosity:minimal
       - task: CMake@1
         displayName: "CMake Install fesapi --config $(BuildType)"
         inputs:
-          workingDirectory: C:/fesapi-build
+          workingDirectory: $(Agent.TempDirectory)/fesapi-build
           cmakeArgs: --build . --config $(BuildType) --target INSTALL -- /verbosity:minimal    
           
       - task: CMake@1
@@ -419,8 +419,8 @@ jobs:
             -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.2-install/lib/avrocpp_s.lib
             -DWITH_FESAPI=TRUE
             -DWITH_DOTNET_WRAPPING=TRUE
-            -DFESAPI_INCLUDE_DIR=C:/fesapi-install/include
-            -DFESAPI_LIBRARY_RELEASE=C:/fesapi-install/lib/FesapiCpp.2.2.0.0.lib
+            -DFESAPI_INCLUDE_DIR=$(Agent.TempDirectory)/fesapi-install/include
+            -DFESAPI_LIBRARY_RELEASE=$(Agent.TempDirectory)/fesapi-install/lib/FesapiCpp.2.2.0.0.lib
 
       - task: CMake@1
         displayName: "Build --config $(BuildType)"
