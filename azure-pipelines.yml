@@ -26,7 +26,7 @@ jobs:
     
       # AVRO
       - powershell: |
-          Invoke-WebRequest https://mirroir.wptheme.fr/apache/avro/stable/cpp/avro-cpp-1.10.2.tar.gz -OutFile $(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz
+          Invoke-WebRequest https://archive.apache.org/dist/avro/avro-1.10.2/cpp/avro-cpp-1.10.2.tar.gz -OutFile $(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz
       - task: ExtractFiles@1
         inputs:
           archiveFilePatterns: '$(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz'
@@ -94,7 +94,7 @@ jobs:
     
       # AVRO
       - powershell: |
-          Invoke-WebRequest https://mirroir.wptheme.fr/apache/avro/stable/cpp/avro-cpp-1.10.2.tar.gz -OutFile $(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz
+          Invoke-WebRequest https://archive.apache.org/dist/avro/avro-1.10.2/cpp/avro-cpp-1.10.2.tar.gz -OutFile $(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz
       - task: ExtractFiles@1
         inputs:
           archiveFilePatterns: '$(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz'
@@ -236,7 +236,7 @@ jobs:
     
       # AVRO
       - powershell: |
-          Invoke-WebRequest https://mirroir.wptheme.fr/apache/avro/stable/cpp/avro-cpp-1.10.2.tar.gz -OutFile $(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz
+          Invoke-WebRequest https://archive.apache.org/dist/avro/avro-1.10.2/cpp/avro-cpp-1.10.2.tar.gz -OutFile $(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz
       - task: ExtractFiles@1
         inputs:
           archiveFilePatterns: '$(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz'
@@ -309,7 +309,7 @@ jobs:
     
       # AVRO
       - powershell: |
-          Invoke-WebRequest https://mirroir.wptheme.fr/apache/avro/stable/cpp/avro-cpp-1.10.2.tar.gz -OutFile $(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz
+          Invoke-WebRequest https://archive.apache.org/dist/avro/avro-1.10.2/cpp/avro-cpp-1.10.2.tar.gz -OutFile $(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz
       - task: ExtractFiles@1
         inputs:
           archiveFilePatterns: '$(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz'
@@ -440,7 +440,7 @@ jobs:
         
       # AVRO
       - script: |
-          curl https://mirroir.wptheme.fr/apache/avro/stable/cpp/avro-cpp-1.10.2.tar.gz -o $(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz
+          curl https://archive.apache.org/dist/avro/avro-1.10.2/cpp/avro-cpp-1.10.2.tar.gz -o $(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz
       - task: ExtractFiles@1
         inputs:
           archiveFilePatterns: '$(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz'
@@ -497,7 +497,7 @@ jobs:
         
       # AVRO
       - script: |
-          curl https://mirroir.wptheme.fr/apache/avro/stable/cpp/avro-cpp-1.10.2.tar.gz -o $(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz
+          curl https://archive.apache.org/dist/avro/avro-1.10.2/cpp/avro-cpp-1.10.2.tar.gz -o $(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz
       - task: ExtractFiles@1
         inputs:
           archiveFilePatterns: '$(Agent.TempDirectory)/avro-cpp-1.10.2.tar.gz'
