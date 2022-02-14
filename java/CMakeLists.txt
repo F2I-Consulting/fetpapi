@@ -1,4 +1,4 @@
-# Included in ../src/CmakeLists.txt if java build is selected.
+# Included in ../src/CMakeLists.txt if java build is selected.
 
 find_package(SWIG 3.0 REQUIRED)
 
@@ -17,6 +17,7 @@ endif (TO_DELETE)
 file (REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/java/src/com/f2i_consulting/fetpapi/etp)
 
 # The name of the library is different on Windows because it includes the version
+# The assembly name is used to load the debug vs release FESAPI library in the Java example
 if (WIN32)
 	if (SWIG_LINKED_TO_RELEASE)
 		set (ASSEMBLY_NAME ${PROJECT_NAME}${CMAKE_RELEASE_POSTFIX}.${Fetpapi_VERSION})

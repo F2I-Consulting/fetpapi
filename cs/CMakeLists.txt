@@ -1,4 +1,4 @@
-# Included in ../CmakeLists.txt if csharp build is selected.
+# Included in ../CMakeLists.txt if csharp build is selected.
 
 find_package(SWIG 3.0 REQUIRED)
 
@@ -29,6 +29,12 @@ set (EXECUTE_COMMAND "${SWIG_EXECUTABLE}")
 list (APPEND EXECUTE_COMMAND -v)
 list (APPEND EXECUTE_COMMAND -c++)
 list (APPEND EXECUTE_COMMAND -csharp)
+if (WITH_FESAPI)
+        list (APPEND EXECUTE_COMMAND -DWITH_FESAPI)
+endif (WITH_FESAPI)
+if (WITH_ETP_SSL)
+        list (APPEND EXECUTE_COMMAND -DWITH_ETP_SSL)
+endif (WITH_ETP_SSL)
 list (APPEND EXECUTE_COMMAND -dllimport)
 list (APPEND EXECUTE_COMMAND ${ASSEMBLY_NAME}.dll)
 list (APPEND EXECUTE_COMMAND -namespace)

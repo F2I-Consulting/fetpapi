@@ -69,7 +69,17 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 	avro::DecoderPtr d = avro::binaryDecoder();
 	d->init(*in);
 
-	Energistics::Etp::v12::Datatypes::MessageHeader receivedMh = decodeMessageHeader(d);
+	Energistics::Etp::v12::Datatypes::MessageHeader receivedMh;
+	try {
+		receivedMh = decodeMessageHeader(d);
+	}
+	catch (avro::Exception& e)
+	{
+		flushReceivingBuffer();
+		send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(19, "The agent is unable to de-serialize the header of the received message."), 0, 0x02);
+		do_read();
+		return;
+	}
 
 	// Request for Acknowledge
 	if ((receivedMh.messageFlags & 0x10) != 0) {
@@ -78,37 +88,44 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 		send(acknowledge, receivedMh.messageId, 0x02);
 	}
 
-	if (receivedMh.messageType == Energistics::Etp::v12::Protocol::Core::Acknowledge::messageTypeId) {
-		// Receive Acknowledge
-		protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Core)]->decodeMessageBody(receivedMh, d);
-	}
-	else if (receivedMh.messageType == Energistics::Etp::v12::Protocol::Core::ProtocolException::messageTypeId) {
-		// Receive Protocol Exception
-		protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Core)]->decodeMessageBody(receivedMh, d);
-		if ((receivedMh.messageFlags & 0x02) != 0) {
-			auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
-			if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
-				specificProtocolHandlers.erase(specificProtocolHandlerIt);
-			}
+	try {
+		if (receivedMh.messageType == Energistics::Etp::v12::Protocol::Core::Acknowledge::messageTypeId) {
+			// Receive Acknowledge
+			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Core)]->decodeMessageBody(receivedMh, d);
 		}
-	}
-	else {
-		auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
-		if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
-			// Receive a message which has been asked to be processed with a specific protocol handler
-			specificProtocolHandlerIt->second->decodeMessageBody(receivedMh, d);
+		else if (receivedMh.messageType == Energistics::Etp::v12::Protocol::Core::ProtocolException::messageTypeId) {
+			// Receive Protocol Exception
+			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Core)]->decodeMessageBody(receivedMh, d);
 			if ((receivedMh.messageFlags & 0x02) != 0) {
-				specificProtocolHandlers.erase(specificProtocolHandlerIt);
+				auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
+				if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
+					specificProtocolHandlers.erase(specificProtocolHandlerIt);
+				}
 			}
-		}
-		else if (receivedMh.protocol < protocolHandlers.size() && protocolHandlers[receivedMh.protocol] != nullptr) {
-			// Receive a message to be processed with a common protocol handler in case for example an unsollicited notification
-			protocolHandlers[receivedMh.protocol]->decodeMessageBody(receivedMh, d);
 		}
 		else {
-			flushReceivingBuffer();
-			send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(4, "The agent does not support the protocol " + std::to_string(receivedMh.protocol) + " identified in a message header."), receivedMh.messageId, 0x02);
+			auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
+			if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
+				// Receive a message which has been asked to be processed with a specific protocol handler
+				specificProtocolHandlerIt->second->decodeMessageBody(receivedMh, d);
+				if ((receivedMh.messageFlags & 0x02) != 0) {
+					specificProtocolHandlers.erase(specificProtocolHandlerIt);
+				}
+			}
+			else if (receivedMh.protocol < protocolHandlers.size() && protocolHandlers[receivedMh.protocol] != nullptr) {
+				// Receive a message to be processed with a common protocol handler in case for example an unsollicited notification
+				protocolHandlers[receivedMh.protocol]->decodeMessageBody(receivedMh, d);
+			}
+			else {
+				flushReceivingBuffer();
+				send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(4, "The agent does not support the protocol " + std::to_string(receivedMh.protocol) + " identified in a message header."), receivedMh.messageId, 0x02);
+			}
 		}
+	}
+	catch (avro::Exception& e)
+	{
+		flushReceivingBuffer();
+		send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(19, "The agent is unable to de-serialize the body of the message id " + receivedMh.messageId), 0, 0x02);
 	}
 
 	do_read();
