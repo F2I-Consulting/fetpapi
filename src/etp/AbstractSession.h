@@ -179,7 +179,12 @@ namespace ETP_NS
 		 */
 		template<typename T> int64_t send(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
-			return sendWithSpecificHandler(mb, protocolHandlers[mb.protocolId], correlationId, messageFlags);
+			if (protocolHandlers.size() > mb.protocolId) {
+				sendWithSpecificHandler(mb, protocolHandlers[mb.protocolId], correlationId, messageFlags);
+			}
+			else {
+				throw std::logic_error("The agent has no registered handler at all for the protocol " + std::to_string(mb.protocolId));
+			}
 		}
 
 		/**

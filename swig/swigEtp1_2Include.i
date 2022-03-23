@@ -204,6 +204,7 @@ typedef long long 				time_t;
 	%nspace Energistics::Etp::v12::Datatypes::ArrayOfDouble;
 	%nspace Energistics::Etp::v12::Datatypes::ArrayOfString;
 	
+	%nspace Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind;
 	%nspace Energistics::Etp::v12::Datatypes::Object::ContextInfo;
 	%nspace Energistics::Etp::v12::Datatypes::Object::ContextScopeKind;
 	%nspace Energistics::Etp::v12::Datatypes::Object::DataObject;
@@ -212,6 +213,11 @@ typedef long long 				time_t;
 	%nspace Energistics::Etp::v12::Datatypes::Object::Dataspace;
 	%nspace Energistics::Etp::v12::Datatypes::Object::Edge;
 	%nspace Energistics::Etp::v12::Datatypes::Object::RelationshipKind;
+	%nspace Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind;
+	%nspace Energistics::Etp::v12::Datatypes::Object::ObjectChange;
+	%nspace Energistics::Etp::v12::Datatypes::Object::PutResponse;
+	%nspace Energistics::Etp::v12::Datatypes::Object::SubscriptionInfo;
+	
 	
 	%nspace Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier;
 	%nspace Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray;
@@ -271,6 +277,17 @@ typedef long long 				time_t;
 	%nspace Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse;
 	%nspace Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces;
 	%nspace Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse;
+	
+	%nspace Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse;
+	%nspace Energistics::Etp::v12::Protocol::StoreNotification::Chunk;
+	%nspace Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked;
+	%nspace Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted;
+	%nspace Energistics::Etp::v12::Protocol::StoreNotification::SubscriptionEnded;
+	%nspace Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications;
+	%nspace Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged;
+	%nspace Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged;
+	%nspace Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications;
+	%nspace Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications;
 #endif
 
 %include "std_map.i"
@@ -461,13 +478,19 @@ namespace Energistics {
 %template(SupportedProtocolVector) std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol>;
 %template(MapStringDataValue) std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue>;
 %template(MapStringErrorInfo) std::map<std::string, Energistics::Etp::v12::Datatypes::ErrorInfo>;
+%template(MapStringArrayOfString) std::map<std::string, Energistics::Etp::v12::Datatypes::ArrayOfString>;
 
 namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Datatypes {			
-				namespace Object {				
-					struct ContextInfo{					
+	namespace Etp {
+		namespace v12 {
+			namespace Datatypes {
+				namespace Object {
+					enum class ActiveStatusKind : int {
+						Active=0,
+						Inactive=1
+					};
+					
+					struct ContextInfo{
 						std::string uri;
 						int32_t depth;
 						std::vector<std::string> dataObjectTypes;
@@ -485,8 +508,10 @@ namespace Energistics {
 						std::string uri;
 						std::vector<std::string> alternateUris;
 						std::string name;
-						boost::optional<int32_t> sourceCount;
-						boost::optional<int32_t> targetCount;
+						bool has_sourceCount();
+						int32_t get_sourceCount();
+						bool has_targetCount();
+						int32_t get_targetCount();
 						int64_t lastChanged;
 						int64_t storeLastWrite;
 						int64_t storeCreated;
@@ -502,7 +527,8 @@ namespace Energistics {
 					struct DataObject{
 						Energistics::Etp::v12::Datatypes::Object::Resource resource;
 						std::string format;
-						boost::optional<Energistics::Etp::v12::Datatypes::Uuid> blobId;
+						bool has_blobId();
+						Energistics::Etp::v12::Datatypes::Uuid get_blobId();
 						std::string data;
 					};
 
@@ -526,6 +552,37 @@ namespace Energistics {
 						Secondary=1,
 						Both=2
 					};
+					
+					enum class ObjectChangeKind : int {
+						insert=0,
+						update=1,
+						authorized=2,
+						joined=3,
+						unjoined=4,
+						joinedSubscription=5,
+						unjoinedSubscription=6
+					};
+
+					struct ObjectChange{
+						Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind changeKind;
+						int64_t changeTime;
+						Energistics::Etp::v12::Datatypes::Object::DataObject dataObject;
+					};
+
+					struct PutResponse{					
+						std::vector<std::string> createdContainedObjectUris;
+						std::vector<std::string> deletedContainedObjectUris;
+						std::vector<std::string> joinedContainedObjectUris;
+						std::vector<std::string> unjoinedContainedObjectUris;
+					};
+
+					struct SubscriptionInfo{					
+						Energistics::Etp::v12::Datatypes::Object::ContextInfo context;
+						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope;
+						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
+						bool includeObjectData=false;
+						std::string format;
+					};
 				}
 			}
 		}
@@ -537,6 +594,9 @@ namespace Energistics {
 %template(EdgeVector) std::vector<Energistics::Etp::v12::Datatypes::Object::Edge>;
 %template(MapStringDataObject) std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject>;
 %template(MapStringDataspace) std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace>;
+%template(MapStringPutResponse) std::map<std::string, Energistics::Etp::v12::Datatypes::Object::PutResponse>;
+%template(MapStringSubscriptionInfo) std::map<std::string, Energistics::Etp::v12::Datatypes::Object::SubscriptionInfo>;
+%template(SubscriptionInfoVector) std::vector<Energistics::Etp::v12::Datatypes::Object::SubscriptionInfo>;
 
 namespace Energistics {
 	namespace Etp {	
@@ -637,6 +697,18 @@ namespace Energistics {
 						static const int messageTypeId=5;
 					};
 					
+					struct Authorize{
+						std::string authorization;
+						std::map<std::string, std::string> supplementalAuthorization;
+						static const int messageTypeId=6;
+					};
+					
+					struct AuthorizeResponse{
+						bool success=false;
+						std::vector<std::string> challenges;
+						static const int messageTypeId=7;
+					};
+					
 					struct Ping{					
 						int64_t currentDateTime;
 						static const int messageTypeId=8;
@@ -647,8 +719,9 @@ namespace Energistics {
 						static const int messageTypeId=9;
 					};
 					
-					struct ProtocolException{					
-						boost::optional<Energistics::Etp::v12::Datatypes::ErrorInfo> error;
+					struct ProtocolException{
+						bool has_error();
+						Energistics::Etp::v12::Datatypes::ErrorInfo get_error();
 						std::map<std::string, Energistics::Etp::v12::Datatypes::ErrorInfo> errors;
 						static const int messageTypeId=1000;
 					};
@@ -674,8 +747,10 @@ namespace Energistics {
 						Energistics::Etp::v12::Datatypes::Object::ContextInfo context;
 						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope;
 						bool countObjects=false;
-						boost::optional<int64_t> storeLastWriteFilter;
-						boost::optional<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind> activeStatusFilter;
+						bool has_storeLastWriteFilter();
+						int64_t get_storeLastWriteFilter();
+						bool has_activeStatusFilter();
+						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter();
 						static const int messageTypeId=1;
 					};
 					
@@ -684,9 +759,10 @@ namespace Energistics {
 						static const int messageTypeId=4;
 					};
 					
-					struct GetDeletedResources{					
+					struct GetDeletedResources{
 						std::string dataspaceUri;
-						boost::optional<int64_t> deleteTimeFilter;
+						bool has_deleteTimeFilter();
+						int64_t get_deleteTimeFilter();
 						std::vector<std::string> dataObjectTypes;
 						static const int messageTypeId=5;
 					};
@@ -883,12 +959,13 @@ namespace Energistics {
 /**************** DATASPACE PROTOCOL  *****************/
 
 namespace Energistics {
-	namespace Etp {	
-		namespace v12 {		
-			namespace Protocol {			
-				namespace Dataspace {				
-					struct GetDataspaces{					
-						boost::optional<int64_t> storeLastWriteFilter;
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace Dataspace {
+					struct GetDataspaces{
+						bool has_storeLastWriteFilter();
+						int64_t get_storeLastWriteFilter();
 						static const int messageTypeId=1;
 					};
 					
@@ -915,6 +992,70 @@ namespace Energistics {
 					struct DeleteDataspacesResponse{					
 						std::map<std::string, std::string> success;
 						static const int messageTypeId=5;
+					};
+				}
+			}
+		}
+	}
+}
+
+/**************** STORE NOTIFICATION PROTOCOL  *****************/
+
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace StoreNotification {
+					struct SubscribeNotificationsResponse{
+						std::map<std::string, std::string> success;
+						static const int messageTypeId=10;
+					};
+					struct Chunk{
+						Energistics::Etp::v12::Datatypes::Uuid blobId;
+						std::string data;
+						bool final=false;
+						static const int messageTypeId=9;
+					};
+					struct ObjectAccessRevoked{
+						std::string uri;
+						int64_t changeTime;
+						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
+						static const int messageTypeId=5;
+					};
+					struct ObjectDeleted{
+						std::string uri;
+						int64_t changeTime;
+						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
+						static const int messageTypeId=3;
+					};
+					struct SubscriptionEnded{
+						std::string reason;
+						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
+						static const int messageTypeId=7;
+					};
+					struct UnsubscribeNotifications{
+						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
+						static const int messageTypeId=4;
+					};
+					struct ObjectActiveStatusChanged{
+						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind activeStatus;
+						int64_t changeTime;
+						Energistics::Etp::v12::Datatypes::Object::Resource resource;
+						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
+						static const int messageTypeId=11;
+					};
+					struct ObjectChanged{
+						Energistics::Etp::v12::Datatypes::Object::ObjectChange change;
+						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
+						static const int messageTypeId=2;
+					};
+					struct SubscribeNotifications{
+						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::SubscriptionInfo> request;
+						static const int messageTypeId=6;
+					};
+					struct UnsolicitedStoreNotifications{
+						std::vector<Energistics::Etp::v12::Datatypes::Object::SubscriptionInfo> subscriptions;
+						static const int messageTypeId=8;
 					};
 				}
 			}
@@ -1243,12 +1384,15 @@ namespace ETP_NS
 		virtual ~StoreNotificationHandlers();
 
 	    virtual void on_SubscribeNotifications(const Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications & msg, int64_t messageId);
+		virtual void on_SubscribeNotificationsResponse(const Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse & msg, int64_t messageId);
 	    virtual void on_UnsubscribeNotifications(const Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications & msg, int64_t messageId, int64_t correlationId);
 		virtual void on_UnsolicitedStoreNotifications(const Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications & msg, int64_t correlationId);
 		virtual void on_SubscriptionEnded(const Energistics::Etp::v12::Protocol::StoreNotification::SubscriptionEnded & msg, int64_t correlationId);
 	    virtual void on_ObjectChanged(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged & msg, int64_t correlationId);
 	    virtual void on_ObjectDeleted(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted & msg, int64_t correlationId);
 		virtual void on_ObjectAccessRevoked(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked & msg, int64_t correlationId);
+		virtual void on_ObjectActiveStatusChanged(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged & msg, int64_t correlationId);
+		virtual void on_Chunk(const Energistics::Etp::v12::Protocol::StoreNotification::Chunk & msg, int64_t correlationId);
 	};
 	
 	class DataArrayHandlers : public ProtocolHandlers
@@ -1373,6 +1517,17 @@ namespace ETP_NS
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse>;
 		
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::Chunk>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::SubscriptionEnded>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications>;
+		
 		template<typename T> int64_t send(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
 			return sendWithSpecificHandler(mb, protocolHandlers[mb.protocolId], correlationId, messageFlags);
@@ -1427,6 +1582,17 @@ namespace ETP_NS
 		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse>;
+		
+		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse>;
+		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::Chunk>;
+		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked>;
+		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted>;
+		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::SubscriptionEnded>;
+		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications>;
+		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged>;
+		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged>;
+		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications>;
+		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications>;
 		
 		bool isMessageStillProcessing(int64_t msgId) const;
 		void close();
@@ -1508,7 +1674,6 @@ namespace ETP_NS
 	{
 	public:
 		Server();
-		std::vector< std::shared_ptr<AbstractSession> >& getSessions();
 		void listen(ServerInitializationParameters* serverInitializationParams, int threadCount);
 	};
 	
