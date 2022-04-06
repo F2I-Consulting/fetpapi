@@ -76,7 +76,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 	catch (avro::Exception& e)
 	{
 		flushReceivingBuffer();
-		send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(19, "The agent is unable to de-serialize the header of the received message."), 0, 0x02);
+		send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(19, "The agent is unable to de-serialize the header of the received message : " + std::string(e.what())), 0, 0x02);
 		do_read();
 		return;
 	}
@@ -125,7 +125,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 	catch (avro::Exception& e)
 	{
 		flushReceivingBuffer();
-		send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(19, "The agent is unable to de-serialize the body of the message id " + receivedMh.messageId), 0, 0x02);
+		send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(19, "The agent is unable to de-serialize the body of the message id " + std::to_string(receivedMh.messageId) + " : " + std::string(e.what())), 0, 0x02);
 	}
 
 	do_read();

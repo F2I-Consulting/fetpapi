@@ -233,7 +233,7 @@ void DataArrayHandlers::on_GetDataArrayMetadata(const Energistics::Etp::v12::Pro
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The DataArrayHandlers::on_GetDataArrayMetadata method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void DataArrayHandlers::on_GetDataArrayMetadataResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse& gdamr, int64_t correlationID)
+void DataArrayHandlers::on_GetDataArrayMetadataResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse& gdamr, int64_t)
 {
 	for (const auto& element : gdamr.arrayMetadata) {
 		const Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata& daMetadata = element.second;

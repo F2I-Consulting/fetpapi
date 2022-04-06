@@ -180,7 +180,7 @@ namespace ETP_NS
 		template<typename T> int64_t send(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
 			if (protocolHandlers.size() > mb.protocolId) {
-				sendWithSpecificHandler(mb, protocolHandlers[mb.protocolId], correlationId, messageFlags);
+				return sendWithSpecificHandler(mb, protocolHandlers[mb.protocolId], correlationId, messageFlags);
 			}
 			else {
 				throw std::logic_error("The agent has no registered handler at all for the protocol " + std::to_string(mb.protocolId));
@@ -248,11 +248,21 @@ namespace ETP_NS
 			webSocketSessionClosed = true;
 		}
 
+		/**
+		* Check if the websocket session (starting after the HTTP handshake/upgrade) is not opened yet or has been closed.
+		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT bool isWebSocketSessionClosed() const { return webSocketSessionClosed;  }
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setEtpSessionClosed(bool etpSessionClosed_) { etpSessionClosed = etpSessionClosed_; }
+
+		/**
+		* Check if the ETP session (starting after the Core.OpenSession or Core.RequestSession message) is not opened yet or has been closed.
+		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT bool isEtpSessionClosed() const { return webSocketSessionClosed || etpSessionClosed; }
 
+		/**
+		* Check wether a particular ETP message has been responded or not by the other agent.
+		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT bool isMessageStillProcessing(int64_t msgId) const { return specificProtocolHandlers.count(msgId) > 0; }
 
 		virtual void setMaxWebSocketMessagePayloadSize(int64_t value) = 0;

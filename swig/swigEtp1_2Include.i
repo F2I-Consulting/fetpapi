@@ -1594,6 +1594,7 @@ namespace ETP_NS
 		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications>;
 		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications>;
 		
+		bool isEtpSessionClosed() const;
 		bool isMessageStillProcessing(int64_t msgId) const;
 		void close();
 	};

@@ -47,7 +47,6 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 		Energistics::Etp::v12::Protocol::Core::OpenSession os;
 		avro::decode(*d, os);
 		session->flushReceivingBuffer();
-		session->setEtpSessionClosed(false);
 
 		// Check MaxWebSocketMessagePayloadSize capability
 		auto search = os.endpointCapabilities.find("MaxWebSocketMessagePayloadSize");
@@ -60,6 +59,7 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 			}
 		}
 
+		session->setEtpSessionClosed(false);
 		on_OpenSession(os, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::CloseSession::messageTypeId) {
