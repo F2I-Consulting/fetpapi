@@ -33,27 +33,31 @@ namespace ETP_NS
 		virtual ~GetFullDataArrayHandlers() = default;
 
 		/**
-		* @param msg			The ETP message boday which has been received and which is to be processed.
+		* @param msg			The ETP message body which has been received and which is to be processed.
 		* @param correlationId	It is the correlation ID to use if a response is needed to this message. It corresponds to the message ID of the received ETP message.
 		*/
 		void on_GetDataArraysResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse & msg, int64_t correlationId) final;
 		
 		/**
-		* @param msg			The ETP message boday which has been received and which is to be processed.
+		* @param msg			The ETP message body which has been received and which is to be processed.
 		* @param correlationId	It is the correlation ID to use if a response is needed to this message. It corresponds to the message ID of the received ETP message.
 		*/
 		void on_GetDataArrayMetadataResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse& msg, int64_t) final
 		{
+			if (msg.arrayMetadata.empty()) {
+				return;
+			}
+
 			if (msg.arrayMetadata.size() == 1) {
 				dataArrayMetadata = msg.arrayMetadata.begin()->second;
+				return;
 			}
-			else {
-				throw std::range_error("These handlers can only work with a single DataArray in GetDataArrayMetadataResponse");
-			}
+			
+			throw std::range_error("These handlers cannot work with more than one DataArray in GetDataArrayMetadataResponse");
 		}
 
 		/**
-		* @param msg			The ETP message boday which has been received and which is to be processed.
+		* @param msg			The ETP message body which has been received and which is to be processed.
 		* @param correlationId	It is the correlation ID to use if a response is needed to this message. It corresponds to the message ID of the received ETP message.
 		*/
 		void on_GetDataSubarraysResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataSubarraysResponse& msg, int64_t) final;

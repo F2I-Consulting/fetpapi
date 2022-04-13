@@ -23,16 +23,10 @@ under the License.
 using namespace ETP_NS;
 using namespace std;
 
-std::string FesapiHdfProxy::getUri() const
-{
-	const std::string xmlNs = getXmlNamespace();
-	return "eml:///" + (xmlNs == "eml20" ? xmlNs + ".obj_" : xmlNs + ".") + "EpcExternalPartReference(" + getUuid() + ")";
-}
-
 Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier FesapiHdfProxy::buildDataArrayIdentifier(const std::string & datasetName) const
 {
 	Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier dai;
-	dai.uri = getUri();
+	dai.uri = buildEtp12Uri();
 	dai.pathInResource = datasetName;
 
 	return dai;
@@ -137,7 +131,7 @@ void FesapiHdfProxy::writeArrayNdOfDoubleValues(const string & groupName,
 	}
 
 	Energistics::Etp::v12::Protocol::DataArray::PutDataArrays pda;
-	pda.dataArrays["0"].uid.uri = getUri();
+	pda.dataArrays["0"].uid.uri = buildEtp12Uri();
 	pda.dataArrays["0"].uid.pathInResource = (groupName.back() == '/' ? groupName : groupName + '/') + name;
 
 	size_t totalCount = 1;

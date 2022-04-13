@@ -45,18 +45,28 @@ namespace ETP_NS
 	namespace EtpHelpers {
 
 		/**
-		* Get the dataobject type from an URI
-		* @return empty string if the operation cannot succeed
+		* Get the dataobject type from a canonical ETP 1.2 URI.
+		*
+		* @param uri	The input canonical ETP 1.2 URI
+		* @return		The URI dataobject type or the empty string if the operation cannot succeed
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::string getDataObjectType(const std::string& uri);
 
 		/**
-		* Provide a session if you want to send a protocol exception in case of non validation.
+		* Get the dataspace URI from a canonical ETP 1.2 URI.
+		*
+		* @param uri	The input canonical ETP 1.2 URI
+		* @return		The dataspace URI or the empty string if the operation cannot succeed
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::string getDataspaceUri(const std::string& uri);
+
+		/**
+		* @param session Provide this parameter if you want to send a protocol exception in case of non validation.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::ErrorInfo validateUri(const std::string & uri, AbstractSession* session = nullptr);
 
 		/**
-		* Provide a session if you want to send a protocol exception in case of non validation.
+		* @param session Provide this parameter if you want to send a protocol exception in case of non validation.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::ErrorInfo validateDataObjectUri(const std::string & uri, AbstractSession* session = nullptr);
 
@@ -66,7 +76,7 @@ namespace ETP_NS
 		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Protocol::Core::ProtocolException buildSingleMessageProtocolException(int32_t m_code, const std::string & m_message);
 
 		/**
-		* extract and return the uuid and the version of a dataobejct based on its URI.
+		* Extract and return the uuid and the version of a dataobject based on its URI.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::pair<std::string, std::string> getUuidAndVersionFromUri(const std::string & uri);
 	}

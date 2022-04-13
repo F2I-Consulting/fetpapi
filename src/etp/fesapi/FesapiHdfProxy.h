@@ -566,7 +566,6 @@ namespace ETP_NS
 		unsigned int compressionLevel;
 		std::string xmlNs_;
 
-		std::string getUri() const;
 		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier buildDataArrayIdentifier(const std::string & datasetName) const;
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrays buildGetDataArraysMessage(const std::string & datasetName) const;
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata buildGetDataArrayMetadataMessage(const std::string & datasetName) const;

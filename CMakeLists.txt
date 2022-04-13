@@ -172,6 +172,7 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/nsDefinitions.h ${CMAKE_CURRENT
 # SWIG wrapping
 # ============================================================================
 
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/swigEtp1_2Include.i.in ${CMAKE_CURRENT_SOURCE_DIR}/swig/swigEtp1_2Include.i) # Overwrite if different
 set (WITH_JAVA_WRAPPING OFF CACHE BOOL "Compile the swig cpp generated file for Java wrappers.")
 set (WITH_DOTNET_WRAPPING OFF CACHE BOOL "Compile the swig cpp generated file for .NET wrappers.")
 set (WITH_PYTHON_WRAPPING OFF CACHE BOOL "Compile the swig cpp generated file for Python wrappers.")
@@ -268,6 +269,16 @@ install(TARGETS ${PROJECT_NAME}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
+
+IF (WIN32)
+	#PDB for debug
+	INSTALL (
+		FILES $<TARGET_PDB_FILE:${PROJECT_NAME}>
+		CONFIGURATIONS Debug RelWithDebInfo
+		DESTINATION ${CMAKE_INSTALL_BINDIR}
+		OPTIONAL
+	)
+ENDIF()
 
 install(EXPORT Fetpapi-export
   FILE

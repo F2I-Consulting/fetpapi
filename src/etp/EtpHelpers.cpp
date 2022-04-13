@@ -34,6 +34,19 @@ std::string ETP_NS::EtpHelpers::getDataObjectType(const std::string& uri)
 		: "";
 }
 
+std::string ETP_NS::EtpHelpers::getDataspaceUri(const std::string& uri)
+{
+	const auto dataspacePos = uri.find("dataspace('");
+	if (dataspacePos == std::string::npos) {
+		return "";
+	}
+
+	const auto slashAfterDataspacePos = uri.find('/', dataspacePos);
+	return slashAfterDataspacePos == std::string::npos
+		? uri
+		: uri.substr(0, slashAfterDataspacePos);
+}
+
 Energistics::Etp::v12::Datatypes::ErrorInfo ETP_NS::EtpHelpers::validateUri(const std::string & uri, ETP_NS::AbstractSession* session)
 {
 	Energistics::Etp::v12::Datatypes::ErrorInfo errorInfo;

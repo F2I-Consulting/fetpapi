@@ -20,8 +20,8 @@ under the License.
 %catches(Swig::DirectorException);
 
 #ifdef WITH_FESAPI
-%import "C:/Users/philippe/dev/fesapiEnv/build/v2.3.0.0/fesapiCpp/install/include/fesapi/common/DataObjectReference.h"
-%import "C:/Users/philippe/dev/fesapiEnv/build/v2.3.0.0/fesapiCpp/install/include/fesapi/common/HdfProxyFactory.h"
+%import "${FESAPI_INCLUDE_DIR}/fesapi/common/DataObjectReference.h"
+%import "${FESAPI_INCLUDE_DIR}/fesapi/common/HdfProxyFactory.h"
 #endif
 
 %{
