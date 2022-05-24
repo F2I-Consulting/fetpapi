@@ -64,7 +64,6 @@ Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata FesapiHdfPro
 	return handlers->getDataArrayMetadata();
 }
 
-
 COMMON_NS::AbstractObject::hdfDatatypeEnum FesapiHdfProxy::getHdfDatatypeInDataset(const std::string & datasetName)
 {
 	const auto daMetadata = getDataArrayMetadata(datasetName);

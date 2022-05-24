@@ -36,15 +36,16 @@ std::string ETP_NS::EtpHelpers::getDataObjectType(const std::string& uri)
 
 std::string ETP_NS::EtpHelpers::getDataspaceUri(const std::string& uri)
 {
-	const auto dataspacePos = uri.find("dataspace('");
+	const size_t dataspacePos = uri.find("dataspace('");
 	if (dataspacePos == std::string::npos) {
 		return "";
 	}
 
-	const auto slashAfterDataspacePos = uri.find('/', dataspacePos);
-	return slashAfterDataspacePos == std::string::npos
-		? uri
-		: uri.substr(0, slashAfterDataspacePos);
+	const size_t closingParenthesisPos = uri.find(')', dataspacePos);
+	if (closingParenthesisPos == std::string::npos) {
+		throw std::invalid_argument("The uri " + uri + " is malformed because it does not contain a closing parenthesis after the dataspace path.");
+	}
+	return uri.substr(0, closingParenthesisPos+1);
 }
 
 Energistics::Etp::v12::Datatypes::ErrorInfo ETP_NS::EtpHelpers::validateUri(const std::string & uri, ETP_NS::AbstractSession* session)
