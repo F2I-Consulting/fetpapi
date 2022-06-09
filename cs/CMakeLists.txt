@@ -59,5 +59,13 @@ target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/swig/swigGeneratedCsW
 set (CS_LIBRARY_NAME FetpapiCs)
 
 #file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/cs/src" DOS_STYLE_SOURCE_DIR)
-configure_file(${CMAKE_SOURCE_DIR}/cmake/fetpapiCs.csproj.template ${CMAKE_SOURCE_DIR}/cs/fetpapiCs.csproj) # Overwrite if different
+if (WITH_FESAPI)
+	set (FESAPI_CS_PROJECT FESAPI_CS_PROJECT-NOTFOUND CACHE FILEPATH "Path to the FESAPI CSHARP Visual studio project")
+	if (NOT EXISTS ${FESAPI_CS_PROJECT})
+		message(WARNING "The FESAPI CSHARP Visual studio project does not look to be a valid file. Please modify it.")
+	endif ()
+	configure_file(${CMAKE_SOURCE_DIR}/cmake/fetpapiCsWithFesapi.csproj.template ${CMAKE_SOURCE_DIR}/cs/fetpapiCs.csproj) # Overwrite if different
+else ()
+	configure_file(${CMAKE_SOURCE_DIR}/cmake/fetpapiCsWithoutFesapi.csproj.template ${CMAKE_SOURCE_DIR}/cs/fetpapiCs.csproj) # Overwrite if different
+endif (WITH_FESAPI)
 configure_file(${CMAKE_SOURCE_DIR}/cmake/AssemblyInfo.cs ${CMAKE_SOURCE_DIR}/cs/Properties/AssemblyInfo.cs) # Overwrite if different

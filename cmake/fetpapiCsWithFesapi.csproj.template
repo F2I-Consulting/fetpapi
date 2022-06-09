@@ -8,7 +8,7 @@
     <ProjectGuid>{38AEA388-3724-4CB3-99FB-205D25012D66}</ProjectGuid>
 	<OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>f2i.energisticsStandardsApi</RootNamespace>
+    <RootNamespace>F2iConsulting.Fetpapi</RootNamespace>
     <AssemblyName>${CS_LIBRARY_NAME}</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -92,6 +92,12 @@
   <ItemGroup>
     <Compile Include="src\**\*.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="${FESAPI_CS_PROJECT}">
+      <Project>{50cf64ab-ea6e-4d04-ac83-6dfec148a4f0}</Project>
+      <Name>fesapiCs</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

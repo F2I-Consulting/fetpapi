@@ -1707,6 +1707,9 @@ namespace ETP_NS
 #ifdef WITH_FESAPI
 %typemap(javaimports) FesapiHdfProxyFactory %{
 	import com.f2i_consulting.fesapi.common.HdfProxyFactory;
+%}
+%typemap(csimports) FesapiHdfProxyFactory %{
+	using F2iConsulting.Fesapi.common;
 %}	
 	class FesapiHdfProxyFactory : public COMMON_NS::HdfProxyFactory
 	{
