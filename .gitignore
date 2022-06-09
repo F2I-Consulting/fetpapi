@@ -1,6 +1,7 @@
 ## Ignore the cmake generated files
 /cs/fetpapiCs.csproj
 /swig/setup.py
+/swig/swigEtp1_2Include.i
 /src/nsDefinitions.h
 
 ## Ignore csharp swig generated files
