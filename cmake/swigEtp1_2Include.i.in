@@ -22,6 +22,7 @@ under the License.
 #ifdef WITH_FESAPI
 %import "${FESAPI_INCLUDE_DIR}/fesapi/common/DataObjectReference.h"
 %import "${FESAPI_INCLUDE_DIR}/fesapi/common/HdfProxyFactory.h"
+%import "${FESAPI_INCLUDE_DIR}/fesapi/common/AbstractObject.h"
 #endif
 
 %{
@@ -162,6 +163,7 @@ typedef long long 				time_t;
 #ifdef WITH_FESAPI
 %{
 #include "../src/etp/fesapi/FesapiHdfProxy.h"
+#include "../src/etp/fesapi/FesapiHelpers.h"
 %}
 #endif
 
@@ -1716,5 +1718,25 @@ namespace ETP_NS
 	public:
 		FesapiHdfProxyFactory(PlainClientSession* session);
 	};
+	
+	namespace FesapiHelpers {
+		/**
+		* Build and return an ETP resource from an Energistics object.
+		* @param obj		The input Energistics obj
+		* @param countRels	Indicate if the returned resource contain the count of source or target relationships.
+		* @return			The ETP resource built from the Energistics object
+		*/
+		Energistics::Etp::v12::Datatypes::Object::Resource buildEtpResourceFromEnergisticsObject(COMMON_NS::AbstractObject const* obj, bool countRels = true);
+
+		/**
+		* Build and return an ETP data object from an Energistics object.
+		* @param obj	The input Energistics obj
+		* @return		The ETP data object built from the Energistics object
+		*/
+		Energistics::Etp::v12::Datatypes::Object::DataObject buildEtpDataObjectFromEnergisticsObject(COMMON_NS::AbstractObject * obj, bool includeSerialization = true);
+	}
 #endif
 }
+
+%pragma(java) moduleimports="import com.f2i_consulting.fesapi.common.AbstractObject;"
+%pragma(csharp) moduleimports="using F2iConsulting.Fesapi.common;"
