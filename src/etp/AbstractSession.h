@@ -188,6 +188,20 @@ namespace ETP_NS
 		}
 
 		/**
+		* Send a message to the server and block the thread until the answer of the server has been processed by the handlers
+		 *
+		 * @param mb The ETP message body to send
+		 * @param correlationId The ID of the message which this message is answering to.
+		 * @param messageFlags The message flags to be sent within the header
+		 * @return The ID of the message that has been put in the sending queue.
+		*/
+		template<typename T> void sendAndBlock(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
+		{
+			int64_t msgId = send(mb, correlationId, messageFlags);
+			while (isMessageStillProcessing(msgId)) {}
+		}
+
+		/**
 		* Send a message and register a specific handler for the response.
 		*/
 		template<typename T> int64_t sendWithSpecificHandler(const T & mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)

@@ -1532,7 +1532,12 @@ namespace ETP_NS
 		
 		template<typename T> int64_t send(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
-			return sendWithSpecificHandler(mb, protocolHandlers[mb.protocolId], correlationId, messageFlags);
+			if (protocolHandlers.size() > mb.protocolId) {
+				return sendWithSpecificHandler(mb, protocolHandlers[mb.protocolId], correlationId, messageFlags);
+			}
+			else {
+				throw std::logic_error("The agent has no registered handler at all for the protocol " + std::to_string(mb.protocolId));
+			}
 		}
 		%template(send) send<Energistics::Etp::v12::Protocol::Core::RequestSession>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Core::OpenSession>;
@@ -1595,6 +1600,74 @@ namespace ETP_NS
 		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged>;
 		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications>;
 		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications>;
+		
+		template<typename T> void sendAndBlock(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
+		{
+			int64_t msgId = send(mb, correlationId, messageFlags);
+			while (isMessageStillProcessing(msgId)) {}
+		}
+		
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::RequestSession>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::OpenSession>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::CloseSession>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::ProtocolException>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::Acknowledge>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::Ping>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::Pong>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::Authorize>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::AuthorizeResponse>;
+		
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Discovery::GetResources>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Discovery::GetDeletedResourcesResponse>;
+		
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::GetDataObjects>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::PutDataObjects>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::DeleteDataObjects>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::Chunk>;
+		
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::GetDataArrays>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::PutDataArrays>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::PutDataArraysResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::GetDataSubarraysResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::PutDataSubarraysResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse>;
+		
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Transaction::StartTransaction>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Transaction::CommitTransaction>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse>;
+		
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse>;
+		
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::Chunk>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::SubscriptionEnded>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications>;
 		
 		bool isEtpSessionClosed() const;
 		bool isMessageStillProcessing(int64_t msgId) const;
