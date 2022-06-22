@@ -1143,95 +1143,87 @@ namespace Energistics {
 	}
 
 	%fragment("store_handler_reference_function", "header", fragment="store_handler_reference_init") {
-
-	static PyObject *store_handler_reference() {
-	  static PyObject *store_handler_reference_string = SWIG_Python_str_FromChar("__store_handler_reference");
-	  return store_handler_reference_string;
-	}
-
+		static PyObject *store_handler_reference() {
+		  static PyObject *store_handler_reference_string = SWIG_Python_str_FromChar("__store_handler_reference");
+		  return store_handler_reference_string;
+		}
 	}
 
 	%extend ETP_NS::AbstractSession {
-	%typemap(ret, fragment="store_handler_reference_function") void setStoreProtocolHandlers(std::shared_ptr<StoreHandlers> storeHandlers) %{
-	  PyObject_SetAttr($self, store_handler_reference(), args);
-	%}
+		%typemap(ret, fragment="store_handler_reference_function") void setStoreProtocolHandlers(std::shared_ptr<StoreHandlers> storeHandlers) %{
+		  PyObject_SetAttr($self, store_handler_reference(), args);
+		%}
 	}
 	
 	%fragment("store_notification_handler_reference_init", "init") {
-	  store_notification_handler_reference();
+		store_notification_handler_reference();
 	}
 
 	%fragment("store_notification_handler_reference_function", "header", fragment="store_notification_handler_reference_init") {
-
-	static PyObject *store_notification_handler_reference() {
-	  static PyObject *store_notification_handler_reference_string = SWIG_Python_str_FromChar("__store_notification_handler_reference");
-	  return store_notification_handler_reference_string;
-	}
-
+		static PyObject *store_notification_handler_reference() {
+			static PyObject *store_notification_handler_reference_string = SWIG_Python_str_FromChar("__store_notification_handler_reference");
+			return store_notification_handler_reference_string;
+		}
 	}
 
 	%extend ETP_NS::AbstractSession {
-	%typemap(ret, fragment="store_notification_handler_reference_function") void setStoreNotificationProtocolHandlers(std::shared_ptr<ETP_NS::StoreNotificationHandlers> storeNotificationHandlers) %{
-	  PyObject_SetAttr($self, store_notification_handler_reference(), args);
-	%}
+		%typemap(ret, fragment="store_notification_handler_reference_function") void setStoreNotificationProtocolHandlers(std::shared_ptr<ETP_NS::StoreNotificationHandlers> storeNotificationHandlers) %{
+		  PyObject_SetAttr($self, store_notification_handler_reference(), args);
+		%}
 	}
 
-// DataArray	
-%fragment("data_array_handler_reference_init", "init") {
+	// DataArray	
+	%fragment("data_array_handler_reference_init", "init") {
 	  data_array_handler_reference();
-}
-%fragment("data_array_handler_reference_function", "header", fragment="data_array_handler_reference_init") {
+	}
+
+	%fragment("data_array_handler_reference_function", "header", fragment="data_array_handler_reference_init") {
 
 	static PyObject *data_array_handler_reference() {
-	  static PyObject *data_array_handler_reference_string = SWIG_Python_str_FromChar("__data_array_handler_reference");
-	  return data_array_handler_reference_string;
+		static PyObject *data_array_handler_reference_string = SWIG_Python_str_FromChar("__data_array_handler_reference");
+		return data_array_handler_reference_string;
+		}
 	}
 
-}
-
-%extend ETP_NS::AbstractSession {
-%typemap(ret, fragment="data_array_handler_reference_function") void setDataArrayProtocolHandlers(std::shared_ptr<DataArrayHandlers> dataArrayHandlers) %{
-	  PyObject_SetAttr($self, data_array_handler_reference(), args);
-	%}
-}
+	%extend ETP_NS::AbstractSession {
+		%typemap(ret, fragment="data_array_handler_reference_function") void setDataArrayProtocolHandlers(std::shared_ptr<DataArrayHandlers> dataArrayHandlers) %{
+			PyObject_SetAttr($self, data_array_handler_reference(), args);
+		%}
+	}
 	
 	// Transaction	
-%fragment("transaction_handler_reference_init", "init") {
-	  transaction_handler_reference();
-}
-%fragment("transaction_handler_reference_function", "header", fragment="transaction_handler_reference_init") {
-
-	static PyObject *transaction_handler_reference() {
-	  static PyObject *transaction_handler_reference_string = SWIG_Python_str_FromChar("__transaction_handler_reference");
-	  return transaction_handler_reference_string;
+	%fragment("transaction_handler_reference_init", "init") {
+		  transaction_handler_reference();
+	}
+	%fragment("transaction_handler_reference_function", "header", fragment="transaction_handler_reference_init") {
+		static PyObject *transaction_handler_reference() {
+		  static PyObject *transaction_handler_reference_string = SWIG_Python_str_FromChar("__transaction_handler_reference");
+		  return transaction_handler_reference_string;
+		}
 	}
 
-}
-
-%extend ETP_NS::AbstractSession {
-%typemap(ret, fragment="transaction_handler_reference_function") void setTransactionProtocolHandlers(std::shared_ptr<TransactionHandlers> transactionHandlers) %{
-	  PyObject_SetAttr($self, transaction_handler_reference(), args);
-	%}
-}
+	%extend ETP_NS::AbstractSession {
+		%typemap(ret, fragment="transaction_handler_reference_function") void setTransactionProtocolHandlers(std::shared_ptr<TransactionHandlers> transactionHandlers) %{
+			  PyObject_SetAttr($self, transaction_handler_reference(), args);
+			%}
+	}
 	
 	// Dataspace	
-%fragment("dataspace_handler_reference_init", "init") {
-	  dataspace_handler_reference();
-}
-%fragment("dataspace_handler_reference_function", "header", fragment="dataspace_handler_reference_init") {
-
-	static PyObject *dataspace_handler_reference() {
-	  static PyObject *dataspace_handler_reference_string = SWIG_Python_str_FromChar("__dataspace_handler_reference");
-	  return dataspace_handler_reference_string;
+	%fragment("dataspace_handler_reference_init", "init") {
+		  dataspace_handler_reference();
+	}
+	%fragment("dataspace_handler_reference_function", "header", fragment="dataspace_handler_reference_init") {
+		static PyObject *dataspace_handler_reference() {
+		  static PyObject *dataspace_handler_reference_string = SWIG_Python_str_FromChar("__dataspace_handler_reference");
+		  return dataspace_handler_reference_string;
+		}
 	}
 
-}
-
-%extend ETP_NS::AbstractSession {
-%typemap(ret, fragment="dataspace_handler_reference_function") void setDataspaceProtocolHandlers(std::shared_ptr<DataspaceHandlers> dataspaceHandlers) %{
-	  PyObject_SetAttr($self, dataspace_handler_reference(), args);
-	%}
-}
+	%extend ETP_NS::AbstractSession {
+	%typemap(ret, fragment="dataspace_handler_reference_function") void setDataspaceProtocolHandlers(std::shared_ptr<DataspaceHandlers> dataspaceHandlers) %{
+		  PyObject_SetAttr($self, dataspace_handler_reference(), args);
+		%}
+	}
 #endif 
 	
 #ifdef SWIGCSHARP

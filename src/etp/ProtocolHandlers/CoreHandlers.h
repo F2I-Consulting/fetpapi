@@ -32,55 +32,55 @@ namespace ETP_NS
 	    void decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader & mh, avro::DecoderPtr d) override;
 
 		/**
-		* @param msg			The ETP message boday which has been received and which is to be processed.
+		* @param msg			The ETP message body which has been received and which is to be processed.
 		* @param correlationId	It is the correlation ID to use if a response is needed to this message. It corresponds to the message ID of the received ETP message.
 		*/
 	    virtual void on_RequestSession(const Energistics::Etp::v12::Protocol::Core::RequestSession& msg, int64_t correlationId);
 
 		/**
-		* @param msg			The ETP message boday which has been received and which is to be processed.
+		* @param msg			The ETP message body which has been received and which is to be processed.
 		* @param correlationId	It is the correlation ID to use if a response is needed to this message. It corresponds to the message ID of the received ETP message.
 		*/
 	    virtual void on_OpenSession(const Energistics::Etp::v12::Protocol::Core::OpenSession& msg, int64_t correlationId);
 
 		/**
-		* @param msg			The ETP message boday whic hhas been received and which is to be processed.
+		* @param msg			The ETP message body whic hhas been received and which is to be processed.
 		* @param correlationId	It is the correlation ID to use if a response is needed to this message. It corresponds to the message ID of the received ETP message.
 		*/
 	    virtual void on_CloseSession(const Energistics::Etp::v12::Protocol::Core::CloseSession& msg, int64_t correlationId);
 
 		/**
-		* @param msg			The ETP message boday which has been received and which is to be processed.
+		* @param msg			The ETP message body which has been received and which is to be processed.
 		* @param correlationId	It is the correlation ID (not message ID) of the received exception message.
 		*/
 	    virtual void on_ProtocolException(const Energistics::Etp::v12::Protocol::Core::ProtocolException& msg, int64_t correlationId);
 
 		/**
-		* @param msg			The ETP message boday which has been received and which is to be processed.
+		* @param msg			The ETP message body which has been received and which is to be processed.
 		* @param correlationId	It is the correlation ID (not message ID) of the received ackknowledged message.
 		*/
 		virtual void on_Acknowledge(const Energistics::Etp::v12::Protocol::Core::Acknowledge& msg, int64_t correlationId);
 
 		/**
-		* @param msg			The ETP message boday which has been received and which is to be processed.
+		* @param msg			The ETP message body which has been received and which is to be processed.
 		* @param correlationId	It is the correlation ID to use if a response is needed to this message. It corresponds to the message ID of the received ETP message.
 		*/
 		virtual void on_Ping(const Energistics::Etp::v12::Protocol::Core::Ping& msg, int64_t correlationId);
 		
 		/**
-		* @param msg			The ETP message boday which has been received and which is to be processed.
+		* @param msg			The ETP message body which has been received and which is to be processed.
 		* @param correlationId	It is the correlation ID to use if a response is needed to this message. It corresponds to the message ID of the received ETP message.
 		*/
 		virtual void on_Pong(const Energistics::Etp::v12::Protocol::Core::Pong& msg, int64_t correlationId);
 
 		/**
-		* @param msg			The ETP message boday which has been received and which is to be processed.
+		* @param msg			The ETP message body which has been received and which is to be processed.
 		* @param correlationId	It is the correlation ID to use if a response is needed to this message. It corresponds to the message ID of the received ETP message.
 		*/
 		virtual void on_Authorize(const Energistics::Etp::v12::Protocol::Core::Authorize& msg, int64_t correlationId);
 
 		/**
-		* @param msg			The ETP message boday which has been received and which is to be processed.
+		* @param msg			The ETP message body which has been received and which is to be processed.
 		* @param correlationId	It is the correlation ID to use if a response is needed to this message. It corresponds to the message ID of the received ETP message.
 		*/
 		virtual void on_AuthorizeResponse(const Energistics::Etp::v12::Protocol::Core::AuthorizeResponse& msg, int64_t correlationId);
