@@ -40,7 +40,7 @@ FETPAPI uses cmake as its build tool. A 3.12 version or later of cmake is requir
 	- OPENSSL_INCLUDE_DIR : the OpenSSL include directory
 	- LIB_EAY_RELEASE : the OpenSSL crypto library you want to link with.
 	- SSL_EAY_RELEASE : the OpenSSL ssl library you want to link with. 
-- OPTIONALLY, for FESAPI support (see [here](https://github.com/F2I-Consulting/fesapi) for documentation on how to build fesapi), please enable the WITH_FESAPI variable and set the following variables :
+- OPTIONALLY, for FESAPI (v2.4.0.0 as a minimal version) support (see [here](https://github.com/F2I-Consulting/fesapi) for documentation on how to build fesapi), please enable the WITH_FESAPI variable and set the following variables :
 	- FESAPI_INCLUDE_DIR : the directory where the FESAPI headers are located (generally the include subdirectory of the fesapi installation directory). 
 	- (ONLY FOR WINDOWS) FESAPI_LIBRARY_DEBUG : Optional, only used by Visual studio Debug configuration, the FESAPI debug library you want to link to.
 	- FESAPI_LIBRARY_RELEASE : the FESAPI library you want to link to.

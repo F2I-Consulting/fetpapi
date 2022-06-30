@@ -222,16 +222,19 @@ void CoreHandlers::on_CloseSession(const Energistics::Etp::v12::Protocol::Core::
 
 void CoreHandlers::on_ProtocolException(const Energistics::Etp::v12::Protocol::Core::ProtocolException & pe, int64_t correlationId)
 {
+	std::cerr << "EXCEPTION received for message_id " << correlationId << std::endl;
 	if (pe.error) {
-		std::cout << "EXCEPTION received for message_id " << correlationId << " with error code " << pe.error.get().code << " : " << pe.error.get().message << std::endl;
+		std::cerr << "Single error code " << pe.error.get().code << " : " << pe.error.get().message << std::endl;
 	}
-
-	for (const auto& error : pe.errors) {
-		std::cout << "*************************************************" << std::endl;
-		std::cout << "Resource non received : " << std::endl;
-		std::cout << "key : " << error.first << std::endl;
-		std::cout << "message : " << error.second.message << std::endl;
-		std::cout << "code : " << error.second.code << std::endl;
+	else {
+		std::cerr << "One or more error code :" << std::endl;
+		for (const auto& error : pe.errors) {
+			std::cerr << "*************************************************" << std::endl;
+			std::cerr << "Resource non received : " << std::endl;
+			std::cerr << "key : " << error.first << std::endl;
+			std::cerr << "message : " << error.second.message << std::endl;
+			std::cerr << "code : " << error.second.code << std::endl;
+		}
 	}
 }
 

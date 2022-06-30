@@ -64,31 +64,31 @@ Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata FesapiHdfPro
 	return handlers->getDataArrayMetadata();
 }
 
-COMMON_NS::AbstractObject::hdfDatatypeEnum FesapiHdfProxy::getHdfDatatypeInDataset(const std::string & datasetName)
+COMMON_NS::AbstractObject::numericalDatatypeEnum  FesapiHdfProxy::getNumericalDatatype(const std::string & datasetName)
 {
 	const auto daMetadata = getDataArrayMetadata(datasetName);
 	switch (daMetadata.transportArrayType) {
 	case Energistics::Etp::v12::Datatypes::AnyArrayType::bytes:
-	case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfBoolean: return COMMON_NS::AbstractObject::hdfDatatypeEnum::CHAR;
-	case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt: return COMMON_NS::AbstractObject::hdfDatatypeEnum::INT;
-	case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong: return COMMON_NS::AbstractObject::hdfDatatypeEnum::LONG_64;
-	case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfFloat: return COMMON_NS::AbstractObject::hdfDatatypeEnum::FLOAT;
-	case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble: return COMMON_NS::AbstractObject::hdfDatatypeEnum::DOUBLE;
-	default: return COMMON_NS::AbstractObject::hdfDatatypeEnum::UNKNOWN;
+	case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfBoolean: return COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8;
+	case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt: return COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32;
+	case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong: return COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64;
+	case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfFloat: return COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT;
+	case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble: return COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE;
+	default: return COMMON_NS::AbstractObject::numericalDatatypeEnum::UNKNOWN;
 	}
 }
 
 int FesapiHdfProxy::getHdfDatatypeClassInDataset(const std::string & datasetName)
 {
 	// Hard to implement because it would need to include H5TPublic.h which could create a dependency on HDF5 which we try to avoid...
-	throw logic_error("Not implemented yet");
+	throw logic_error("getHdfDatatypeClassInDataset Not implemented yet");
 }
 
 void FesapiHdfProxy::writeItemizedListOfList(const string & groupName, const std::string & name,
-	hdf5_hid_t cumulativeLengthDatatype,
+	COMMON_NS::AbstractObject::numericalDatatypeEnum cumulativeLengthDatatype,
 	const void * cumulativeLength,
 	unsigned long long cumulativeLengthSize,
-	hdf5_hid_t elementsDatatype,
+	COMMON_NS::AbstractObject::numericalDatatypeEnum elementsDatatype,
 	const void * elements,
 	unsigned long long elementsSize)
 {
@@ -97,31 +97,23 @@ void FesapiHdfProxy::writeItemizedListOfList(const string & groupName, const std
 
 unsigned int FesapiHdfProxy::getDimensionCount(const std::string & datasetName)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("getDimensionCount Not implemented yet");
 }
 
 std::vector<unsigned long long> FesapiHdfProxy::getElementCountPerDimension(const std::string & datasetName)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("getElementCountPerDimension Not implemented yet");
 }
 
 signed long long FesapiHdfProxy::getElementCount(const std::string & datasetName)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("getElementCount Not implemented yet");
 }
 
-void FesapiHdfProxy::writeArrayNdOfFloatValues(const string & groupName,
-	const string & name,
-	const float * floatValues,
-	const unsigned long long * numValuesInEachDimension,
-	unsigned int numDimensions)
-{
-	throw logic_error("Not implemented yet");
-}
-
-void FesapiHdfProxy::writeArrayNdOfDoubleValues(const string & groupName,
-	const string & name,
-	const double * dblValues,
+void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
+	const std::string & name,
+	COMMON_NS::AbstractObject::numericalDatatypeEnum datatype,
+	const void * values,
 	const unsigned long long * numValuesInEachDimension,
 	unsigned int numDimensions)
 {
@@ -142,80 +134,68 @@ void FesapiHdfProxy::writeArrayNdOfDoubleValues(const string & groupName,
 	pda.dataArrays["0"].array.dimensions = dimensions;
 
 	Energistics::Etp::v12::Datatypes::AnyArray data;
-	Energistics::Etp::v12::Datatypes::ArrayOfDouble arrayOfDbl;
-	arrayOfDbl.values = std::vector<double>(dblValues, dblValues + totalCount);
-	data.item.set_ArrayOfDouble(arrayOfDbl);
+	if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE) {
+		Energistics::Etp::v12::Datatypes::ArrayOfDouble avroArray;
+		avroArray.values = std::vector<double>(static_cast<const double*>(values), static_cast<const double*>(values) + totalCount);
+		data.item.set_ArrayOfDouble(avroArray);
+	}
+	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT) {
+		Energistics::Etp::v12::Datatypes::ArrayOfFloat avroArray;
+		avroArray.values = std::vector<float>(static_cast<const float*>(values), static_cast<const float*>(values) + totalCount);
+		data.item.set_ArrayOfFloat(avroArray);
+	}
+	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64 || datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64) {
+		Energistics::Etp::v12::Datatypes::ArrayOfLong avroArray;
+		avroArray.values = std::vector<int64_t>(static_cast<const int64_t*>(values), static_cast<const int64_t*>(values) + totalCount);
+		data.item.set_ArrayOfLong(avroArray);
+	}
+	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32 || datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32) {
+		Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
+		avroArray.values = std::vector<int32_t>(static_cast<const int32_t*>(values), static_cast<const int32_t*>(values) + totalCount);
+		data.item.set_ArrayOfInt(avroArray);
+	}
+	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16 || datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16) {
+		Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
+		for (size_t i = 0; i < totalCount; ++i) {
+			avroArray.values.push_back(static_cast<const short*>(values)[i]);
+		}
+		data.item.set_ArrayOfInt(avroArray);
+	}
+	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8 || datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8) {
+		std::string avroArray;
+		for (size_t i = 0; i < totalCount; ++i) {
+			avroArray.push_back(static_cast<const char*>(values)[i]);
+		}
+		data.item.set_bytes(avroArray);
+	}
+	else {
+		throw logic_error("You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
+	}
 	pda.dataArrays["0"].array.data = data;
 
-	session_->send(pda);
-}
-
-void FesapiHdfProxy::writeArrayNdOfCharValues(const std::string & groupName,
-	const std::string & name,
-	const char * intValues,
-	const unsigned long long * numValuesInEachDimension,
-	unsigned int numDimensions)
-{
-	throw logic_error("Not implemented yet");
-}
-
-void FesapiHdfProxy::writeArrayNdOfIntValues(const string & groupName,
-	const string & name,
-	const int * intValues,
-	const unsigned long long * numValuesInEachDimension,
-	unsigned int numDimensions)
-{
-	throw logic_error("Not implemented yet");
-}
-
-void FesapiHdfProxy::writeArrayNdOfInt64Values(const std::string & groupName,
-	const std::string & name,
-	const int64_t * values,
-	const unsigned long long * numValuesInEachDimension,
-	unsigned int numDimensions)
-{
-	throw logic_error("Not implemented yet");
-}
-
-void FesapiHdfProxy::writeArrayNdOfUInt64Values(const std::string & groupName,
-	const std::string & name,
-	const uint64_t * values,
-	const unsigned long long * numValuesInEachDimension,
-	unsigned int numDimensions)
-{
-	throw logic_error("Not implemented yet");
-}
-
-void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
-	const std::string & name,
-	hdf5_hid_t datatype,
-	const void * values,
-	const unsigned long long * numValuesInEachDimension,
-	unsigned int numDimensions)
-{
-	throw logic_error("Not implemented yet");
+	session_->send(pda, 0, 0x02);
 }
 
 void FesapiHdfProxy::createArrayNd(
 	const std::string& groupName,
 	const std::string& datasetName,
-	hdf5_hid_t datatype,
+	COMMON_NS::AbstractObject::numericalDatatypeEnum datatype,
 	const unsigned long long* numValuesInEachDimension,
 	unsigned int numDimensions)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("createArrayNdNot implemented yet");
 }
 
 void FesapiHdfProxy::writeArrayNdSlab(
 	const string& groupName,
 	const string& datasetName,
-	hdf5_hid_t datatype,
+	COMMON_NS::AbstractObject::numericalDatatypeEnum datatype,
 	const void* values,
 	const unsigned long long* numValuesInEachDimension,
 	const unsigned long long* offsetInEachDimension,
 	unsigned int numDimensions)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("writeArrayNdSlab Not implemented yet");
 }
 
 void FesapiHdfProxy::readArrayNdOfDoubleValues(
@@ -224,7 +204,7 @@ void FesapiHdfProxy::readArrayNdOfDoubleValues(
 	unsigned long long const * offsetInEachDimension,
 	unsigned int numDimensions)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("readArrayNdOfDoubleValues Not implemented yet");
 }
 
 void FesapiHdfProxy::readArrayNdOfDoubleValues(
@@ -235,7 +215,7 @@ void FesapiHdfProxy::readArrayNdOfDoubleValues(
 	unsigned long long const * blockSizeInEachDimension,
 	unsigned int numDimensions)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("readArrayNdOfDoubleValues Not implemented yet");
 }
 
 void FesapiHdfProxy::selectArrayNdOfValues(
@@ -249,7 +229,7 @@ void FesapiHdfProxy::selectArrayNdOfValues(
 	hdf5_hid_t & dataset,
 	hdf5_hid_t & filespace)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("selectArrayNdOfValues Not implemented yet");
 }
 
 void FesapiHdfProxy::readArrayNdOfDoubleValues(
@@ -258,7 +238,7 @@ void FesapiHdfProxy::readArrayNdOfDoubleValues(
 	void* values,
 	unsigned long long slabSize)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("readArrayNdOfDoubleValues Not implemented yet");
 }
 
 void FesapiHdfProxy::readArrayNdOfFloatValues(
@@ -267,7 +247,7 @@ void FesapiHdfProxy::readArrayNdOfFloatValues(
 	unsigned long long const * offsetInEachDimension,
 	unsigned int numDimensions)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("readArrayNdOfFloatValues Not implemented yet");
 }
 
 void FesapiHdfProxy::readArrayNdOfInt64Values(
@@ -276,7 +256,7 @@ void FesapiHdfProxy::readArrayNdOfInt64Values(
 	unsigned long long const * offsetInEachDimension,
 	unsigned int numDimensions)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("readArrayNdOfInt64Values Not implemented yet");
 }
 
 void FesapiHdfProxy::readArrayNdOfIntValues(
@@ -285,7 +265,7 @@ void FesapiHdfProxy::readArrayNdOfIntValues(
 	unsigned long long const * offsetInEachDimension,
 	unsigned int numDimensions)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("readArrayNdOfIntValues Not implemented yet");
 }
 
 std::vector<unsigned long long> FesapiHdfProxy::readArrayDimensions(const std::string & datasetName)
@@ -304,42 +284,42 @@ void FesapiHdfProxy::writeGroupAttributes(const std::string & groupName,
 	const std::vector<std::string> & attributeNames,
 	const std::vector<std::string> & values)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("writeGroupAttributes Not implemented yet");
 }
 
 void FesapiHdfProxy::writeGroupAttribute(const std::string & groupName,
 	const std::string & attributeName,
 	const std::vector<std::string> & values)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("writeGroupAttribute Not implemented yet");
 }
 
 void FesapiHdfProxy::writeGroupAttributes(const std::string & groupName,
 	const std::vector<std::string> & attributeNames,
 	const std::vector<double> & values)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("writeGroupAttributes Not implemented yet");
 }
 
 void FesapiHdfProxy::writeGroupAttributes(const std::string & groupName,
 	const std::vector<std::string> & attributeNames,
 	const std::vector<int> & values)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("writeGroupAttributes Not implemented yet");
 }
 
 void FesapiHdfProxy::writeDatasetAttributes(const std::string & datasetName,
 	const std::vector<std::string> & attributeNames,
 	const std::vector<std::string> & values)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("writeDatasetAttributes Not implemented yet");
 }
 
 void FesapiHdfProxy::writeDatasetAttribute(const std::string & datasetName,
 	const std::string & attributeName,
 	const std::vector<std::string> & values)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("writeDatasetAttribute Not implemented yet");
 }
 
 void FesapiHdfProxy::writeDatasetAttributes(const std::string & datasetName,
@@ -353,39 +333,39 @@ void FesapiHdfProxy::writeDatasetAttributes(const std::string & datasetName,
 	const std::vector<std::string> & attributeNames,
 	const std::vector<int> & values)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("writeDatasetAttributes Not implemented yet");
 }
 
 std::string FesapiHdfProxy::readStringAttribute(const std::string & obj_name,
 	const std::string & attr_name) const
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("readStringAttribute Not implemented yet");
 }
 
 vector<string> FesapiHdfProxy::readStringArrayAttribute(const std::string & obj_name,
 	const std::string & attr_name) const
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("readStringArrayAttribute Not implemented yet");
 }
 
 double FesapiHdfProxy::readDoubleAttribute(const std::string & obj_name,
 	const std::string & attr_name) const
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("readDoubleAttribute Not implemented yet");
 }
 
 int64_t FesapiHdfProxy::readLongAttribute(const std::string & obj_name,
 	const std::string & attr_name) const
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("readLongAttribute Not implemented yet");
 }
 
 bool FesapiHdfProxy::exist(const std::string & absolutePathInHdfFile) const
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("exist Not implemented yet");
 }
 
 bool FesapiHdfProxy::isCompressed(const std::string & datasetName)
 {
-	throw logic_error("Not implemented yet");
+	throw logic_error("isCompressed Not implemented yet");
 }

@@ -159,7 +159,8 @@ jobs:
       
       # fesapi 
       - powershell: |
-          git clone https://github.com/F2I-Consulting/fesapi.git -b v2.2.0.0 C:/fesapi
+          # git clone https://github.com/F2I-Consulting/fesapi.git -b v2.4.0.0 C:/fesapi
+          git clone https://github.com/F2I-Consulting/fesapi.git C:/fesapi 
         displayName: 'Cloning fesapi'
       - task: CMake@1
         displayName: 'CMake configure fesapi'
@@ -202,7 +203,7 @@ jobs:
             -DAVRO_LIBRARY_RELEASE=$(Agent.TempDirectory)/avro-cpp-1.10.2-install/lib/avrocpp_s.lib
             -DWITH_FESAPI=TRUE
             -DFESAPI_INCLUDE_DIR=C:/fesapi-install/include
-            -DFESAPI_LIBRARY_RELEASE=C:/fesapi-install/lib/FesapiCpp.2.2.0.0.lib
+            -DFESAPI_LIBRARY_RELEASE=C:/fesapi-install/lib/FesapiCpp.2.4.0.0.lib
 
       - task: CMake@1
         displayName: "Build --config $(BuildType)"
@@ -374,14 +375,15 @@ jobs:
           
       # fesapi
       - powershell: |
-          git clone https://github.com/F2I-Consulting/fesapi.git -b v2.2.0.0 $(Build.SourcesDirectory)/../fesapi-2.2.0.0
+          #git clone https://github.com/F2I-Consulting/fesapi.git -b v2.2.0.0 $(Build.SourcesDirectory)/../fesapi-2.2.0.0
+          git clone https://github.com/F2I-Consulting/fesapi.git $(Build.SourcesDirectory)/../fesapi-2.4.0.0
         displayName: 'Cloning FESAPI'
       - task: CMake@1
         displayName: 'CMake configure fesapi'
         inputs:
           workingDirectory: $(Agent.TempDirectory)/fesapi-build
           cmakeArgs:
-            $(Build.SourcesDirectory)/../fesapi-2.2.0.0
+            $(Build.SourcesDirectory)/../fesapi-2.4.0.0
             $(Generator)
             -Wno-dev -Wno-deprecated
             -DHDF5_BUILT_AS_DYNAMIC_LIB=TRUE
@@ -420,7 +422,7 @@ jobs:
             -DWITH_FESAPI=TRUE
             -DWITH_DOTNET_WRAPPING=TRUE
             -DFESAPI_INCLUDE_DIR=$(Agent.TempDirectory)/fesapi-install/include
-            -DFESAPI_LIBRARY_RELEASE=$(Agent.TempDirectory)/fesapi-install/lib/FesapiCpp.2.2.0.0.lib
+            -DFESAPI_LIBRARY_RELEASE=$(Agent.TempDirectory)/fesapi-install/lib/FesapiCpp.2.4.0.0.lib
 
       - task: CMake@1
         displayName: "Build --config $(BuildType)"
@@ -527,7 +529,8 @@ jobs:
        
       # fesapi
       - script: |
-          git clone https://github.com/F2I-Consulting/fesapi.git -b v2.2.0.0 $(Agent.TempDirectory)/fesapi
+          #git clone https://github.com/F2I-Consulting/fesapi.git -b v2.2.0.0 $(Agent.TempDirectory)/fesapi
+          git clone https://github.com/F2I-Consulting/fesapi.git $(Agent.TempDirectory)/fesapi
         displayName: 'Cloning fesapi'
       - task: CMake@1
         displayName: 'CMake configure fesapi'
