@@ -88,6 +88,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 		send(acknowledge, receivedMh.messageId, 0x02);
 	}
 
+	const initialNonRespondedMessage = specificProtocolHandlerIt.size();
 	try {
 		if (receivedMh.messageType == Energistics::Etp::v12::Protocol::Core::Acknowledge::messageTypeId) {
 			// Receive Acknowledge
@@ -105,7 +106,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 		}
 		else {
 			auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
-			if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
+			if (specificProtocolHandlerIt != specificProtocolHandlers.end() && specificProtocolHandlerIt->second != nullptr) {
 				// Receive a message which has been asked to be processed with a specific protocol handler
 				specificProtocolHandlerIt->second->decodeMessageBody(receivedMh, d);
 				if ((receivedMh.messageFlags & 0x02) != 0) {
@@ -117,6 +118,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 				protocolHandlers[receivedMh.protocol]->decodeMessageBody(receivedMh, d);
 			}
 			else {
+				std::cerr << "Received a message with id " << receivedMh.messageId << " for which non protocol handlers is associated. Protocol " << receivedMh.protocol << std::endl;
 				flushReceivingBuffer();
 				send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(4, "The agent does not support the protocol " + std::to_string(receivedMh.protocol) + " identified in a message header."), receivedMh.messageId, 0x02);
 			}

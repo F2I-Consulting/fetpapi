@@ -1781,7 +1781,7 @@ namespace ETP_NS
 	class FesapiHdfProxyFactory : public COMMON_NS::HdfProxyFactory
 	{
 	public:
-		FesapiHdfProxyFactory(PlainClientSession* session);
+		FesapiHdfProxyFactory(AbstractSession* session); // We may have to tell PlainClientSession instead of AbstractSession for some directors/inheritancy reason.
 	};
 	
 	namespace FesapiHelpers {

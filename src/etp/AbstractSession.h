@@ -35,6 +35,7 @@ under the License.
 #include "ProtocolHandlers/DataspaceHandlers.h"
 
 #include <unordered_map>
+#include <queue>
 
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
@@ -217,8 +218,7 @@ namespace ETP_NS
 		}
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT void sendCloseFrame() {
-			std::vector<uint8_t> empty;
-			sendingQueue.push_back(empty);
+			sendingQueue.push(std::vector<uint8_t>());
 
 			if (sendingQueue.size() == 1) {
 				do_write();
@@ -246,7 +246,7 @@ namespace ETP_NS
 			}
 
 			// Remove the message from the queue
-			sendingQueue.erase(sendingQueue.begin());
+			sendingQueue.pop();
 
 			if(!sendingQueue.empty()) {
 				do_write();
@@ -282,22 +282,34 @@ namespace ETP_NS
 		virtual void setMaxWebSocketMessagePayloadSize(int64_t value) = 0;
 		int64_t getMaxWebSocketMessagePayloadSize() const { return maxWebSocketMessagePayloadSize; }
 
+		void setMaxSentAndNonRespondedMessageCount(uint8_t value) { maxSentAndNonRespondedMessageCount = value; }
+
 	protected:
 		boost::beast::flat_buffer receivedBuffer;
+		/// The default handlers for each subprotocole. Default handlers are at the index of the corresponding subprotocol id.
 		std::vector<std::shared_ptr<ETP_NS::ProtocolHandlers>> protocolHandlers;
+		/// A map indicating which handlers must be used for responding to which message id.
 		std::unordered_map<int64_t, std::shared_ptr<ETP_NS::ProtocolHandlers>> specificProtocolHandlers;
-		int64_t maxWebSocketMessagePayloadSize;
-		bool webSocketSessionClosed; // open with the websocket handshake
-		bool etpSessionClosed; // open with the requestSession and openSession message
-		std::vector<std::vector<uint8_t> > sendingQueue;
+		/// The maximum size in bytes allowed for a complete WebSocket message payload, which is composed of one or more WebSocket frames.
+		/// The limit to use during a session is the smaller of the client's and the server's value for MaxWebSocketMessagePayloadSize,
+		/// which should be determined by the limits imposed by the WebSocket library used by each endpoint. 
+		/// See https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/using_websocket/messages.html
+		/// and https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/read_message_max/overload1.html
+		int64_t maxWebSocketMessagePayloadSize = 16000000;
+		/// The maximum count of messaeg which have been sent and have not been responded yet.
+		uint8_t maxSentAndNonRespondedMessageCount = 5;
+		/// Indicates if the websocket session is opened or not. It becomes false after the websocket handshake
+		bool webSocketSessionClosed = true;
+		/// Indicates if the ETP1.2 session is opened or not. It becomes false after the requestSession and openSession message
+		bool etpSessionClosed = true;
+		/// The queue of messages to be sent
+		std::queue<std::vector<uint8_t>> sendingQueue;
+		/// The next available message id.
 		int64_t messageId;
+		/// The identifier of the session
 		boost::uuids::uuid identifier;
 
-		// https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/using_websocket/messages.html
-		// and https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/read_message_max/overload1.html
-		AbstractSession() : receivedBuffer(), protocolHandlers(), specificProtocolHandlers(), maxWebSocketMessagePayloadSize(16000000),
-			webSocketSessionClosed(true), etpSessionClosed(true),
-			sendingQueue() {}
+		AbstractSession() = default;
 
 		/**
 		 * Write the current buffer on the web socket
@@ -338,7 +350,7 @@ namespace ETP_NS
 			int64_t byteCount = e->byteCount();
 
 			if (byteCount < maxWebSocketMessagePayloadSize) {
-				sendingQueue.push_back(*avro::snapshot(*out).get());
+				sendingQueue.push(*avro::snapshot(*out).get());
 
 				std::cout << "*************************************************" << std::endl;
 				std::cout << "Message Header sent : " << std::endl;

@@ -141,9 +141,9 @@ namespace ETP_NS
 		}
 
 		void do_write() {
-			if (!sendingQueue[0].empty()) {
+			if (!sendingQueue.front().empty()) {
 				derived().ws().async_write(
-					boost::asio::buffer(sendingQueue[0]),
+					boost::asio::buffer(sendingQueue.front()),
 					boost::asio::bind_executor(
 						strand,
 						std::bind(

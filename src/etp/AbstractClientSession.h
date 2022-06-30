@@ -115,9 +115,9 @@ namespace ETP_NS
 		}
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT void do_write() {
-			if (!sendingQueue[0].empty()) {
+			if (!sendingQueue.front().empty()) {
 				derived().ws().async_write(
-					boost::asio::buffer(sendingQueue[0]),
+					boost::asio::buffer(sendingQueue.front()),
 					std::bind(
 						&AbstractSession::on_write,
 						shared_from_this(),
@@ -129,6 +129,10 @@ namespace ETP_NS
 			}
 		}
 
+		/**
+		* Close the Websocket Session
+		* The ETP session had to be closed before.
+		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT void do_close() {
 			derived().ws().async_close(websocket::close_code::normal,
 				std::bind(
