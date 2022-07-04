@@ -167,7 +167,10 @@ namespace ETP_NS
 			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace)] = dataspaceHandlers;
 		}
 
-		FETPAPI_DLL_IMPORT_OR_EXPORT void close();
+		/**
+		* Wait for all sent messages to be responded and then close the websocket connection
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT void close() { isCloseRequested = true; }
 
 		/**
 		 * Create a default ETP message header from the ETP message body.
@@ -190,11 +193,11 @@ namespace ETP_NS
 
 		/**
 		* Send a message to the server and block the thread until the answer of the server has been processed by the handlers
-		 *
-		 * @param mb The ETP message body to send
-		 * @param correlationId The ID of the message which this message is answering to.
-		 * @param messageFlags The message flags to be sent within the header
-		 * @return The ID of the message that has been put in the sending queue.
+		*
+		* @param mb The ETP message body to send
+		* @param correlationId The ID of the message which this message is answering to.
+		* @param messageFlags The message flags to be sent within the header
+		* @return The ID of the message that has been put in the sending queue.
 		*/
 		template<typename T> void sendAndBlock(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
@@ -204,29 +207,29 @@ namespace ETP_NS
 
 		/**
 		* Send a message and register a specific handler for the response.
+		*
+		* @param mb The ETP message body to send
+		* @param specificHandler The handler which are going to be called for the response to this sent message
+		* @param correlationId The ID of the message which this message is answering to.
+		* @param messageFlags The message flags to be sent within the header
+		* @return The ID of the message that has been put in the sending queue.
 		*/
 		template<typename T> int64_t sendWithSpecificHandler(const T & mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
-			int64_t msgId = encode(mb, correlationId, messageFlags); // put the message to write in the queue
+			// Encode the message into AVRO format and put it in the sending queue
+			const int64_t msgId = encode(mb, correlationId, messageFlags);
+			std::get<2>(sendingQueue.back()) = specificHandler;
 
+			// Send the message directly if the sending queue was empty.
 			if (sendingQueue.size() == 1) {
 				do_write();
 			}
-			specificProtocolHandlers[msgId] = specificHandler;
 
 			return msgId;
 		}
 
-		FETPAPI_DLL_IMPORT_OR_EXPORT void sendCloseFrame() {
-			sendingQueue.push(std::vector<uint8_t>());
-
-			if (sendingQueue.size() == 1) {
-				do_write();
-			}
-		}
-
 		/**
-		 * Close the web socket (without sending any ETP message)
+		 * Close the web socket session (without sending any ETP message)
 		 */
 		virtual void do_close() = 0;
 
@@ -245,17 +248,18 @@ namespace ETP_NS
 				std::cerr << "on_write : " << ec.message() << std::endl;
 			}
 
-			// Remove the message from the queue
+			// Remove the sent message from the queue
 			sendingQueue.pop();
 
-			if(!sendingQueue.empty()) {
-				do_write();
-			}
+			do_write();
 		}
 
 		void on_close(boost::system::error_code ec) {
 			if(ec) {
 				std::cerr << "on_close : " << ec.message() << std::endl;
+			}
+			if (!etpSessionClosed) {
+				std::cerr << "Websocket session is going to be closed BUT ETP SESSION HAS NOT BEEN CLOSED YET!!!" << std::endl;
 			}
 
 			// If we get here then the connection is closed gracefully
@@ -302,12 +306,14 @@ namespace ETP_NS
 		bool webSocketSessionClosed = true;
 		/// Indicates if the ETP1.2 session is opened or not. It becomes false after the requestSession and openSession message
 		bool etpSessionClosed = true;
-		/// The queue of messages to be sent
-		std::queue<std::vector<uint8_t>> sendingQueue;
+		/// The queue of messages to be sent where the tuple respectively define message id, message and protoocol handlers for responding to this message.
+		std::queue< std::tuple<int64_t, std::vector<uint8_t>, std::shared_ptr<ETP_NS::ProtocolHandlers>> > sendingQueue;
 		/// The next available message id.
 		int64_t messageId;
 		/// The identifier of the session
 		boost::uuids::uuid identifier;
+		/// Indicates that the endpoint request to close the websocket session 
+		bool isCloseRequested = false;
 
 		AbstractSession() = default;
 
@@ -326,7 +332,7 @@ namespace ETP_NS
 		* Return the current message id and increment it for next call.
 		*/
 		int64_t incrementMessageId() {
-			int64_t result = messageId;
+			const int64_t result = messageId;
 			messageId += 2;
 			return  result;
 		}
@@ -347,13 +353,13 @@ namespace ETP_NS
 			avro::encode(*e, mh);
 			avro::encode(*e, mb);
 			e->flush();
-			int64_t byteCount = e->byteCount();
+			const int64_t byteCount = e->byteCount();
 
 			if (byteCount < maxWebSocketMessagePayloadSize) {
-				sendingQueue.push(*avro::snapshot(*out).get());
+				sendingQueue.push(std::make_tuple(mh.messageId, *avro::snapshot(*out).get(), nullptr));
 
 				std::cout << "*************************************************" << std::endl;
-				std::cout << "Message Header sent : " << std::endl;
+				std::cout << "Message Header sent in the queue : " << std::endl;
 				std::cout << "protocol : " << mh.protocol << std::endl;
 				std::cout << "type : " << mh.messageType << std::endl;
 				std::cout << "id : " << mh.messageId << std::endl;

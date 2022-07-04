@@ -48,6 +48,10 @@ namespace ETP_NS
 		const std::string& getTarget() const { return target; }
 		const std::string& getAuthorization() const { return authorization; }
 
+		/**
+		* Run the websocket and then the ETP session.
+		* Everything related to this session (including the completion handlers) will operate on the same unique thread in a single event loop.
+		*/
 		bool run() {
 			// We run the io_service off in its own thread so that it operates completely asynchronously with respect to the rest of the program.
 			auto work = boost::asio::make_work_guard(ioc);
@@ -114,18 +118,43 @@ namespace ETP_NS
 #endif
 		}
 
-		FETPAPI_DLL_IMPORT_OR_EXPORT void do_write() {
-			if (!sendingQueue.front().empty()) {
+		void do_write() {
+			if (sendingQueue.empty()) {
+				std::cout << "*************************************************" << std::endl;
+				std::cout << "The sending queue is empty." << std::endl;
+				std::cout << "*************************************************" << std::endl;
+				return;
+			}
+
+			if (specificProtocolHandlers.size() == maxSentAndNonRespondedMessageCount) {
+				std::cout << "*************************************************" << std::endl;
+				std::cout << "Cannot send Message id : " << std::get<0>(sendingQueue.front()) << " because the max number of setn and non processed message has been reached." << std::endl;
+				std::cout << "*************************************************" << std::endl;
+				return;
+			}
+
+			bool previousSentMessageCompleted = specificProtocolHandlers.find(std::get<0>(sendingQueue.front())) == specificProtocolHandlers.end();
+
+			if (!previousSentMessageCompleted) {
+				std::cout << "*************************************************" << std::endl;
+				std::cout << "Cannot send Message id : " << std::get<0>(sendingQueue.front()) << " because the previous messgae has not finished to be sent." << std::endl;
+				std::cout << "*************************************************" << std::endl;
+			}
+			else {
+				std::cout << "*************************************************" << std::endl;
+				std::cout << "Sending Message id : " << std::get<0>(sendingQueue.front()) << std::endl;
+				std::cout << "*************************************************" << std::endl;
+
 				derived().ws().async_write(
-					boost::asio::buffer(sendingQueue.front()),
+					boost::asio::buffer(std::get<1>(sendingQueue.front())),
 					std::bind(
 						&AbstractSession::on_write,
 						shared_from_this(),
 						std::placeholders::_1,
 						std::placeholders::_2));
-			}
-			else {
-				do_close();
+
+				// Register the handler to respond to the sent message
+				specificProtocolHandlers[std::get<0>(sendingQueue.front())] = std::get<2>(sendingQueue.front());
 			}
 		}
 

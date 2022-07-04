@@ -152,7 +152,7 @@ namespace ETP_NS
 			while (subarrayOffset < dataArrayValueCount) {
 				// Compute the offset in the receiving array
 				size_t arrayOffset = currentStarts.back();
-				for (int dimIndex = iterator->second.counts.size() - 2; dimIndex >= 0; --dimIndex) {
+				for (int64_t dimIndex = iterator->second.counts.size() - 2; dimIndex >= 0; --dimIndex) {
 					size_t multiplier = iterator->second.counts[dimIndex + 1];
 					for (size_t dimIndex2 = dimIndex + 2; dimIndex2 < iterator->second.counts.size(); ++dimIndex2) {
 						multiplier *= iterator->second.counts[dimIndex2];
@@ -207,7 +207,7 @@ namespace ETP_NS
 				}
 
 				// Compute the new starts in the ETP subarray
-				for (int dimIndex = iterator->second.counts.size() - 2; dimIndex >= 0; --dimIndex) {
+				for (int64_t dimIndex = iterator->second.counts.size() - 2; dimIndex >= 0; --dimIndex) {
 					if (currentStarts[dimIndex] + 1 < iterator->second.starts[dimIndex] + iterator->second.counts[dimIndex]) {
 						++currentStarts[dimIndex];
 						break;

@@ -65,6 +65,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 		return;
 	}
 
+	std::cout << "Receiving " << bytes_transferred << " bytes" << std::endl;
 	avro::InputStreamPtr in = avro::memoryInputStream(static_cast<const uint8_t*>(receivedBuffer.data().data()), bytes_transferred);
 	avro::DecoderPtr d = avro::binaryDecoder();
 	d->init(*in);
@@ -88,7 +89,6 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 		send(acknowledge, receivedMh.messageId, 0x02);
 	}
 
-	const initialNonRespondedMessage = specificProtocolHandlerIt.size();
 	try {
 		if (receivedMh.messageType == Energistics::Etp::v12::Protocol::Core::Acknowledge::messageTypeId) {
 			// Receive Acknowledge
@@ -101,6 +101,9 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 				auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
 				if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
 					specificProtocolHandlers.erase(specificProtocolHandlerIt);
+					if (specificProtocolHandlers.size() == maxSentAndNonRespondedMessageCount - 1) {
+						do_write();
+					}
 				}
 			}
 		}
@@ -109,8 +112,12 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 			if (specificProtocolHandlerIt != specificProtocolHandlers.end() && specificProtocolHandlerIt->second != nullptr) {
 				// Receive a message which has been asked to be processed with a specific protocol handler
 				specificProtocolHandlerIt->second->decodeMessageBody(receivedMh, d);
+				std::cout << "PROCESSED msg id " << receivedMh.correlationId << std::endl;
 				if ((receivedMh.messageFlags & 0x02) != 0) {
 					specificProtocolHandlers.erase(specificProtocolHandlerIt);
+					if (specificProtocolHandlers.size() == maxSentAndNonRespondedMessageCount - 1) {
+						do_write();
+					}
 				}
 			}
 			else if (receivedMh.protocol < protocolHandlers.size() && protocolHandlers[receivedMh.protocol] != nullptr) {
@@ -130,10 +137,11 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 		send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(19, "The agent is unable to de-serialize the body of the message id " + std::to_string(receivedMh.messageId) + " : " + std::string(e.what())), 0, 0x02);
 	}
 
-	do_read();
-}
+	if (specificProtocolHandlers.empty() && isCloseRequested)
+	{
+		etpSessionClosed = true;
+		send(Energistics::Etp::v12::Protocol::Core::CloseSession(), 0, 0x02);
+	}
 
-void AbstractSession::close()
-{
-	send(Energistics::Etp::v12::Protocol::Core::CloseSession(), 0, 0x02);
+	do_read();
 }

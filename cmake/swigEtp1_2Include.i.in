@@ -1237,13 +1237,13 @@ namespace Energistics {
 
 
 %typemap(cscode) ETP_NS::AbstractSession %{
-  private CoreHandlers coreHandlersReference;
-  private DiscoveryHandlers discoveryHandlersReference;
-  private StoreHandlers storeHandlersReference;
-  private StoreNotificationHandlers storeNotificationHandlersReference;
-  private DataArrayHandlers dataArrayHandlersReference;
-  private TransactionHandlers transactionHandlersReference;
-  private DataspaceHandlers dataspaceHandlersReference;
+  private CoreHandlers coreHandlersReference = null;
+  private DiscoveryHandlers discoveryHandlersReference = null;
+  private StoreHandlers storeHandlersReference = null;
+  private StoreNotificationHandlers storeNotificationHandlersReference = null;
+  private DataArrayHandlers dataArrayHandlersReference = null;
+  private TransactionHandlers transactionHandlersReference = null;
+  private DataspaceHandlers dataspaceHandlersReference = null;
 %}
 
 %typemap(csin,
@@ -1705,6 +1705,10 @@ namespace ETP_NS
 	class PlainClientSession : public AbstractSession
 	{
 	public:
+		/**
+		* Run the websocket and then the ETP session.
+		* Everything related to this session (including the completion handlers) will operate on the same unique thread in a single event loop.
+		*/
 		bool run();
 	};
 
@@ -1713,6 +1717,10 @@ namespace ETP_NS
 	class SslClientSession : public AbstractSession
 	{
 	public:
+		/**
+		* Run the websocket and then the ETP session.
+		* Everything related to this session (including the completion handlers) will operate on the same unique thread in a single event loop.
+		*/
 		bool run();
 	};
 #endif

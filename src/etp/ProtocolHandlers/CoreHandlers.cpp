@@ -60,12 +60,13 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 		}
 
 		session->setEtpSessionClosed(false);
-		on_OpenSession(os, mh.messageId);
+		on_OpenSession(os, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::CloseSession::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Core::CloseSession cs;
 		avro::decode(*d, cs);
 		session->flushReceivingBuffer();
+		session->setEtpSessionClosed(true);
 		on_CloseSession(cs, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::ProtocolException::messageTypeId) {
@@ -216,8 +217,8 @@ void CoreHandlers::on_OpenSession(const Energistics::Etp::v12::Protocol::Core::O
 
 void CoreHandlers::on_CloseSession(const Energistics::Etp::v12::Protocol::Core::CloseSession &, int64_t)
 {
-	std::cout << "Close session after received request." << std::endl;
-	session->sendCloseFrame();
+	std::cout << "Close session after receiving ETP message to close session." << std::endl;
+	session->do_close();
 }
 
 void CoreHandlers::on_ProtocolException(const Energistics::Etp::v12::Protocol::Core::ProtocolException & pe, int64_t correlationId)

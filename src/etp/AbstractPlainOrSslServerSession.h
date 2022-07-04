@@ -141,9 +141,30 @@ namespace ETP_NS
 		}
 
 		void do_write() {
-			if (!sendingQueue.front().empty()) {
+			if (sendingQueue.empty()) {
+				std::cout << "*************************************************" << std::endl;
+				std::cout << "The sending queue is empty." << std::endl;
+				std::cout << "*************************************************" << std::endl;
+				return;
+			}
+
+			if (specificProtocolHandlers.size() == maxSentAndNonRespondedMessageCount) {
+				std::cout << "*************************************************" << std::endl;
+				std::cout << "Cannot send Message id : " << std::get<0>(sendingQueue.front()) << " because the max number of setn and non processed message has been reached." << std::endl;
+				std::cout << "*************************************************" << std::endl;
+				return;
+			}
+
+			bool previousSentMessageCompleted = specificProtocolHandlers.find(std::get<0>(sendingQueue.front())) == specificProtocolHandlers.end();
+
+			if (!previousSentMessageCompleted) {
+				std::cout << "*************************************************" << std::endl;
+				std::cout << "Cannot send Message id : " << std::get<0>(sendingQueue.front()) << " because the previous messgae has not finished to be sent." << std::endl;
+				std::cout << "*************************************************" << std::endl;
+			}
+			else {
 				derived().ws().async_write(
-					boost::asio::buffer(sendingQueue.front()),
+					boost::asio::buffer(std::get<1>(sendingQueue.front())),
 					boost::asio::bind_executor(
 						strand,
 						std::bind(
@@ -151,9 +172,9 @@ namespace ETP_NS
 							shared_from_this(),
 							std::placeholders::_1,
 							std::placeholders::_2)));
-			}
-			else {
-				do_close();
+
+				// Register the handler to respond to the sent message
+				specificProtocolHandlers[std::get<0>(sendingQueue.front())] = std::get<2>(sendingQueue.front());
 			}
 		}
 

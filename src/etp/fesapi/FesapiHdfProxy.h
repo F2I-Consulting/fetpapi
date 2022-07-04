@@ -580,7 +580,7 @@ namespace ETP_NS
 								currentCounts[dimIndex] = daMetadata.dimensions[dimIndex] - starts[dimIndex];
 							}
 
-							for (int64_t dimIndex2 = dimIndex + 1; dimIndex2 < daMetadata.dimensions.size(); ++dimIndex2) {
+							for (size_t dimIndex2 = dimIndex + 1; dimIndex2 < daMetadata.dimensions.size(); ++dimIndex2) {
 								starts[dimIndex2] = 0;
 								currentCounts[dimIndex2] = counts[dimIndex2];
 							}
