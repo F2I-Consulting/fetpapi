@@ -170,9 +170,7 @@ jobs:
             ../fesapi
             $(Generator)
             -Wno-dev -Wno-deprecated
-            -DHDF5_BUILT_AS_DYNAMIC_LIB=TRUE
-            -DHDF5_C_INCLUDE_DIR=C:/hdf5-1.10.6-win64-vs2017/include
-            -DHDF5_C_LIBRARY_RELEASE=C:/hdf5-1.10.6-win64-vs2017/lib/hdf5.lib
+            -DHDF5_ROOT=C:/hdf5-1.10.6-win64-vs2017
             -DMINIZIP_INCLUDE_DIR=C:/Minizip-install/include
             -DMINIZIP_LIBRARY_RELEASE=C:/Minizip-install/lib/minizip.lib
             -DZLIB_INCLUDE_DIR=C:/hdf5-1.10.6-win64-vs2017/include
@@ -386,9 +384,7 @@ jobs:
             $(Build.SourcesDirectory)/../fesapi-2.4.0.0
             $(Generator)
             -Wno-dev -Wno-deprecated
-            -DHDF5_BUILT_AS_DYNAMIC_LIB=TRUE
-            -DHDF5_C_INCLUDE_DIR=$(Agent.TempDirectory)/hdf5-1.12.0-win64-vs2019/include
-            -DHDF5_C_LIBRARY_RELEASE=$(Agent.TempDirectory)/hdf5-1.12.0-win64-vs2019/lib/hdf5.lib
+            -DHDF5_ROOT=$(Agent.TempDirectory)/hdf5-1.12.0-win64-vs2019
             -DMINIZIP_INCLUDE_DIR=$(Agent.TempDirectory)/Minizip-install/include
             -DMINIZIP_LIBRARY_RELEASE=$(Agent.TempDirectory)/Minizip-install/lib/minizip.lib
             -DZLIB_INCLUDE_DIR=$(Agent.TempDirectory)/hdf5-1.12.0-win64-vs2019/include
@@ -539,8 +535,6 @@ jobs:
           cmakeArgs:
             ../fesapi
             -Wno-dev -Wno-deprecated
-            -DHDF5_C_INCLUDE_DIR=/usr/include/hdf5/serial/
-            -DHDF5_C_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/hdf5/serial/libhdf5.so
             -DMINIZIP_INCLUDE_DIR=/usr/include/minizip
             -DMINIZIP_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libminizip.so
             -DZLIB_INCLUDE_DIR=/usr/include

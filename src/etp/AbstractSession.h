@@ -170,7 +170,13 @@ namespace ETP_NS
 		/**
 		* Wait for all sent messages to be responded and then close the websocket connection
 		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT void close() { isCloseRequested = true; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT void close() { 
+			isCloseRequested = true;
+			if (specificProtocolHandlers.empty() && sendingQueue.empty()) {
+				etpSessionClosed = true;
+				send(Energistics::Etp::v12::Protocol::Core::CloseSession(), 0, 0x02);
+			}
+		}
 
 		/**
 		 * Create a default ETP message header from the ETP message body.
