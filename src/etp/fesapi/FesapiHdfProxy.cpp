@@ -92,7 +92,8 @@ void FesapiHdfProxy::writeItemizedListOfList(const string & groupName, const std
 	const void * elements,
 	unsigned long long elementsSize)
 {
-	throw logic_error("Not implemented yet");
+	writeArrayNd(groupName + '/' + name, CUMULATIVE_LENGTH_DS_NAME, cumulativeLengthDatatype, cumulativeLength, &cumulativeLengthSize, 1);
+	writeArrayNd(groupName + '/' + name, ELEMENTS_DS_NAME, elementsDatatype, elements, &elementsSize, 1);
 }
 
 unsigned int FesapiHdfProxy::getDimensionCount(const std::string & datasetName)
