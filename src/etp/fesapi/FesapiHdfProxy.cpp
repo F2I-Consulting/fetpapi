@@ -96,19 +96,16 @@ void FesapiHdfProxy::writeItemizedListOfList(const string & groupName, const std
 	writeArrayNd(groupName + '/' + name, ELEMENTS_DS_NAME, elementsDatatype, elements, &elementsSize, 1);
 }
 
-unsigned int FesapiHdfProxy::getDimensionCount(const std::string & datasetName)
-{
-	throw logic_error("getDimensionCount Not implemented yet");
-}
-
 std::vector<unsigned long long> FesapiHdfProxy::getElementCountPerDimension(const std::string & datasetName)
 {
-	throw logic_error("getElementCountPerDimension Not implemented yet");
-}
+	std::vector<unsigned long long> result;
 
-signed long long FesapiHdfProxy::getElementCount(const std::string & datasetName)
-{
-	throw logic_error("getElementCount Not implemented yet");
+	const auto daMetadata = getDataArrayMetadata(datasetName);
+	for (auto dim : daMetadata.dimensions) {
+		result.push_back(dim);
+	}
+
+	return result;
 }
 
 void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
@@ -267,18 +264,6 @@ void FesapiHdfProxy::readArrayNdOfIntValues(
 	unsigned int numDimensions)
 {
 	throw logic_error("readArrayNdOfIntValues Not implemented yet");
-}
-
-std::vector<unsigned long long> FesapiHdfProxy::readArrayDimensions(const std::string & datasetName)
-{
-	std::vector<unsigned long long> result;
-
-	const auto daMetadata = getDataArrayMetadata(datasetName);
-	for (auto dim : daMetadata.dimensions) {
-		result.push_back(dim);
-	}
-	
-	return result;
 }
 
 void FesapiHdfProxy::writeGroupAttributes(const std::string & groupName,

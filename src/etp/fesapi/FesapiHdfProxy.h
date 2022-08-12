@@ -140,22 +140,10 @@ namespace ETP_NS
 			unsigned long long elementsSize) final;
 
 		/**
-		* Get the number of dimensions in an HDF dataset of the proxy.
-		* @param datasetName	The absolute name of the dataset we want to get the number of dimensions.
-		*/
-		unsigned int getDimensionCount(const std::string & datasetName) final;
-
-		/**
 		 * Get the number of elements in each dimension in an HDF dataset of the proxy.
 		 * @param datasetName	The absolute name of the dataset we want to get the number of elements.
 		 */
 		std::vector<unsigned long long> getElementCountPerDimension(const std::string & datasetName) final;
-
-		/**
-		* Get the number of elements in an HDF dataset of the proxy. The number of elements is get from all dimensions.
-		* @param datasetName	The absolute name of the dataset we want to get the number of elements.
-		*/
-		signed long long getElementCount(const std::string & datasetName) final;
 
 		/**
 		* Set the new compression level which will be used for all data to be written
@@ -455,12 +443,6 @@ namespace ETP_NS
 		* @param datasetName	The absolute dataset name where to read the values
 		*/
 		void readArrayNdOfUCharValues(const std::string & datasetName, unsigned char* values) final { readArrayNdOfValues(datasetName, values); }
-
-		/**
-		* Read the dimensions of an array stored in a specific dataset
-		* @param datasetName	The absolute dataset name where to read the array dimensions
-		*/
-		std::vector<unsigned long long> readArrayDimensions(const std::string & datasetName) final;
 
 		/**
 		* Check wether an absolute path exists in the hdf file or not.
