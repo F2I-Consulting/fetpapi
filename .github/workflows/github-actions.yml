@@ -1,0 +1,82 @@
+name: github-actions
+on: [push, pull_request]
+jobs:
+  windows-2019:
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v2
+      - name: Boost install
+        run: |
+          (New-Object System.Net.WebClient).DownloadFile("https://sourceforge.net/projects/boost/files/boost-binaries/1.78.0//boost_1_78_0-msvc-14.2-64.exe", "${{ runner.temp }}\boost.exe")
+          Start-Process -Wait -FilePath "${{ runner.temp }}\boost.exe" "/SILENT","/SP-","/SUPPRESSMSGBOXES","/DIR=${{ runner.temp }}\boost-install"
+      - name: AVRO install
+        run: |
+          (New-Object System.Net.WebClient).DownloadFile("https://archive.apache.org/dist/avro/avro-1.10.2/cpp/avro-cpp-1.10.2.tar.gz", "${{ runner.temp }}\avro-cpp-1.10.2.tar.gz")
+          7z x ${{ runner.temp }}\avro-cpp-1.10.2.tar.gz -o${{ runner.temp }}
+          7z x ${{ runner.temp }}\avro-cpp-1.10.2.tar -o${{ runner.temp }}
+          ((Get-Content -path ${{ runner.temp }}/avro-cpp-1.10.2/CMakeLists.txt -Raw) -replace 'install \(TARGETS avrocpp avrocpp_s','install (TARGETS avrocpp_s') | Set-Content -Path ${{ runner.temp }}/avro-cpp-1.10.2/CMakeLists.txt
+          ((Get-Content -path ${{ runner.temp }}/avro-cpp-1.10.2/CMakeLists.txt -Raw) -replace 'install \(TARGETS avrogencpp RUNTIME DESTINATION bin\)','') | Set-Content -Path ${{ runner.temp }}/avro-cpp-1.10.2/CMakeLists.txt
+          cd ${{ runner.temp }}
+          mkdir avro-cpp-1.10.2-build
+          cd avro-cpp-1.10.2-build
+          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-1.10.2-install ${{ runner.temp }}/avro-cpp-1.10.2
+          cmake --build . --config Release --target avrocpp_s -j2
+          cmake --install .
+      - name: CMake build and install
+        run: |
+          cd ${{ github.workspace }}/..
+          mkdir build
+          cd build
+          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.10.2-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.10.2-install/lib/avrocpp_s.lib ${{ github.workspace }}
+          cmake --build . --config Release -j2
+  windows-2019-with-fesapi:
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v2
+      - name: Boost install
+        run: |
+          (New-Object System.Net.WebClient).DownloadFile("https://sourceforge.net/projects/boost/files/boost-binaries/1.78.0//boost_1_78_0-msvc-14.2-64.exe", "${{ runner.temp }}\boost.exe")
+          Start-Process -Wait -FilePath "${{ runner.temp }}\boost.exe" "/SILENT","/SP-","/SUPPRESSMSGBOXES","/DIR=${{ runner.temp }}\boost-install"
+      - name: AVRO install
+        run: |
+          (New-Object System.Net.WebClient).DownloadFile("https://archive.apache.org/dist/avro/avro-1.10.2/cpp/avro-cpp-1.10.2.tar.gz", "${{ runner.temp }}\avro-cpp-1.10.2.tar.gz")
+          7z x ${{ runner.temp }}\avro-cpp-1.10.2.tar.gz -o${{ runner.temp }}
+          7z x ${{ runner.temp }}\avro-cpp-1.10.2.tar -o${{ runner.temp }}
+          ((Get-Content -path ${{ runner.temp }}/avro-cpp-1.10.2/CMakeLists.txt -Raw) -replace 'install \(TARGETS avrocpp avrocpp_s','install (TARGETS avrocpp_s') | Set-Content -Path ${{ runner.temp }}/avro-cpp-1.10.2/CMakeLists.txt
+          ((Get-Content -path ${{ runner.temp }}/avro-cpp-1.10.2/CMakeLists.txt -Raw) -replace 'install \(TARGETS avrogencpp RUNTIME DESTINATION bin\)','') | Set-Content -Path ${{ runner.temp }}/avro-cpp-1.10.2/CMakeLists.txt
+          cd ${{ runner.temp }}
+          mkdir avro-cpp-1.10.2-build
+          cd avro-cpp-1.10.2-build
+          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-1.10.2-install ${{ runner.temp }}/avro-cpp-1.10.2
+          cmake --build . --config Release --target avrocpp_s -j2
+          cmake --install .
+      - name: HDF5 install
+        run: |
+          Invoke-WebRequest https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.0/bin/hdf5-1.12.0-Std-win10_64-vs16.zip -OutFile ${{ runner.temp }}\hdf5-1.12.0-Std-win10_64-vs16.zip
+          Expand-Archive ${{ runner.temp }}\hdf5-1.12.0-Std-win10_64-vs16.zip -DestinationPath ${{ runner.temp }}
+          msiexec.exe /i "${{ runner.temp }}\hdf\HDF5-1.12.0-win64.msi" /qn INSTALL_ROOT=${{ runner.temp }}\hdf5-1.12.0-Std-win10_64-vs16
+      - name: Minizip install
+        run: |
+          git clone https://github.com/F2I-Consulting/Minizip.git ${{ runner.temp }}/Minizip
+          cd ${{ runner.temp }}
+          mkdir minizip-build
+          cd minizip-build
+          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DZLIB_INCLUDE_DIR=${{ runner.temp }}/hdf5-1.12.0-Std-win10_64-vs16/include -DZLIB_LIBRARY_RELEASE=${{ runner.temp }}/hdf5-1.12.0-Std-win10_64-vs16/lib/hdf5.lib -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/minizip-install ${{ runner.temp }}/Minizip
+          cmake --build . --config Release -j2
+          cmake --build . --config Release --target INSTALL
+      - name: FESAPI install
+        run: |
+          git clone https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
+          cd ${{ runner.temp }}
+          mkdir fesapi-build
+          cd fesapi-build
+          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DHDF5_ROOT=${{ runner.temp }}\hdf5-1.12.0-Std-win10_64-vs16 -DMINIZIP_INCLUDE_DIR=${{ runner.temp }}/minizip-install/include -DMINIZIP_LIBRARY_RELEASE=${{ runner.temp }}/minizip-install/lib/minizip.lib -DZLIB_INCLUDE_DIR=${{ runner.temp }}\hdf5-1.12.0-Std-win10_64-vs16/include -DZLIB_LIBRARY_RELEASE=${{ runner.temp }}\hdf5-1.12.0-Std-win10_64-vs16/lib/zlib.lib -DSZIP_LIBRARY_RELEASE=${{ runner.temp }}\hdf5-1.12.0-Std-win10_64-vs16/lib/szip.lib -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DWITH_EXAMPLE=TRUE -DWITH_RESQML2_2=TRUE -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fesapi-install ${{ runner.temp }}/fesapi-src
+          cmake --build . --config Release -j2
+          cmake --build . --config Release --target INSTALL
+      - name: CMake build and install
+        run: |
+          cd ${{ github.workspace }}/..
+          mkdir build
+          cd build
+          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.10.2-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.10.2-install/lib/avrocpp_s.lib -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=${{ runner.temp }}/fesapi-install/include -DFESAPI_LIBRARY_RELEASE=${{ runner.temp }}/fesapi-install/lib/FesapiCpp.2.4.0.0.lib ${{ github.workspace }}
+          cmake --build . --config Release -j2
