@@ -145,3 +145,54 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 
 	do_read();
 }
+
+std::string AbstractSession::startTransaction(std::vector<std::string> dataspaceUris, bool readOnly)
+{
+	size_t transactionProtocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
+	if (protocolHandlers.size() <= transactionProtocolId || protocolHandlers[transactionProtocolId] == nullptr) {
+		throw std::logic_error("You did not register any transaction protocol handlers.");
+	}
+	std::shared_ptr<TransactionHandlers> transactionHandlers = std::dynamic_pointer_cast<TransactionHandlers>(protocolHandlers[transactionProtocolId]);
+
+	Energistics::Etp::v12::Protocol::Transaction::StartTransaction startTransactionMsg;
+	startTransactionMsg.dataspaceUris = dataspaceUris;
+	startTransactionMsg.readOnly = readOnly;
+	sendAndBlock(startTransactionMsg, 0, 0x02);
+	return transactionHandlers->isInAnActiveTransaction()
+		? ""
+		: transactionHandlers->getLastTransactionFailure();
+}
+
+std::string AbstractSession::rollbackTransaction()
+{
+	size_t transactionProtocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
+	if (protocolHandlers.size() <= transactionProtocolId || protocolHandlers[transactionProtocolId] == nullptr) {
+		throw std::logic_error("You did not register any transaction protocol handlers.");
+	}
+	std::shared_ptr<TransactionHandlers> transactionHandlers = std::dynamic_pointer_cast<TransactionHandlers>(protocolHandlers[transactionProtocolId]);
+
+	Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction rollbackTransactionMsg;
+	rollbackTransactionMsg.transactionUuid = transactionHandlers->getTransactionUuid();
+	sendAndBlock(rollbackTransactionMsg, 0, 0x02);
+
+	return !transactionHandlers->isInAnActiveTransaction()
+		? ""
+		: transactionHandlers->getLastTransactionFailure();
+}
+
+std::string AbstractSession::commitTransaction()
+{
+	size_t transactionProtocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
+	if (protocolHandlers.size() <= transactionProtocolId || protocolHandlers[transactionProtocolId] == nullptr) {
+		throw std::logic_error("You did not register any transaction protocol handlers.");
+	}
+	std::shared_ptr<TransactionHandlers> transactionHandlers = std::dynamic_pointer_cast<TransactionHandlers>(protocolHandlers[transactionProtocolId]);
+
+	Energistics::Etp::v12::Protocol::Transaction::CommitTransaction commitTransactionMsg;
+	commitTransactionMsg.transactionUuid = transactionHandlers->getTransactionUuid();
+	sendAndBlock(commitTransactionMsg, 0, 0x02);
+
+	return !transactionHandlers->isInAnActiveTransaction()
+		? ""
+		: transactionHandlers->getLastTransactionFailure();
+}

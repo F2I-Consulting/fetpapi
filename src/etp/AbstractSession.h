@@ -294,6 +294,29 @@ namespace ETP_NS
 
 		void setMaxSentAndNonRespondedMessageCount(uint8_t value) { maxSentAndNonRespondedMessageCount = value; }
 
+		/**
+		* A customer sends to a store to begin a transaction.
+		* This function should be used with caution if Transaction Handlers have been overidden.
+		*
+		* @param dataspaceUris  Indicates the dataspaces involved in the transaction. An empty STRING means the default dataspace. An empty LIST means all dataspaces.
+		* @param readOnly		Indicates that the request in the transaction is read-only (i.e., "get" messages). 
+		*/
+		std::string startTransaction(std::vector<std::string> dataspaceUris = {}, bool readOnly = false);
+
+		/**
+		* A customer sends to a store to commit and end a transaction. This message implies that the customer 
+		* has received from or sent to the store all the data required for some purpose. The customer asserts that 
+		* the data sent in the scope of this transaction is a consistent unit of work.
+		*/
+		std::string rollbackTransaction();
+
+		/*
+		* A customer sends to a store to cancel a transaction. The store MUST disregard any requests or data sent 
+		* with that transaction. The current transaction (the one being canceled) MUST NOT change the state of 
+		* the store.
+		*/
+		std::string commitTransaction();
+
 	protected:
 		boost::beast::flat_buffer receivedBuffer;
 		/// The default handlers for each subprotocole. Default handlers are at the index of the corresponding subprotocol id.

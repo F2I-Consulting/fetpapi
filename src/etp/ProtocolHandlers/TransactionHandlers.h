@@ -22,6 +22,13 @@ under the License.
 
 namespace ETP_NS
 {
+	/**
+	* Transaction (Protocol 18) was developed to ensure store data consistency for applications that may have 
+	* long, complex transactions (typically associated with earth modeling/RESQML). It establishes simple 
+	* transaction semantics for ETP sessions. When implemented by a store, the Transaction protocol ensures 
+	* that all "get" and "put" operations issued against a store, within the same transaction, refers to data in a 
+	* consistent store state.
+	*/
 	class FETPAPI_DLL_IMPORT_OR_EXPORT TransactionHandlers : public ProtocolHandlers
 	{
 	public:
@@ -36,5 +43,15 @@ namespace ETP_NS
 		virtual void on_CommitTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse & msg, int64_t correlationId);
 	    virtual void on_RollbackTransaction(const Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction & msg, int64_t correlationId);
 		virtual void on_RollbackTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse & msg, int64_t correlationId);
+
+		bool isInAnActiveTransaction() const {
+			return std::find_if(transactionUuid.array.begin(), transactionUuid.array.end(), [](uint8_t item) {return item != 0; }) != transactionUuid.array.end();
+		}
+		const Energistics::Etp::v12::Datatypes::Uuid& getTransactionUuid() const { return transactionUuid; }
+		const std::string& getLastTransactionFailure() const { return lastTransactionFailure; }
+	private:
+		/// ETP1.2intentionally supports a single open transaction on a session.
+		Energistics::Etp::v12::Datatypes::Uuid transactionUuid = {};
+		std::string lastTransactionFailure;
 	};
 }

@@ -77,9 +77,18 @@ void TransactionHandlers::on_StartTransaction(const Energistics::Etp::v12::Proto
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The TransactionHandlers::on_StartTransaction method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void TransactionHandlers::on_StartTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse&, int64_t)
+void TransactionHandlers::on_StartTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse& msg, int64_t)
 {
-	std::cout << "on_StartTransactionResponse" << std::endl;
+	if (isInAnActiveTransaction()) {
+		throw std::logic_error("ETP1.2 intentionally supports a single open transaction on a session");
+	}
+
+	if (msg.successful) {
+		transactionUuid = msg.transactionUuid;
+	}
+	else {
+		lastTransactionFailure = msg.failureReason;
+	}
 }
 
 void TransactionHandlers::on_CommitTransaction(const Energistics::Etp::v12::Protocol::Transaction::CommitTransaction&, int64_t correlationId)
@@ -87,9 +96,14 @@ void TransactionHandlers::on_CommitTransaction(const Energistics::Etp::v12::Prot
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The TransactionHandlers::on_PutDataObject method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void TransactionHandlers::on_CommitTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse&, int64_t)
+void TransactionHandlers::on_CommitTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse& msg, int64_t)
 {
-	std::cout << "on_CommitTransactionResponse" << std::endl;
+	if (msg.successful) {
+		std::fill(transactionUuid.array.begin(), transactionUuid.array.end(), 0);
+	}
+	else {
+		lastTransactionFailure = msg.failureReason;
+	}
 }
 
 void TransactionHandlers::on_RollbackTransaction(const Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction&, int64_t correlationId)
@@ -97,7 +111,12 @@ void TransactionHandlers::on_RollbackTransaction(const Energistics::Etp::v12::Pr
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The TransactionHandlers::on_DeleteDataObject method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void TransactionHandlers::on_RollbackTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse&, int64_t)
+void TransactionHandlers::on_RollbackTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse& msg, int64_t)
 {
-	std::cout << "on_RollbackTransactionResponse" << std::endl;
+	if (msg.successful) {
+		std::fill(transactionUuid.array.begin(), transactionUuid.array.end(), 0);
+	}
+	else {
+		lastTransactionFailure = msg.failureReason;
+	}
 }
