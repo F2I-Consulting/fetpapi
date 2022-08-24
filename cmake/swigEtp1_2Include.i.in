@@ -1894,4 +1894,5 @@ namespace ETP_NS
 }
 
 %pragma(java) moduleimports="import com.f2i_consulting.fesapi.common.AbstractObject;"
+%pragma(java) jniclassimports="import com.f2i_consulting.fesapi.common.AbstractObject;"
 %pragma(csharp) moduleimports="using F2iConsulting.Fesapi.common;"

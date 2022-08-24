@@ -13,7 +13,7 @@ Download (build and install if necessary) third party libraries:
 - BOOST : All versions from version 1.66 should be ok but you may experience some [min/max build issues](https://github.com/boostorg/beast/issues/1980) using version 1.72 or 1.73.
 - AVRO : https://avro.apache.org/releases.html#Download (starting from version 1.9.0, build it with the above boost library)
 - (OPTIONALLY) OpenSSL : version 1.1 is known to work.
-- (OPTIONALLY) [FESAPI](https://github.com/F2I-Consulting/fesapi/releases) : All versions from version 2.3.0.0 should be ok.
+- (OPTIONALLY) [FESAPI](https://github.com/F2I-Consulting/fesapi/releases) : All versions from version 2.4.0.0 should be ok.
 
 We advise you to install these third party libraries respectively into
 - fesapiEnv/dependencies/boost-particularVersion
