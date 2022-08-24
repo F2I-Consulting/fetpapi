@@ -80,3 +80,70 @@ jobs:
           cd build
           cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.10.2-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.10.2-install/lib/avrocpp_s.lib -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=${{ runner.temp }}/fesapi-install/include -DFESAPI_LIBRARY_RELEASE=${{ runner.temp }}/fesapi-install/lib/FesapiCpp.2.4.0.0.lib ${{ github.workspace }}
           cmake --build . --config Release -j2
+  ubuntu-20:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: APT install
+        run: |
+          sudo apt update
+          sudo apt install -y libboost-all-dev
+      - name: AVRO INSTALL
+        run: |
+          curl https://archive.apache.org/dist/avro/avro-1.10.2/cpp/avro-cpp-1.10.2.tar.gz -o ${{ runner.temp }}/avro-cpp-1.10.2.tar.gz
+          cd ${{ runner.temp }}
+          tar xzf avro-cpp-1.10.2.tar.gz
+          sed -i 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' avro-cpp-1.10.2/CMakeLists.txt
+          sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.10.2/CMakeLists.txt
+          mkdir avro-cpp-1.10.2-build
+          cd avro-cpp-1.10.2-build
+          cmake -Wno-dev -Wno-deprecated -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-1.10.2-install ${{ runner.temp }}/avro-cpp-1.10.2
+          cmake --build . -j2
+          cmake --install .
+      - name: CMake build and install
+        run: |
+          cd ${{ github.workspace }}/..
+          mkdir build
+          cd build
+          cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.10.2-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.10.2-install/lib/libavrocpp_s.a ${{ github.workspace }}
+          cmake --build . --config Release -j2
+  ubuntu-20-java8-with-fesapi:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: '8'
+      - name: APT install
+        run: |
+          sudo apt update
+          sudo apt install -y libhdf5-dev libminizip-dev libboost-all-dev
+      - name: FESAPI install
+        run: |
+          git clone https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
+          cd ${{ runner.temp }}
+          mkdir fesapi-build
+          cd fesapi-build
+          cmake -DMINIZIP_INCLUDE_DIR=/usr/include/minizip -DMINIZIP_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libminizip.so.1.0.0 -DCMAKE_BUILD_TYPE=Release -DWITH_JAVA_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fesapi-install ${{ runner.temp }}/fesapi-src
+          cmake --build . -j2
+          cmake --install .
+      - name: AVRO INSTALL
+        run: |
+          curl https://archive.apache.org/dist/avro/avro-1.10.2/cpp/avro-cpp-1.10.2.tar.gz -o ${{ runner.temp }}/avro-cpp-1.10.2.tar.gz
+          cd ${{ runner.temp }}
+          tar xzf avro-cpp-1.10.2.tar.gz
+          sed -i 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' avro-cpp-1.10.2/CMakeLists.txt
+          sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.10.2/CMakeLists.txt
+          mkdir avro-cpp-1.10.2-build
+          cd avro-cpp-1.10.2-build
+          cmake -Wno-dev -Wno-deprecated -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-1.10.2-install ${{ runner.temp }}/avro-cpp-1.10.2
+          cmake --build . -j2
+          cmake --install .
+      - name: CMake build and install
+        run: |
+          cd ${{ github.workspace }}/..
+          mkdir build
+          cd build
+          cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.10.2-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.10.2-install/lib/libavrocpp_s.a -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=${{ runner.temp }}/fesapi-install/include -DFESAPI_LIBRARY_RELEASE=${{ runner.temp }}/fesapi-install/lib/libFesapiCpp.so -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }}
+          cmake --build . --config Release -j2
