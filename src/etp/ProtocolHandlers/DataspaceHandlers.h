@@ -36,5 +36,19 @@ namespace ETP_NS
 		virtual void on_PutDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse & msg, int64_t correlationId);
 	    virtual void on_DeleteDataspaces(const Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces & msg, int64_t correlationId);
 		virtual void on_DeleteDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse & msg, int64_t correlationId);
+
+		std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> getDataspaces() const {
+			return dataspaces;
+		}
+		void clearDataspaces() { dataspaces.clear(); }
+
+		std::vector<std::string> getSuccessKeys() const {
+			return successKeys;
+		}
+		void clearSuccessKeys() { successKeys.clear(); }
+
+	private:
+		std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> dataspaces;
+		std::vector<std::string> successKeys;
 	};
 }

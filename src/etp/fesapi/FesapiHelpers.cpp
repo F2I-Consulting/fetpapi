@@ -43,6 +43,8 @@ Energistics::Etp::v12::Datatypes::Object::Resource ETP_NS::FesapiHelpers::buildE
 
 	result.storeLastWrite = -1; // Not supported yet
 
+	result.activeStatus = Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind::Inactive; // Active dataobjects are not supported for now
+
 	return result;
 }
 

@@ -85,10 +85,7 @@ void StoreHandlers::on_GetDataObjects(const Energistics::Etp::v12::Protocol::Sto
 
 void StoreHandlers::on_GetDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse& msg, int64_t)
 {
-	for (const auto& graphResource : msg.dataObjects) {
-		std::cout << "Resource received : " << std::endl;
-		printDataObject(graphResource.second);
-	}
+	dataObjects.insert(msg.dataObjects.begin(), msg.dataObjects.end());
 }
 
 void StoreHandlers::on_PutDataObjects(const Energistics::Etp::v12::Protocol::Store::PutDataObjects&, int64_t correlationId)
@@ -96,9 +93,11 @@ void StoreHandlers::on_PutDataObjects(const Energistics::Etp::v12::Protocol::Sto
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The StoreHandlers::on_PutDataObject method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void StoreHandlers::on_PutDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse&, int64_t correlationId)
+void StoreHandlers::on_PutDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse& msg, int64_t correlationId)
 {
-	std::cout << "on_PutDataObjectsResponse to message id " << correlationId << std::endl;
+	for (const auto& entry : msg.success) {
+		successKeys.push_back(entry.first);
+	}
 }
 
 void StoreHandlers::on_DeleteDataObjects(const Energistics::Etp::v12::Protocol::Store::DeleteDataObjects&, int64_t correlationId)
@@ -106,9 +105,11 @@ void StoreHandlers::on_DeleteDataObjects(const Energistics::Etp::v12::Protocol::
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The StoreHandlers::on_DeleteDataObject method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void StoreHandlers::on_DeleteDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse&, int64_t correlationId)
+void StoreHandlers::on_DeleteDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse& msg, int64_t correlationId)
 {
-	std::cout << "on_DeleteDataObjectsResponse to message id " << correlationId << std::endl;
+	for (const auto& entry : msg.deletedUris) {
+		successKeys.push_back(entry.first);
+	}
 }
 
 void StoreHandlers::on_Chunk(const Energistics::Etp::v12::Protocol::Store::Chunk&, int64_t)

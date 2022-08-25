@@ -112,7 +112,6 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 			if (specificProtocolHandlerIt != specificProtocolHandlers.end() && specificProtocolHandlerIt->second != nullptr) {
 				// Receive a message which has been asked to be processed with a specific protocol handler
 				specificProtocolHandlerIt->second->decodeMessageBody(receivedMh, d);
-				std::cout << "PROCESSED msg id " << receivedMh.correlationId << std::endl;
 				if ((receivedMh.messageFlags & 0x02) != 0) {
 					specificProtocolHandlers.erase(specificProtocolHandlerIt);
 					if (specificProtocolHandlers.size() == maxSentAndNonRespondedMessageCount - 1) {
@@ -146,53 +145,220 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 	do_read();
 }
 
+/****************
+***** CORE ******
+****************/
+
+std::map<std::string, Energistics::Etp::v12::Datatypes::ErrorInfo> AbstractSession::getProtocolExceptions()
+{
+	std::shared_ptr<CoreHandlers> handlers = getCoreProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any core protocol handlers.");
+	}
+	return handlers->getProtocolExceptions();
+}
+
+/****************
+*** DATASPACE ***
+****************/
+
+std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> AbstractSession::getDataspaces(int64_t storeLastWriteFilter)
+{
+	std::shared_ptr<DataspaceHandlers> handlers = getDataspaceProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any dataspace protocol handlers.");
+	}
+
+	Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces msg;
+	if (storeLastWriteFilter >= 0) {
+		msg.storeLastWriteFilter = storeLastWriteFilter;
+	}
+	sendAndBlock(msg, 0, 0x02);
+	std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> result = handlers->getDataspaces();
+	handlers->clearDataspaces();
+	return result;
+}
+
+std::vector<std::string> AbstractSession::putDataspaces(const std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace>& dataspaces)
+{
+	std::shared_ptr<DataspaceHandlers> handlers = getDataspaceProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any dataspace protocol handlers.");
+	}
+
+	Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces msg;
+	msg.dataspaces = dataspaces;
+	sendAndBlock(msg, 0, 0x02);
+	std::vector<std::string> result = handlers->getSuccessKeys();
+	handlers->clearSuccessKeys();
+	return result;
+}
+
+std::vector<std::string> AbstractSession::deleteDataspaces(const std::map<std::string, std::string>& dataspaceUris)
+{
+	std::shared_ptr<DataspaceHandlers> handlers = getDataspaceProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any dataspace protocol handlers.");
+	}
+
+	Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces msg;
+	msg.uris = dataspaceUris;
+	sendAndBlock(msg, 0, 0x02);
+	std::vector<std::string> result = handlers->getSuccessKeys();
+	handlers->clearSuccessKeys();
+	return result;
+}
+
+/****************
+*** DISCOVERY ***
+****************/
+
+std::vector<Energistics::Etp::v12::Datatypes::Object::Resource> AbstractSession::getResources(
+	const Energistics::Etp::v12::Datatypes::Object::ContextInfo& context,
+	const Energistics::Etp::v12::Datatypes::Object::ContextScopeKind& scope,
+	int64_t storeLastWriteFilter,
+	bool countObjects)
+{
+	std::shared_ptr<DiscoveryHandlers> handlers = getDiscoveryProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any discovery protocol handlers.");
+	}
+
+	Energistics::Etp::v12::Protocol::Discovery::GetResources msg;
+	msg.context = context;
+	msg.scope = scope;
+	if (storeLastWriteFilter >= 0) {
+		msg.storeLastWriteFilter = storeLastWriteFilter;
+	}
+	msg.countObjects = countObjects;
+	sendAndBlock(msg, 0, 0x02);
+	std::vector<Energistics::Etp::v12::Datatypes::Object::Resource> result = handlers->getResources();
+	handlers->clearResources();
+	return result;
+}
+
+std::vector<Energistics::Etp::v12::Datatypes::Object::DeletedResource> AbstractSession::getDeletedResources(
+	const std::string& dataspaceUri,
+	int64_t deleteTimeFilter,
+	const std::vector<std::string>& dataObjectTypes)
+{
+	std::shared_ptr<DiscoveryHandlers> handlers = getDiscoveryProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any discovery protocol handlers.");
+	}
+
+	Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources msg;
+	msg.dataspaceUri = dataspaceUri;
+	if (deleteTimeFilter >= 0) {
+		msg.deleteTimeFilter = deleteTimeFilter;
+	}
+	msg.dataObjectTypes = dataObjectTypes;
+	sendAndBlock(msg, 0, 0x02);
+	std::vector<Energistics::Etp::v12::Datatypes::Object::DeletedResource> result = handlers->getDeletedResources();
+	handlers->clearDeletedResources();
+	return result;
+}
+
+/****************
+***** STORE *****
+****************/
+
+std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> AbstractSession::getDataObjects(const std::map<std::string, std::string>& uris)
+{
+	std::shared_ptr<StoreHandlers> handlers = getStoreProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any store protocol handlers.");
+	}
+
+	Energistics::Etp::v12::Protocol::Store::GetDataObjects msg;
+	msg.uris = uris;
+	msg.format = "xml";
+	sendAndBlock(msg, 0, 0x02);
+	std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> result = handlers->getDataObjects();
+	handlers->clearDataObjects();
+	return result;
+}
+
+std::vector<std::string> AbstractSession::putDataObjects(const std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject>& dataObjects)
+{
+	std::shared_ptr<StoreHandlers> handlers = getStoreProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any store protocol handlers.");
+	}
+
+	Energistics::Etp::v12::Protocol::Store::PutDataObjects msg;
+	msg.dataObjects = dataObjects;
+	msg.pruneContainedObjects = false;
+	sendAndBlock(msg, 0, 0x02);
+	std::vector<std::string> result = handlers->getSuccessKeys();
+	handlers->clearSuccessKeys();
+	return result;
+}
+
+std::vector<std::string> AbstractSession::deleteDataObjects(const std::map<std::string, std::string>& uris)
+{
+	std::shared_ptr<StoreHandlers> handlers = getStoreProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any store protocol handlers.");
+	}
+
+	Energistics::Etp::v12::Protocol::Store::DeleteDataObjects msg;
+	msg.uris = uris;
+	msg.pruneContainedObjects = false;
+	sendAndBlock(msg, 0, 0x02);
+	std::vector<std::string> result = handlers->getSuccessKeys();
+	handlers->clearSuccessKeys();
+	return result;
+}
+
+/****************
+** TRANSACTION **
+****************/
+
 std::string AbstractSession::startTransaction(std::vector<std::string> dataspaceUris, bool readOnly)
 {
-	size_t transactionProtocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
-	if (protocolHandlers.size() <= transactionProtocolId || protocolHandlers[transactionProtocolId] == nullptr) {
-		throw std::logic_error("You did not register any transaction protocol handlers.");
+	std::shared_ptr<TransactionHandlers> handlers = getTransactionProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any trnsaction protocol handlers.");
 	}
-	std::shared_ptr<TransactionHandlers> transactionHandlers = std::dynamic_pointer_cast<TransactionHandlers>(protocolHandlers[transactionProtocolId]);
 
 	Energistics::Etp::v12::Protocol::Transaction::StartTransaction startTransactionMsg;
 	startTransactionMsg.dataspaceUris = dataspaceUris;
 	startTransactionMsg.readOnly = readOnly;
 	sendAndBlock(startTransactionMsg, 0, 0x02);
-	return transactionHandlers->isInAnActiveTransaction()
+	return handlers->isInAnActiveTransaction()
 		? ""
-		: transactionHandlers->getLastTransactionFailure();
+		: handlers->getLastTransactionFailure();
 }
 
 std::string AbstractSession::rollbackTransaction()
 {
-	size_t transactionProtocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
-	if (protocolHandlers.size() <= transactionProtocolId || protocolHandlers[transactionProtocolId] == nullptr) {
-		throw std::logic_error("You did not register any transaction protocol handlers.");
+	std::shared_ptr<TransactionHandlers> handlers = getTransactionProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any trnsaction protocol handlers.");
 	}
-	std::shared_ptr<TransactionHandlers> transactionHandlers = std::dynamic_pointer_cast<TransactionHandlers>(protocolHandlers[transactionProtocolId]);
 
 	Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction rollbackTransactionMsg;
-	rollbackTransactionMsg.transactionUuid = transactionHandlers->getTransactionUuid();
+	rollbackTransactionMsg.transactionUuid = handlers->getTransactionUuid();
 	sendAndBlock(rollbackTransactionMsg, 0, 0x02);
 
-	return !transactionHandlers->isInAnActiveTransaction()
+	return !handlers->isInAnActiveTransaction()
 		? ""
-		: transactionHandlers->getLastTransactionFailure();
+		: handlers->getLastTransactionFailure();
 }
 
 std::string AbstractSession::commitTransaction()
 {
-	size_t transactionProtocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
-	if (protocolHandlers.size() <= transactionProtocolId || protocolHandlers[transactionProtocolId] == nullptr) {
-		throw std::logic_error("You did not register any transaction protocol handlers.");
+	std::shared_ptr<TransactionHandlers> handlers = getTransactionProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any trnsaction protocol handlers.");
 	}
-	std::shared_ptr<TransactionHandlers> transactionHandlers = std::dynamic_pointer_cast<TransactionHandlers>(protocolHandlers[transactionProtocolId]);
 
 	Energistics::Etp::v12::Protocol::Transaction::CommitTransaction commitTransactionMsg;
-	commitTransactionMsg.transactionUuid = transactionHandlers->getTransactionUuid();
+	commitTransactionMsg.transactionUuid = handlers->getTransactionUuid();
 	sendAndBlock(commitTransactionMsg, 0, 0x02);
 
-	return !transactionHandlers->isInAnActiveTransaction()
+	return !handlers->isInAnActiveTransaction()
 		? ""
-		: transactionHandlers->getLastTransactionFailure();
+		: handlers->getLastTransactionFailure();
 }

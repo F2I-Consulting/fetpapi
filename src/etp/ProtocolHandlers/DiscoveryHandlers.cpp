@@ -72,9 +72,7 @@ void DiscoveryHandlers::on_GetResources(const Energistics::Etp::v12::Protocol::D
 
 void DiscoveryHandlers::on_GetResourcesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse & msg, int64_t)
 {
-	for (const auto& resource : msg.resources) {
-		std::cout << "DISCOVERED RESOURCE (" << resource.name << ", " << resource.uri << ')' << std::endl;
-	}
+	resources.insert(resources.end(), msg.resources.begin(), msg.resources.end());
 }
 
 void DiscoveryHandlers::on_GetResourcesEdgesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse & msg, int64_t)
@@ -91,7 +89,5 @@ void DiscoveryHandlers::on_GetDeletedResources(const Energistics::Etp::v12::Prot
 
 void DiscoveryHandlers::on_GetDeletedResourcesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetDeletedResourcesResponse & msg, int64_t)
 {
-	for (const auto & resource : msg.deletedResources) {
-		std::cout << "DISCOVERED DELETED RESOURCE (" << resource.uri << " deleted at " << resource.deletedTime << ')' << std::endl;
-	}
+	deletedResources.insert(deletedResources.end(), msg.deletedResources.begin(), msg.deletedResources.end());
 }

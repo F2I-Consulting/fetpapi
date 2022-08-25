@@ -89,6 +89,13 @@ namespace ETP_NS
 	    	}
 	    }
 
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::CoreHandlers> getCoreProtocolHandlers() {
+			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Core);
+			return protocolHandlers.size() > protocolId
+				? std::dynamic_pointer_cast<CoreHandlers>(protocolHandlers[protocolId])
+				: nullptr;
+		}
+
 	    /**
 		 * Set the Discovery protocol handlers
 		 */
@@ -99,10 +106,11 @@ namespace ETP_NS
 			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery)] = discoveryHandlers;
 		}
 
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ProtocolHandlers> getDiscoveryProtocolHandlers() {
-			return protocolHandlers.size() > static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery) ?
-				protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery)] :
-				nullptr;
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::DiscoveryHandlers> getDiscoveryProtocolHandlers() {
+			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
+			return protocolHandlers.size() > protocolId
+				? std::dynamic_pointer_cast<DiscoveryHandlers>(protocolHandlers[protocolId])
+				: nullptr;
 		}
 
 		/**
@@ -115,10 +123,11 @@ namespace ETP_NS
 			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Store)] = storeHandlers;
 		}
 
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ProtocolHandlers> getStoreProtocolHandlers() {
-			return protocolHandlers.size() > static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Store) ?
-				protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Store)] :
-				nullptr;
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::StoreHandlers> getStoreProtocolHandlers() {
+			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Store);
+			return protocolHandlers.size() > protocolId
+				? std::dynamic_pointer_cast<StoreHandlers>(protocolHandlers[protocolId])
+				: nullptr;
 		}
 
 		/**
@@ -131,10 +140,11 @@ namespace ETP_NS
 			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification)] = storeNotificationHandlers;
 		}
 
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ProtocolHandlers> getStoreNotificationProtocolHandlers() {
-			return protocolHandlers.size() > static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification) ?
-				protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification)] :
-				nullptr;
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::StoreNotificationHandlers> getStoreNotificationProtocolHandlers() {
+			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
+			return protocolHandlers.size() > protocolId
+				? std::dynamic_pointer_cast<StoreNotificationHandlers>(protocolHandlers[protocolId])
+				: nullptr;
 		}
 
 		/**
@@ -147,6 +157,13 @@ namespace ETP_NS
 			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::DataArray)] = dataArrayHandlers;
 		}
 
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::DataArrayHandlers> getDataArrayProtocolHandlers() {
+			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
+			return protocolHandlers.size() > protocolId
+				? std::dynamic_pointer_cast<DataArrayHandlers>(protocolHandlers[protocolId])
+				: nullptr;
+		}
+
 		/**
 		 * Set the Transaction protocol handlers
 		 */
@@ -155,6 +172,13 @@ namespace ETP_NS
 				protocolHandlers.push_back(nullptr);
 			}
 			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction)] = transactionHandlers;
+		}
+
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::TransactionHandlers> getTransactionProtocolHandlers() {
+			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
+			return protocolHandlers.size() > protocolId
+				? std::dynamic_pointer_cast<TransactionHandlers>(protocolHandlers[protocolId])
+				: nullptr;
 		}
 
 		/**
@@ -167,15 +191,11 @@ namespace ETP_NS
 			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace)] = dataspaceHandlers;
 		}
 
-		/**
-		* Wait for all sent messages to be responded and then close the websocket connection
-		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT void close() { 
-			isCloseRequested = true;
-			if (specificProtocolHandlers.empty() && sendingQueue.empty()) {
-				etpSessionClosed = true;
-				send(Energistics::Etp::v12::Protocol::Core::CloseSession(), 0, 0x02);
-			}
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::DataspaceHandlers> getDataspaceProtocolHandlers() {
+			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
+			return protocolHandlers.size() > protocolId
+				? std::dynamic_pointer_cast<DataspaceHandlers>(protocolHandlers[protocolId])
+				: nullptr;
 		}
 
 		/**
@@ -277,13 +297,6 @@ namespace ETP_NS
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT bool isWebSocketSessionClosed() const { return webSocketSessionClosed;  }
 
-		FETPAPI_DLL_IMPORT_OR_EXPORT void setEtpSessionClosed(bool etpSessionClosed_) { etpSessionClosed = etpSessionClosed_; }
-
-		/**
-		* Check if the ETP session (starting after the Core.OpenSession or Core.RequestSession message) is not opened yet or has been closed.
-		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT bool isEtpSessionClosed() const { return webSocketSessionClosed || etpSessionClosed; }
-
 		/**
 		* Check wether a particular ETP message has been responded or not by the other agent.
 		*/
@@ -294,28 +307,171 @@ namespace ETP_NS
 
 		void setMaxSentAndNonRespondedMessageCount(uint8_t value) { maxSentAndNonRespondedMessageCount = value; }
 
+		/****************
+		***** CORE ******
+		****************/
+
+		/**
+		* Wait for all sent messages to be responded and then close the websocket connection
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT void close() {
+			isCloseRequested = true;
+			if (specificProtocolHandlers.empty() && sendingQueue.empty()) {
+				etpSessionClosed = true;
+				send(Energistics::Etp::v12::Protocol::Core::CloseSession(), 0, 0x02);
+			}
+		}
+
+		/**
+		* Check if the ETP session (starting after the Core.OpenSession or Core.RequestSession message) is not opened yet or has been closed.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT bool isEtpSessionClosed() const { return webSocketSessionClosed || etpSessionClosed; }
+
+		void setEtpSessionClosed(bool etpSessionClosed_) { etpSessionClosed = etpSessionClosed_; }
+
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::map<std::string, Energistics::Etp::v12::Datatypes::ErrorInfo> getProtocolExceptions();
+
+		/****************
+		*** DATASPACE ***
+		****************/
+
+		/**
+		* A customer sends to a store to discover all dataspaces available on the store.
+		* This function should be used with caution if Dataspace Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param storeLastWriteFilter	An optional filter to limit the dataspaces returned by date/time last saved to the store.
+		*								The store returns a list of dataspaces whose last changed date/time is greater than the specified date/time.
+		*								It must be a UTC dateTime value, serialized as a positive long, using the Avro logical type timestamp-micros (microseconds from the Unix Epoch, 1 January 1970 00:00:00.000000 UTC).
+		* @param return	The available dataspaces the store could return.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> getDataspaces(int64_t storeLastWriteFilter = -1);
+
+		/**
+		* A customer sends to a store to create one or more dataspaces.
+		* This function should be used with caution if Dataspace Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param dataspaces  ETP general map : One each for each dataspace the customer wants to add or update.
+		* @param return	The map keys corresponding to the dataspaces which have been put successfully into the store.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> putDataspaces(const std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace>& dataspaces);
+
+		/**
+		* A customer sends to a store to delete one or more dataspaces.
+		* This function should be used with caution if Dataspace Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param dataspaceUris  ETP general map where the values must be the URIs for the dataspaces the customer wants to delete.
+		* @param return	The map keys corresponding to the dataspaces which have been deleted successfully.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> deleteDataspaces(const std::map<std::string, std::string>& dataspaceUris);
+
+		/****************
+		*** DISCOVERY ***
+		****************/
+
+		/**
+		* A Customer sends this message to a store to discover data objects in the store.
+		* This function should be used with caution if Discovery Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param context				Includes the URI of the dataspace or data object to begin the discovery, what specific types of data objects are of interest,
+		*								and how many "levels" of relationships in the model to discover, among others. 
+		* @param scope					Scope is specified in reference to the URI (which is entered in the context field).
+		*								It indicates which direction in the graph that the operation should proceed (targets or sources) and whether or not to include the starting point (self).
+		* @param storeLastWriteFilter	An optional filter to filter the discovery on a date when the data object was last written in a particular store.
+		*								The store returns resources whose storeLastWrite date/time is GREATER than the date/time specified in this filter field.
+		*								It must be a UTC dateTime value, serialized as a positive long, using the Avro logical type timestamp-micros (microseconds from the Unix Epoch, 1 January 1970 00:00:00.000000 UTC).
+		* @param countObjects			If true, the store provides counts of sources and targets for each resource identified by Discovery.
+		* @param return					The resources corresponding to this query.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<Energistics::Etp::v12::Datatypes::Object::Resource> getResources(
+			const Energistics::Etp::v12::Datatypes::Object::ContextInfo& context,
+			const Energistics::Etp::v12::Datatypes::Object::ContextScopeKind& scope,
+			int64_t storeLastWriteFilter = -1,
+			bool countObjects = false);
+
+		/**
+		* A customer sends to a store to discover data objects that have been deleted (which are sometimes called "tombstones").
+		* This function should be used with caution if Discovery Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param dataspaceUri			The URI of the dataspace where the objects were deleted.
+		* @param deleteTimeFilter		An optional filter to filter the discovery on a date when the data object was deleted in a particular store.
+		*								The store returns resources for objects whose delete times are greater than this value.
+		*								It must be a UTC dateTime value, serialized as a positive long, using the Avro logical type timestamp-micros (microseconds from the Unix Epoch, 1 January 1970 00:00:00.000000 UTC).
+		* @param dataObjectTypes		Filter for the types of data objects you want. EXAMPLES: "witsml20.Well", "resqml20.obj_TectonicBoundaryFeature", "resqml20.*" 
+		* @param return					The deleted resources corresponding to this query.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<Energistics::Etp::v12::Datatypes::Object::DeletedResource> getDeletedResources(
+			const std::string& dataspaceUri,
+			int64_t deleteTimeFilter = -1,
+			const std::vector<std::string>& dataObjectTypes = {});
+
+		/****************
+		***** STORE *****
+		****************/
+
+		/**
+		* A customer sends to a store to get one or more data objects, each identified by a URI.
+		* This function should be used with caution if Store Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param uris	ETP general map where the values MUST be the URIs of a data object to be retrieved.
+		* @param return	The received dataobjects in a map where the key makes the link between the asked uris and the received dataobjects.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> getDataObjects(const std::map<std::string, std::string>& uris);
+
+		/**
+		* A customer sends to a store to add or update one or more data objects.
+		* This function should be used with caution if Store Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param uris	ETP general map where the values MUST be the data for each data object in the request, including each one's URI.
+		* @param return	The map keys corresponding to the dataObjects which have been put successfully.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> putDataObjects(const std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject>& dataObjects);
+
+		/**
+		* A customer sends to a store to delete one or more data objects from the store.  
+		* This function should be used with caution if Store Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param uris	ETP general map where the values MUST be the URIs of a data object to be deleted.
+		* @param return	The map keys corresponding to the dataObjects which have been deleted successfully.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> deleteDataObjects(const std::map<std::string, std::string>& uris);
+
+		/****************
+		** TRANSACTION **
+		****************/
+
 		/**
 		* A customer sends to a store to begin a transaction.
 		* This function should be used with caution if Transaction Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
 		*
 		* @param dataspaceUris  Indicates the dataspaces involved in the transaction. An empty STRING means the default dataspace. An empty LIST means all dataspaces.
 		* @param readOnly		Indicates that the request in the transaction is read-only (i.e., "get" messages). 
 		*/
-		std::string startTransaction(std::vector<std::string> dataspaceUris = {}, bool readOnly = false);
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::string startTransaction(std::vector<std::string> dataspaceUris = {}, bool readOnly = false);
 
 		/**
 		* A customer sends to a store to commit and end a transaction. This message implies that the customer 
 		* has received from or sent to the store all the data required for some purpose. The customer asserts that 
 		* the data sent in the scope of this transaction is a consistent unit of work.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
 		*/
-		std::string rollbackTransaction();
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::string rollbackTransaction();
 
 		/*
 		* A customer sends to a store to cancel a transaction. The store MUST disregard any requests or data sent 
 		* with that transaction. The current transaction (the one being canceled) MUST NOT change the state of 
 		* the store.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
 		*/
-		std::string commitTransaction();
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::string commitTransaction();
 
 	protected:
 		boost::beast::flat_buffer receivedBuffer;

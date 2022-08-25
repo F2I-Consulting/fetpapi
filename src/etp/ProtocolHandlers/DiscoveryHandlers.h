@@ -36,5 +36,19 @@ namespace ETP_NS
 
 		virtual void on_GetDeletedResources(const Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources & msg, int64_t correlationId);
 		virtual void on_GetDeletedResourcesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetDeletedResourcesResponse & msg, int64_t correlationId);
+
+		std::vector<Energistics::Etp::v12::Datatypes::Object::Resource> getResources() const {
+			return resources;
+		}
+		void clearResources() { resources.clear(); }
+
+		std::vector<Energistics::Etp::v12::Datatypes::Object::DeletedResource> getDeletedResources() const {
+			return deletedResources;
+		}
+		void clearDeletedResources() { deletedResources.clear(); }
+
+	private:
+		std::vector<Energistics::Etp::v12::Datatypes::Object::Resource> resources;
+		std::vector<Energistics::Etp::v12::Datatypes::Object::DeletedResource> deletedResources;
 	};
 }

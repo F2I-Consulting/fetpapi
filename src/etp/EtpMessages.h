@@ -49,6 +49,17 @@ namespace Energistics {
 		}
 	}
 }
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::Protocol> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::Protocol& v) {
+			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(v));
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Datatypes::Protocol& v) {
+			v = static_cast<Energistics::Etp::v12::Datatypes::Protocol>(e.decodeEnum());
+		}
+	};
+}
+
 namespace Energistics {
 	namespace Etp {
 		namespace v12 {
@@ -334,8 +345,8 @@ namespace Energistics {
 				namespace Dataspace {
 					struct GetDataspaces {
 						boost::optional<int64_t> storeLastWriteFilter;
-						bool has_storeLastWriteFilter() { return storeLastWriteFilter.is_initialized(); }
-						int64_t get_storeLastWriteFilter() { return storeLastWriteFilter.get(); }
+						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.is_initialized(); }
+						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.get(); }
 						static constexpr int messageTypeId=1;
 						static constexpr int protocolId = static_cast<int>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
 					};
@@ -387,8 +398,8 @@ namespace Energistics {
 					struct GetDeletedResources {
 						std::string dataspaceUri;
 						boost::optional<int64_t> deleteTimeFilter;
-						bool has_deleteTimeFilter() { return deleteTimeFilter.is_initialized(); }
-						int64_t get_deleteTimeFilter() { return deleteTimeFilter.get(); }
+						bool has_deleteTimeFilter() const { return deleteTimeFilter.is_initialized(); }
+						int64_t get_deleteTimeFilter() const { return deleteTimeFilter.get(); }
 						std::vector<std::string> dataObjectTypes;
 						static constexpr int messageTypeId=5;
 						static constexpr int protocolId = static_cast<int>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
@@ -1828,8 +1839,8 @@ namespace Energistics {
 				namespace Core {
 					struct ProtocolException {
 						boost::optional<Energistics::Etp::v12::Datatypes::ErrorInfo> error;
-						bool has_error() { return error.is_initialized(); }
-						Energistics::Etp::v12::Datatypes::ErrorInfo get_error() { return error.get(); }
+						bool has_error() const { return error.is_initialized(); }
+						Energistics::Etp::v12::Datatypes::ErrorInfo get_error() const { return error.get(); }
 						std::map<std::string, Energistics::Etp::v12::Datatypes::ErrorInfo> errors;
 						static constexpr int messageTypeId=1000;
 						static constexpr int protocolId = static_cast<int>(Energistics::Etp::v12::Datatypes::Protocol::Core);
@@ -1869,16 +1880,6 @@ namespace avro {
 		}
 		static void decode(Decoder& e, Energistics::Etp::v12::Datatypes::MessageHeaderExtension& v) {
 			avro::decode(e, v.extension);
-		}
-	};
-}
-namespace avro {
-	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::Protocol> {
-		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::Protocol& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(v));
-		}
-		static void decode(Decoder& e, Energistics::Etp::v12::Datatypes::Protocol& v) {
-			v = static_cast<Energistics::Etp::v12::Datatypes::Protocol>(e.decodeEnum());
 		}
 	};
 }
@@ -2915,8 +2916,8 @@ namespace Energistics {
 						Energistics::Etp::v12::Datatypes::IndexValue startIndex;
 						bool dataChanges=false;
 						boost::optional<int32_t> requestLatestIndexCount;
-						bool has_requestLatestIndexCount() { return requestLatestIndexCount.is_initialized(); }
-						int32_t get_requestLatestIndexCount() { return requestLatestIndexCount.get(); }
+						bool has_requestLatestIndexCount() const { return requestLatestIndexCount.is_initialized(); }
+						int32_t get_requestLatestIndexCount() const { return requestLatestIndexCount.get(); }
 					};
 				}
 			}
@@ -4162,11 +4163,11 @@ namespace Energistics {
 						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope;
 						bool countObjects=false;
 						boost::optional<int64_t> storeLastWriteFilter;
-						bool has_storeLastWriteFilter() { return storeLastWriteFilter.is_initialized(); }
-						int64_t get_storeLastWriteFilter() { return storeLastWriteFilter.get(); }
+						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.is_initialized(); }
+						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.get(); }
 						boost::optional<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind> activeStatusFilter;
-						bool has_activeStatusFilter() { return activeStatusFilter.is_initialized(); }
-						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() { return activeStatusFilter.get(); }
+						bool has_activeStatusFilter() const { return activeStatusFilter.is_initialized(); }
+						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() const { return activeStatusFilter.get(); }
 						bool includeEdges=false;
 						static constexpr int messageTypeId=1;
 						static constexpr int protocolId = static_cast<int>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
@@ -4205,11 +4206,11 @@ namespace Energistics {
 						Energistics::Etp::v12::Datatypes::Object::ContextInfo context;
 						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope;
 						boost::optional<int64_t> storeLastWriteFilter;
-						bool has_storeLastWriteFilter() { return storeLastWriteFilter.is_initialized(); }
-						int64_t get_storeLastWriteFilter() { return storeLastWriteFilter.get(); }
+						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.is_initialized(); }
+						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.get(); }
 						boost::optional<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind> activeStatusFilter;
-						bool has_activeStatusFilter() { return activeStatusFilter.is_initialized(); }
-						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() { return activeStatusFilter.get(); }
+						bool has_activeStatusFilter() const { return activeStatusFilter.is_initialized(); }
+						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() const { return activeStatusFilter.get(); }
 						static constexpr int messageTypeId=1;
 						static constexpr int protocolId = static_cast<int>(Energistics::Etp::v12::Datatypes::Protocol::DiscoveryQuery);
 					};
@@ -4243,11 +4244,11 @@ namespace Energistics {
 						Energistics::Etp::v12::Datatypes::Object::ContextInfo context;
 						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope;
 						boost::optional<int64_t> storeLastWriteFilter;
-						bool has_storeLastWriteFilter() { return storeLastWriteFilter.is_initialized(); }
-						int64_t get_storeLastWriteFilter() { return storeLastWriteFilter.get(); }
+						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.is_initialized(); }
+						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.get(); }
 						boost::optional<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind> activeStatusFilter;
-						bool has_activeStatusFilter() { return activeStatusFilter.is_initialized(); }
-						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() { return activeStatusFilter.get(); }
+						bool has_activeStatusFilter() const { return activeStatusFilter.is_initialized(); }
+						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() const { return activeStatusFilter.get(); }
 						std::string format;
 						static constexpr int messageTypeId=1;
 						static constexpr int protocolId = static_cast<int>(Energistics::Etp::v12::Datatypes::Protocol::StoreQuery);
@@ -4342,15 +4343,15 @@ namespace Energistics {
 						std::vector<std::string> alternateUris;
 						std::string name;
 						boost::optional<int32_t> sourceCount;
-						bool has_sourceCount() { return sourceCount.is_initialized(); }
-						int32_t get_sourceCount() { return sourceCount.get(); }
+						bool has_sourceCount() const { return sourceCount.is_initialized(); }
+						int32_t get_sourceCount() const { return sourceCount.get(); }
 						boost::optional<int32_t> targetCount;
-						bool has_targetCount() { return targetCount.is_initialized(); }
-						int32_t get_targetCount() { return targetCount.get(); }
+						bool has_targetCount() const { return targetCount.is_initialized(); }
+						int32_t get_targetCount() const { return targetCount.get(); }
 						int64_t lastChanged;
 						int64_t storeLastWrite;
 						int64_t storeCreated;
-						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind activeStatus = Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind::Inactive;
+						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind activeStatus;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
 				}
@@ -4482,8 +4483,8 @@ namespace Energistics {
 						Energistics::Etp::v12::Datatypes::Object::Resource resource;
 						std::string format;
 						boost::optional<Energistics::Etp::v12::Datatypes::Uuid> blobId;
-						bool has_blobId() { return blobId.is_initialized(); }
-						Energistics::Etp::v12::Datatypes::Uuid get_blobId() { return blobId.get(); }
+						bool has_blobId() const { return blobId.is_initialized(); }
+						Energistics::Etp::v12::Datatypes::Uuid get_blobId() const { return blobId.get(); }
 						std::string data;
 					};
 				}
@@ -4738,8 +4739,8 @@ namespace Energistics {
 					struct SupportedType {
 						std::string dataObjectType;
 						boost::optional<int32_t> objectCount;
-						bool has_objectCount() { return objectCount.is_initialized(); }
-						int32_t get_objectCount() { return objectCount.get(); }
+						bool has_objectCount() const { return objectCount.is_initialized(); }
+						int32_t get_objectCount() const { return objectCount.get(); }
 						Energistics::Etp::v12::Datatypes::Object::RelationshipKind relationshipKind;
 					};
 				}

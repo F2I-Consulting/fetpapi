@@ -79,10 +79,7 @@ void DataspaceHandlers::on_GetDataspaces(const Energistics::Etp::v12::Protocol::
 
 void DataspaceHandlers::on_GetDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse& msg, int64_t)
 {
-	for (const auto& ds : msg.dataspaces) {
-		std::cout << "dataspace uri received : " << ds.uri << std::endl;
-		std::cout << "dataspace title received : " << ds.path << std::endl;
-	}
+	dataspaces.insert(dataspaces.end(), msg.dataspaces.begin(), msg.dataspaces.end());
 }
 
 void DataspaceHandlers::on_PutDataspaces(const Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces&, int64_t correlationId)
@@ -90,9 +87,11 @@ void DataspaceHandlers::on_PutDataspaces(const Energistics::Etp::v12::Protocol::
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The DataspaceHandlers::on_PutDataObject method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void DataspaceHandlers::on_PutDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse&, int64_t)
+void DataspaceHandlers::on_PutDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse& msg, int64_t)
 {
-	std::cout << "on_PutDataspacesResponse" << std::endl;
+	for (const auto& entry : msg.success) {
+		successKeys.push_back(entry.first);
+	}
 }
 
 void DataspaceHandlers::on_DeleteDataspaces(const Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces&, int64_t correlationId)
@@ -100,7 +99,9 @@ void DataspaceHandlers::on_DeleteDataspaces(const Energistics::Etp::v12::Protoco
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The DataspaceHandlers::on_DeleteDataObject method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void DataspaceHandlers::on_DeleteDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse&, int64_t)
+void DataspaceHandlers::on_DeleteDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse& msg, int64_t)
 {
-	std::cout << "on_DeleteDataspacesResponse" << std::endl;
+	for (const auto& entry : msg.success) {
+		successKeys.push_back(entry.first);
+	}
 }

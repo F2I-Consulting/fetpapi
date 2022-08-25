@@ -225,16 +225,11 @@ void CoreHandlers::on_ProtocolException(const Energistics::Etp::v12::Protocol::C
 {
 	std::cerr << "EXCEPTION received for message_id " << correlationId << std::endl;
 	if (pe.error) {
-		std::cerr << "Single error code " << pe.error.get().code << " : " << pe.error.get().message << std::endl;
+		protocolExceptions["EXCEPTION about message id " + std::to_string(correlationId)] = pe.get_error();
 	}
 	else {
-		std::cerr << "One or more error code :" << std::endl;
 		for (const auto& error : pe.errors) {
-			std::cerr << "*************************************************" << std::endl;
-			std::cerr << "Resource non received : " << std::endl;
-			std::cerr << "key : " << error.first << std::endl;
-			std::cerr << "message : " << error.second.message << std::endl;
-			std::cerr << "code : " << error.second.code << std::endl;
+			protocolExceptions["EXCEPTION about message id " + std::to_string(correlationId) + " key " + error.first] = error.second;
 		}
 	}
 }

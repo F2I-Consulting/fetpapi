@@ -37,5 +37,19 @@ namespace ETP_NS
 	    virtual void on_DeleteDataObjects(const Energistics::Etp::v12::Protocol::Store::DeleteDataObjects & msg, int64_t correlationId);
 		virtual void on_DeleteDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse & msg, int64_t correlationId);
 		virtual void on_Chunk(const Energistics::Etp::v12::Protocol::Store::Chunk & msg, int64_t correlationId);
+
+		std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> getDataObjects() const {
+			return dataObjects;
+		}
+		void clearDataObjects() { dataObjects.clear(); }
+
+		std::vector<std::string> getSuccessKeys() const {
+			return successKeys;
+		}
+		void clearSuccessKeys() { successKeys.clear(); }
+
+	private:
+		std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataObjects;
+		std::vector<std::string> successKeys;
 	};
 }
