@@ -43,15 +43,23 @@ std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> Initializatio
 
 std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> InitializationParameters::makeSupportedDataObjects() const
 {
+	std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> dataobjectCaps;
+	Energistics::Etp::v12::Datatypes::DataValue dataVal;
+	dataVal.item.set_boolean(true);
+	dataobjectCaps["SupportsDelete"] = dataVal;
+	dataobjectCaps["SupportsGet"] = dataVal;
+	dataobjectCaps["SupportsPut"] = dataVal;
+
 	std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> result;
 
 	Energistics::Etp::v12::Datatypes::SupportedDataObject supportedDataObject;
 	supportedDataObject.qualifiedType = "resqml20.*";
+	supportedDataObject.dataObjectCapabilities = dataobjectCaps;
 	result.push_back(supportedDataObject);
 	supportedDataObject.qualifiedType = "resqml22.*";
 	result.push_back(supportedDataObject);
 
-	supportedDataObject.qualifiedType = "eml20.EpcExternalPartReference";
+	supportedDataObject.qualifiedType = "eml20.obj_EpcExternalPartReference";
 	result.push_back(supportedDataObject);
 	supportedDataObject.qualifiedType = "eml21.PropertyKind";
 	result.push_back(supportedDataObject);
@@ -103,12 +111,8 @@ std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> InitializationP
 	protocolVersion.revision = 0;
 
 	Energistics::Etp::v12::Datatypes::SupportedProtocol protocol;
-	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Core);
-	protocol.protocolVersion = protocolVersion;
-	protocol.role = "server";
-	result.push_back(protocol);
-
 	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
+	protocol.protocolVersion = protocolVersion;
 	protocol.role = "store";
 	result.push_back(protocol);
 

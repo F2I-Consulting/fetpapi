@@ -72,7 +72,7 @@ namespace
 		supportedDataObject.qualifiedType = "resqml22.*";
 		result.push_back(supportedDataObject);
 
-		supportedDataObject.qualifiedType = "eml20.EpcExternalPartReference";
+		supportedDataObject.qualifiedType = "eml20.obj_EpcExternalPartReference";
 		result.push_back(supportedDataObject);
 		supportedDataObject.qualifiedType = "eml21.PropertyKind";
 		result.push_back(supportedDataObject);
