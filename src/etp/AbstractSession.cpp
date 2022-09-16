@@ -319,7 +319,10 @@ std::string AbstractSession::startTransaction(std::vector<std::string> dataspace
 {
 	std::shared_ptr<TransactionHandlers> handlers = getTransactionProtocolHandlers();
 	if (handlers == nullptr) {
-		throw std::logic_error("You did not register any trnsaction protocol handlers.");
+		throw std::logic_error("You did not register any transaction protocol handlers.");
+	}
+	if (handlers->isInAnActiveTransaction()) {
+		throw std::logic_error("You cannot start a transaction before the current transaction is rolled back or committed. ETP1.2 intentionally supports a single open transaction on a session.");
 	}
 
 	Energistics::Etp::v12::Protocol::Transaction::StartTransaction startTransactionMsg;
@@ -335,7 +338,10 @@ std::string AbstractSession::rollbackTransaction()
 {
 	std::shared_ptr<TransactionHandlers> handlers = getTransactionProtocolHandlers();
 	if (handlers == nullptr) {
-		throw std::logic_error("You did not register any trnsaction protocol handlers.");
+		throw std::logic_error("You did not register any transaction protocol handlers.");
+	}
+	if (!handlers->isInAnActiveTransaction()) {
+		throw std::logic_error("You cannot roll back a transaction which has not been started.");
 	}
 
 	Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction rollbackTransactionMsg;
@@ -351,7 +357,10 @@ std::string AbstractSession::commitTransaction()
 {
 	std::shared_ptr<TransactionHandlers> handlers = getTransactionProtocolHandlers();
 	if (handlers == nullptr) {
-		throw std::logic_error("You did not register any trnsaction protocol handlers.");
+		throw std::logic_error("You did not register any transaction protocol handlers.");
+	}
+	if (!handlers->isInAnActiveTransaction()) {
+		throw std::logic_error("You cannot commit a transaction which has not been started.");
 	}
 
 	Energistics::Etp::v12::Protocol::Transaction::CommitTransaction commitTransactionMsg;
