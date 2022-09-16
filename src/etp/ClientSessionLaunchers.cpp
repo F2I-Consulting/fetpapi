@@ -169,6 +169,13 @@ std::shared_ptr<ETP_NS::SslClientSession> ETP_NS::ClientSessionLaunchers::create
 {
 	// The SSL context is required, and holds certificates
 	ssl::context ctx{ ssl::context::sslv23_client };
+	ctx.set_default_verify_paths();
+	ctx.set_options(
+		ssl::context::default_workarounds
+		| ssl::context::no_sslv2
+		| ssl::context::no_sslv3
+		| ssl::context::single_dh_use
+	);
 
 	if (!additionalCertificates.empty()) {
 		boost::system::error_code ec;

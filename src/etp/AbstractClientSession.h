@@ -106,6 +106,7 @@ namespace ETP_NS
 				{
 					m.insert(boost::beast::http::field::sec_websocket_protocol, "etp12.energistics.org");
 					m.insert(boost::beast::http::field::authorization, authorization);
+					m.insert("etp-encoding", "binary");
 				})
 			);
 			// Perform the websocket handshake
