@@ -95,6 +95,9 @@ namespace ETP_NS
 					m.insert(boost::beast::http::field::sec_websocket_protocol, "etp12.energistics.org");
 					m.insert(boost::beast::http::field::authorization, authorization);
 					m.insert("etp-encoding", "binary");
+					for (const auto& mapEntry : additionalHandshakeHeaderFields_) {
+						m.insert(mapEntry.first, mapEntry.second);
+					}
 				},
 				std::bind(
 					&AbstractClientSession::on_handshake,
@@ -107,6 +110,9 @@ namespace ETP_NS
 					m.insert(boost::beast::http::field::sec_websocket_protocol, "etp12.energistics.org");
 					m.insert(boost::beast::http::field::authorization, authorization);
 					m.insert("etp-encoding", "binary");
+					for (const auto& mapEntry : additionalHandshakeHeaderFields_) {
+						m.insert(mapEntry.first, mapEntry.second);
+					}
 				})
 			);
 			// Perform the websocket handshake
@@ -224,6 +230,7 @@ namespace ETP_NS
 		std::string port;
 		std::string target;
 		std::string authorization;
+		std::map<std::string, std::string> additionalHandshakeHeaderFields_;
 		websocket::response_type responseType; // In order to check handshake sec_websocket_protocol
 		Energistics::Etp::v12::Protocol::Core::RequestSession requestSession;
 		bool successfulConnection;

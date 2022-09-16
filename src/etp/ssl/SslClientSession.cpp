@@ -23,7 +23,7 @@ using namespace ETP_NS;
 
 SslClientSession::SslClientSession(boost::asio::ssl::context& ctx,
 	InitializationParameters* initializationParams, const std::string& target, const std::string& authorization,
-	std::size_t frameSize)
+	const std::map<std::string, std::string>& additionalHandshakeHeaderFields, std::size_t frameSize)
 	: AbstractClientSession<SslClientSession>(initializationParams, target, authorization),
 		ws_(ioc, ctx)
 {
@@ -33,4 +33,6 @@ SslClientSession::SslClientSession(boost::asio::ssl::context& ctx,
 #else
 	ws_.write_buffer_bytes(frameSize);
 #endif
+
+	additionalHandshakeHeaderFields_ = additionalHandshakeHeaderFields;
 }

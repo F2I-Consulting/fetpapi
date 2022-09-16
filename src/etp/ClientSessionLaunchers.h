@@ -35,11 +35,11 @@ namespace ETP_NS
 		*							Default value corresponds to the default Boost.Beast value : https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/write_buffer_bytes/overload1.html.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::PlainClientSession> createWsClientSession(InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
-			std::size_t preferredMaxFrameSize = 4096);
+			const std::map<std::string, std::string>& additionalHandshakeHeaderFields = {}, std::size_t preferredMaxFrameSize = 4096);
 
 #ifdef WITH_ETP_SSL
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::SslClientSession> createWssClientSession(InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
-			std::size_t preferredMaxFrameSize = 4096, const std::string & additionalCertificates = "");
+			const std::map<std::string, std::string>& additionalHandshakeHeaderFields = {}, std::size_t preferredMaxFrameSize = 4096, const std::string & additionalCertificates = "");
 #endif
 
 	}

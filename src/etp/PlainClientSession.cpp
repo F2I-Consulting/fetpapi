@@ -23,7 +23,7 @@ using namespace ETP_NS;
 
 PlainClientSession::PlainClientSession(
 	InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
-	std::size_t frameSize) :
+	const std::map<std::string, std::string>& additionalHandshakeHeaderFields, std::size_t frameSize) :
 		AbstractClientSession<PlainClientSession>(initializationParams, target, authorization),
 		ws_(ioc)
 {
@@ -33,4 +33,6 @@ PlainClientSession::PlainClientSession(
 #else
 	ws_.write_buffer_bytes(frameSize);
 #endif
+
+	additionalHandshakeHeaderFields_ = additionalHandshakeHeaderFields;
 }
