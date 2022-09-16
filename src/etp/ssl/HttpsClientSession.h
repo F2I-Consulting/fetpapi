@@ -195,7 +195,8 @@ namespace ETP_NS
 				ec.assign(0, ec.category());
 			}
 			if (ec) {
-				std::cerr << "shutdown : " << ec.message() << std::endl;
+				// Do nothing : https://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
+				//std::cerr << "shutdown : " << ec.message() << std::endl;
 				return;
 			}
 
