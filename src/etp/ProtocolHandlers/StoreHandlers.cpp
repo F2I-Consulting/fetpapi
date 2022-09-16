@@ -93,7 +93,7 @@ void StoreHandlers::on_PutDataObjects(const Energistics::Etp::v12::Protocol::Sto
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The StoreHandlers::on_PutDataObject method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void StoreHandlers::on_PutDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse& msg, int64_t correlationId)
+void StoreHandlers::on_PutDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse& msg, int64_t)
 {
 	for (const auto& entry : msg.success) {
 		successKeys.push_back(entry.first);
@@ -105,7 +105,7 @@ void StoreHandlers::on_DeleteDataObjects(const Energistics::Etp::v12::Protocol::
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The StoreHandlers::on_DeleteDataObject method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void StoreHandlers::on_DeleteDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse& msg, int64_t correlationId)
+void StoreHandlers::on_DeleteDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse& msg, int64_t)
 {
 	for (const auto& entry : msg.deletedUris) {
 		successKeys.push_back(entry.first);

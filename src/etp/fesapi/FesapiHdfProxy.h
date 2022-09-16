@@ -206,70 +206,94 @@ namespace ETP_NS
 		/**
 		* Write some string attributes into a group
 		*/
-		void writeGroupAttributes(const std::string & groupName,
-			const std::vector<std::string> & attributeNames,
-			const std::vector<std::string> & values) final;
+		void writeGroupAttributes(const std::string&,
+			const std::vector<std::string>&,
+			const std::vector<std::string>&) final {
+			throw std::logic_error("Group attributes are not supported in ETP1.2");
+		}
 
 		/**
 		* Write a single attribute which contain an array of strings
 		*/
-		void writeGroupAttribute(const std::string & groupName,
-			const std::string & attributeName,
-			const std::vector<std::string> & values) final;
+		void writeGroupAttribute(const std::string&,
+			const std::string&,
+			const std::vector<std::string>&) final {
+			throw std::logic_error("Group attributes are not supported in ETP1.2");
+		}
 
 		/**
 		* Write some double attributes into a group
 		*/
-		void writeGroupAttributes(const std::string & groupName,
-			const std::vector<std::string> & attributeNames,
-			const std::vector<double> & values);
+		void writeGroupAttributes(const std::string&,
+			const std::vector<std::string>&,
+			const std::vector<double>&) {
+			throw std::logic_error("Group attributes are not supported in ETP1.2");
+		}
 
 		/**
 		* Write some int attributes into a group
 		*/
-		void writeGroupAttributes(const std::string & groupName,
-			const std::vector<std::string> & attributeNames,
-			const std::vector<int> & values) final;
+		void writeGroupAttributes(const std::string&,
+			const std::vector<std::string>&,
+			const std::vector<int>&) final {
+			throw std::logic_error("Group attributes are not supported in ETP1.2");
+		}
 
 		/**
 		* Write some string attributes into a dataset
 		*/
-		void writeDatasetAttributes(const std::string & datasetName,
-			const std::vector<std::string> & attributeNames,
-			const std::vector<std::string> & values) final;
+		void writeDatasetAttributes(const std::string&,
+			const std::vector<std::string>&,
+			const std::vector<std::string>&) final {
+			throw std::logic_error("Dataset attributes are not supported in ETP1.2");
+		}
 
 		/**
 		* Write a single attribute which contain an array of strings
 		*/
-		void writeDatasetAttribute(const std::string & datasetName,
-			const std::string & attributeName,
-			const std::vector<std::string> & values) final;
+		void writeDatasetAttribute(const std::string&,
+			const std::string&,
+			const std::vector<std::string>&) final {
+			throw std::logic_error("Dataset attributes are not supported in ETP1.2");
+		}
 
 		/**
 		* Write some double attributes into a dataset
 		*/
-		void writeDatasetAttributes(const std::string & datasetName,
-			const std::vector<std::string> & attributeNames,
-			const std::vector<double> & values) final;
+		void writeDatasetAttributes(const std::string&,
+			const std::vector<std::string>&,
+			const std::vector<double>&) final {
+			throw std::logic_error("Dataset attributes are not supported in ETP1.2");
+		}
 
 		/**
 		* Write some int attributes into a dataset
 		*/
-		void writeDatasetAttributes(const std::string & datasetName,
-			const std::vector<std::string> & attributeNames,
-			const std::vector<int> & values) final;
+		void writeDatasetAttributes(const std::string&,
+			const std::vector<std::string>&,
+			const std::vector<int>&) final {
+			throw std::logic_error("Dataset attributes are not supported in ETP1.2");
+		}
 
-		std::string readStringAttribute(const std::string & obj_name,
-			const std::string & attr_name) const final;
+		std::string readStringAttribute(const std::string&,
+			const std::string&) const final {
+			throw std::logic_error("Attributes are not supported in ETP1.2");
+		}
 
-		std::vector<std::string> readStringArrayAttribute(const std::string & obj_name,
-			const std::string & attr_name) const final;
+		std::vector<std::string> readStringArrayAttribute(const std::string&,
+			const std::string&) const final {
+			throw std::logic_error("Attributes are not supported in ETP1.2");
+		}
 
-		double readDoubleAttribute(const std::string & obj_name,
-			const std::string & attr_name) const final;
+		double readDoubleAttribute(const std::string&,
+			const std::string&) const final {
+			throw std::logic_error("Attributes are not supported in ETP1.2");
+		}
 
-		int64_t readLongAttribute(const std::string & obj_name,
-			const std::string & attr_name) const final;
+		int64_t readLongAttribute(const std::string&,
+			const std::string&) const final {
+			throw std::logic_error("Attributes are not supported in ETP1.2");
+		}
 
 		/**
 		* Read an array Nd of double values stored in a specific dataset

@@ -78,7 +78,7 @@ COMMON_NS::AbstractObject::numericalDatatypeEnum  FesapiHdfProxy::getNumericalDa
 	}
 }
 
-int FesapiHdfProxy::getHdfDatatypeClassInDataset(const std::string & datasetName)
+int FesapiHdfProxy::getHdfDatatypeClassInDataset(const std::string&)
 {
 	// Hard to implement because it would need to include H5TPublic.h which could create a dependency on HDF5 which we try to avoid...
 	throw logic_error("getHdfDatatypeClassInDataset Not implemented yet");
@@ -264,86 +264,6 @@ void FesapiHdfProxy::readArrayNdOfIntValues(
 	unsigned int numDimensions)
 {
 	throw logic_error("readArrayNdOfIntValues Not implemented yet");
-}
-
-void FesapiHdfProxy::writeGroupAttributes(const std::string & groupName,
-	const std::vector<std::string> & attributeNames,
-	const std::vector<std::string> & values)
-{
-	throw logic_error("writeGroupAttributes Not implemented yet");
-}
-
-void FesapiHdfProxy::writeGroupAttribute(const std::string & groupName,
-	const std::string & attributeName,
-	const std::vector<std::string> & values)
-{
-	throw logic_error("writeGroupAttribute Not implemented yet");
-}
-
-void FesapiHdfProxy::writeGroupAttributes(const std::string & groupName,
-	const std::vector<std::string> & attributeNames,
-	const std::vector<double> & values)
-{
-	throw logic_error("writeGroupAttributes Not implemented yet");
-}
-
-void FesapiHdfProxy::writeGroupAttributes(const std::string & groupName,
-	const std::vector<std::string> & attributeNames,
-	const std::vector<int> & values)
-{
-	throw logic_error("writeGroupAttributes Not implemented yet");
-}
-
-void FesapiHdfProxy::writeDatasetAttributes(const std::string & datasetName,
-	const std::vector<std::string> & attributeNames,
-	const std::vector<std::string> & values)
-{
-	throw logic_error("writeDatasetAttributes Not implemented yet");
-}
-
-void FesapiHdfProxy::writeDatasetAttribute(const std::string & datasetName,
-	const std::string & attributeName,
-	const std::vector<std::string> & values)
-{
-	throw logic_error("writeDatasetAttribute Not implemented yet");
-}
-
-void FesapiHdfProxy::writeDatasetAttributes(const std::string & datasetName,
-	const std::vector<std::string> & attributeNames,
-	const std::vector<double> & values)
-{
-	throw logic_error("Not implemented yet");
-}
-
-void FesapiHdfProxy::writeDatasetAttributes(const std::string & datasetName,
-	const std::vector<std::string> & attributeNames,
-	const std::vector<int> & values)
-{
-	throw logic_error("writeDatasetAttributes Not implemented yet");
-}
-
-std::string FesapiHdfProxy::readStringAttribute(const std::string & obj_name,
-	const std::string & attr_name) const
-{
-	throw logic_error("readStringAttribute Not implemented yet");
-}
-
-vector<string> FesapiHdfProxy::readStringArrayAttribute(const std::string & obj_name,
-	const std::string & attr_name) const
-{
-	throw logic_error("readStringArrayAttribute Not implemented yet");
-}
-
-double FesapiHdfProxy::readDoubleAttribute(const std::string & obj_name,
-	const std::string & attr_name) const
-{
-	throw logic_error("readDoubleAttribute Not implemented yet");
-}
-
-int64_t FesapiHdfProxy::readLongAttribute(const std::string & obj_name,
-	const std::string & attr_name) const
-{
-	throw logic_error("readLongAttribute Not implemented yet");
 }
 
 bool FesapiHdfProxy::exist(const std::string & absolutePathInHdfFile) const
