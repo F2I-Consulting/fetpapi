@@ -212,7 +212,7 @@ void CoreHandlers::on_RequestSession(const Energistics::Etp::v12::Protocol::Core
 
 void CoreHandlers::on_OpenSession(const Energistics::Etp::v12::Protocol::Core::OpenSession &, int64_t)
 {
-	std::cout << "The session has been opened with the default core protocol handlers. You probably want to use your own." << std::endl;
+	std::cout << "The session has been opened with the default core protocol handlers." << std::endl;
 }
 
 void CoreHandlers::on_CloseSession(const Energistics::Etp::v12::Protocol::Core::CloseSession &, int64_t)

@@ -84,7 +84,7 @@ endif (WIN32)
 # ============================================================================
 
 set (WITH_FESAPI OFF CACHE BOOL "Build Fetpapi with Fesapi support.")
-set (WITH_ETP_SSL OFF CACHE BOOL "Build Fesapi with ETP SSL support.")
+set (WITH_ETP_SSL ON CACHE BOOL "Build Fesapi with ETP SSL support.")
 
 # ============================================================================
 # checking for required dependencies
