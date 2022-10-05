@@ -1,6 +1,7 @@
 #ifndef ETP_MESSAGES__
 #define ETP_MESSAGES__
 
+#include <chrono>
 #include <map>
 #include <vector>
 #include <string>
@@ -17,7 +18,7 @@ namespace Energistics {
 	namespace Etp {
 		namespace v12 {
 			namespace Datatypes {
-				enum class Protocol : int {
+				enum class Protocol : uint_fast8_t {
 					Core = 0,
 					ChannelStreaming = 1,
 					ChannelDataFrame = 2,
@@ -483,7 +484,7 @@ namespace Energistics {
 				namespace Store {
 					struct GetDataObjects {
 						std::map<std::string, std::string> uris;
-						std::string format;
+						std::string format = "xml";
 						static constexpr int messageTypeId=1;
 						static constexpr int protocolId = static_cast<int>(Energistics::Etp::v12::Datatypes::Protocol::Store);
 					};
@@ -539,7 +540,7 @@ namespace Energistics {
 	namespace Etp {
 		namespace v12 {
 			namespace Datatypes {
-				enum class AnyArrayType : int {
+				enum class AnyArrayType : uint_fast8_t {
 					arrayOfBoolean=0,
 					arrayOfInt=1,
 					arrayOfLong=2,
@@ -566,7 +567,7 @@ namespace Energistics {
 	namespace Etp {
 		namespace v12 {
 			namespace Datatypes {
-				enum class AnyLogicalArrayType : int {
+				enum class AnyLogicalArrayType : uint_fast8_t {
 					arrayOfBoolean=0,
 					arrayOfInt8=1,
 					arrayOfUInt8=2,
@@ -1155,7 +1156,7 @@ namespace Energistics {
 	namespace Etp {
 		namespace v12 {
 			namespace Datatypes {
-				enum class DataObjectCapabilityKind : int {
+				enum class DataObjectCapabilityKind : uint_fast8_t {
 					ActiveTimeoutPeriod=0,
 					MaxContainedDataObjectCount=1,
 					MaxDataObjectSize=2,
@@ -1742,7 +1743,7 @@ namespace Energistics {
 	namespace Etp {
 		namespace v12 {
 			namespace Datatypes {
-				enum class EndpointCapabilityKind : int {
+				enum class EndpointCapabilityKind : uint_fast8_t {
 					ActiveTimeoutPeriod=0,
 					AuthorizationDetails=1,
 					ChangePropagationPeriod=2,
@@ -1887,7 +1888,7 @@ namespace Energistics {
 	namespace Etp {
 		namespace v12 {
 			namespace Datatypes {
-				enum class ProtocolCapabilityKind : int {
+				enum class ProtocolCapabilityKind : uint_fast8_t {
 					FrameChangeDetectionPeriod=0,
 					MaxDataArraySize=1,
 					MaxDataObjectSize=2,
@@ -2317,10 +2318,10 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				struct Version {
-					int32_t major;
-					int32_t minor;
-					int32_t revision;
-					int32_t patch;
+					int32_t major = 1;
+					int32_t minor = 2;
+					int32_t revision = 0;
+					int32_t patch = 0;
 				};
 			}
 		}
@@ -2385,7 +2386,7 @@ namespace Energistics {
 						std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> supportedDataObjects;
 						std::string supportedCompression;
 						std::vector<std::string> supportedFormats;
-						int64_t currentDateTime;
+						int64_t currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 						int64_t earliestRetainedChangeTime;
 						Energistics::Etp::v12::Datatypes::Uuid sessionId;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> endpointCapabilities;
@@ -2439,8 +2440,8 @@ namespace Energistics {
 						std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> requestedProtocols;
 						std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> supportedDataObjects;
 						std::vector<std::string> supportedCompression;
-						std::vector<std::string> supportedFormats;
-						int64_t currentDateTime;
+						std::vector<std::string> supportedFormats = { "xml" };
+						int64_t currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 						int64_t earliestRetainedChangeTime;
 						bool serverAuthorizationRequired=false;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> endpointCapabilities;
@@ -2558,7 +2559,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				namespace ChannelData {
-					enum class ChannelDataKind : int {
+					enum class ChannelDataKind : uint_fast8_t {
 						DateTime=0,
 						ElapsedTime=1,
 						MeasuredDepth=2,
@@ -2631,7 +2632,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				namespace ChannelData {
-					enum class ChannelIndexKind : int {
+					enum class ChannelIndexKind : uint_fast8_t {
 						DateTime=0,
 						ElapsedTime=1,
 						MeasuredDepth=2,
@@ -2687,7 +2688,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				namespace ChannelData {
-					enum class IndexDirection : int {
+					enum class IndexDirection : uint_fast8_t {
 						Increasing=0,
 						Decreasing=1,
 						Unordered=2
@@ -2712,7 +2713,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				namespace ChannelData {
-					enum class PassDirection : int {
+					enum class PassDirection : uint_fast8_t {
 						Up=0,
 						HoldingSteady=1,
 						Down=2
@@ -3463,7 +3464,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				namespace Object {
-					enum class ActiveStatusKind : int {
+					enum class ActiveStatusKind : uint_fast8_t {
 						Active=0,
 						Inactive=1
 					};
@@ -3540,7 +3541,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				namespace Object {
-					enum class ContextScopeKind : int {
+					enum class ContextScopeKind : uint_fast8_t {
 						self=0,
 						sources=1,
 						targets=2,
@@ -3951,7 +3952,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				namespace Object {
-					enum class ObjectChangeKind : int {
+					enum class ObjectChangeKind : uint_fast8_t {
 						insert=0,
 						update=1,
 						authorized=2,
@@ -4095,7 +4096,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				namespace Object {
-					enum class RelationshipKind : int {
+					enum class RelationshipKind : uint_fast8_t {
 						Primary=0,
 						Secondary=1,
 						Both=2
@@ -4122,9 +4123,9 @@ namespace Energistics {
 				namespace Object {
 					struct ContextInfo {
 						std::string uri;
-						int32_t depth;
+						int32_t depth = 1;
 						std::vector<std::string> dataObjectTypes;
-						Energistics::Etp::v12::Datatypes::Object::RelationshipKind navigableEdges;
+						Energistics::Etp::v12::Datatypes::Object::RelationshipKind navigableEdges = Energistics::Etp::v12::Datatypes::Object::RelationshipKind::Primary;
 						bool includeSecondaryTargets=false;
 						bool includeSecondarySources=false;
 					};
@@ -4160,7 +4161,7 @@ namespace Energistics {
 				namespace Discovery {
 					struct GetResources {
 						Energistics::Etp::v12::Datatypes::Object::ContextInfo context;
-						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope;
+						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope = Energistics::Etp::v12::Datatypes::Object::ContextScopeKind::targets;
 						bool countObjects=false;
 						boost::optional<int64_t> storeLastWriteFilter;
 						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.is_initialized(); }
@@ -4204,7 +4205,7 @@ namespace Energistics {
 				namespace DiscoveryQuery {
 					struct FindResources {
 						Energistics::Etp::v12::Datatypes::Object::ContextInfo context;
-						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope;
+						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope = Energistics::Etp::v12::Datatypes::Object::ContextScopeKind::targets;
 						boost::optional<int64_t> storeLastWriteFilter;
 						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.is_initialized(); }
 						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.get(); }
@@ -4242,7 +4243,7 @@ namespace Energistics {
 				namespace StoreQuery {
 					struct FindDataObjects {
 						Energistics::Etp::v12::Datatypes::Object::ContextInfo context;
-						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope;
+						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope = Energistics::Etp::v12::Datatypes::Object::ContextScopeKind::targets;
 						boost::optional<int64_t> storeLastWriteFilter;
 						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.is_initialized(); }
 						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.get(); }
@@ -4284,7 +4285,7 @@ namespace Energistics {
 					struct Edge {
 						std::string sourceUri;
 						std::string targetUri;
-						Energistics::Etp::v12::Datatypes::Object::RelationshipKind relationshipKind;
+						Energistics::Etp::v12::Datatypes::Object::RelationshipKind relationshipKind = Energistics::Etp::v12::Datatypes::Object::RelationshipKind::Primary;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
 				}
@@ -4351,7 +4352,7 @@ namespace Energistics {
 						int64_t lastChanged;
 						int64_t storeLastWrite;
 						int64_t storeCreated;
-						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind activeStatus;
+						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind activeStatus = Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind::Inactive;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
 				}
@@ -4446,7 +4447,7 @@ namespace Energistics {
 			namespace Protocol {
 				namespace StoreNotification {
 					struct ObjectActiveStatusChanged {
-						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind activeStatus;
+						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind activeStatus = Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind::Inactive;
 						int64_t changeTime;
 						Energistics::Etp::v12::Datatypes::Object::Resource resource;
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
@@ -4653,7 +4654,7 @@ namespace Energistics {
 				namespace Object {
 					struct SubscriptionInfo {
 						Energistics::Etp::v12::Datatypes::Object::ContextInfo context;
-						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope;
+						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope= Energistics::Etp::v12::Datatypes::Object::ContextScopeKind::targets;
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						bool includeObjectData=false;
 						std::string format;
@@ -4741,7 +4742,7 @@ namespace Energistics {
 						boost::optional<int32_t> objectCount;
 						bool has_objectCount() const { return objectCount.is_initialized(); }
 						int32_t get_objectCount() const { return objectCount.get(); }
-						Energistics::Etp::v12::Datatypes::Object::RelationshipKind relationshipKind;
+						Energistics::Etp::v12::Datatypes::Object::RelationshipKind relationshipKind = Energistics::Etp::v12::Datatypes::Object::RelationshipKind::Primary;
 					};
 				}
 			}
@@ -4965,7 +4966,5 @@ namespace avro {
 		}
 	};
 }
-
-
 
 #endif

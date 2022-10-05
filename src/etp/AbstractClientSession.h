@@ -135,7 +135,7 @@ namespace ETP_NS
 
 			if (specificProtocolHandlers.size() == maxSentAndNonRespondedMessageCount) {
 				std::cout << "*************************************************" << std::endl;
-				std::cout << "Cannot send Message id : " << std::get<0>(sendingQueue.front()) << " because the max number of setn and non processed message has been reached." << std::endl;
+				std::cout << "Cannot send Message id : " << std::get<0>(sendingQueue.front()) << " because the max number of sent and non processed message has been reached." << std::endl;
 				std::cout << "*************************************************" << std::endl;
 				return;
 			}
