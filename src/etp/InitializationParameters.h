@@ -39,10 +39,14 @@ namespace ETP_NS
 {
 	class InitializationParameters
 	{
+	private:
+		InitializationParameters(const std::string & etpUrl);
+
 	protected:
 		boost::uuids::uuid identifier_;
 		std::string host_;
 		unsigned short port_;
+		std::string urlPath_;
 
 		// Capabilities
 		// https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/using_websocket/messages.html
@@ -50,15 +54,48 @@ namespace ETP_NS
 		int64_t maxWebSocketMessagePayloadSize_ = 16000000;
 
 	public:
+
 		/**
-		* Set the identifier of the server a default value.
-		* You should set the identifer as wanted in your own derived class.
+		* @param instanceUuid	The UUID of the client or server instance.
+		* @param etpUrl			Must follow the syntax ws://<host>:<port>/<path> or wss://<host>:<port>/<path> or simply <host>:<port>/<path>
+		*						where port is optional and is defaulted to 80 if scheme is "ws" or if no scheme is provided.
+		*						In "wss" schema cases, port is defaulted to 443.
 		*/
-		InitializationParameters(boost::uuids::uuid instanceUuid, const std::string & host, unsigned short port) : identifier_(instanceUuid), host_(host), port_(port) {}
+		FETPAPI_DLL_IMPORT_OR_EXPORT InitializationParameters(boost::uuids::uuid instanceUuid, const std::string & etpUrl) :
+			InitializationParameters(etpUrl) {
+			identifier_ = instanceUuid;
+		}
+
 		/**
 		* Mainly for use with SWIG i.e. boost uuid structure is not easily portable whereas strings are.
 		*/
-		InitializationParameters(const std::string & instanceUuid, const std::string & host, unsigned short port) : host_(host), port_(port) {
+		FETPAPI_DLL_IMPORT_OR_EXPORT InitializationParameters(const std::string& instanceUuid, const std::string & etpUrl) :
+			InitializationParameters(etpUrl) {
+			std::stringstream ss(instanceUuid);
+			ss >> identifier_;
+		}
+
+		/**
+		* @param instanceUuid	The UUID of the client or server instance.
+		* @param host			The fully qualified domain name of a network host, or its IP address as a set of four decimal digit groups separated by ".".
+		* @param port			The port number to connect to.
+		* @param urlPath		The rest of the locator consists of data specific to the scheme, and is known as the "url-path".
+		*						It supplies the details of how the specified resource can be accessed.
+		*						Note that the "/" between the host (or port) and the url-path is NOT part of the url-path.
+		*/
+		InitializationParameters(boost::uuids::uuid instanceUuid, const std::string & host, unsigned short port, const std::string & urlPath = "") : identifier_(instanceUuid), host_(host), port_(port), urlPath_(urlPath) {}
+		
+		/**
+		* Mainly for use with SWIG i.e. boost uuid structure is not easily portable whereas strings are.
+		*
+		* @param instanceUuid	The UUID of the client or server instance.
+		* @param host			The fully qualified domain name of a network host, or its IP address as a set of four decimal digit groups separated by ".".
+		* @param port			The port number to connect to.
+		* @param urlPath		The rest of the locator consists of data specific to the scheme, and is known as the "url-path".
+		*						It supplies the details of how the specified resource can be accessed.
+		*						Note that the "/" between the host (or port) and the url-path is NOT part of the url-path.
+		*/
+		InitializationParameters(const std::string & instanceUuid, const std::string & host, unsigned short port, const std::string & urlPath = "") : host_(host), port_(port), urlPath_(urlPath) {
 			std::stringstream ss(instanceUuid);
 			ss >> identifier_;
 		}
@@ -73,6 +110,7 @@ namespace ETP_NS
 		const boost::uuids::uuid& getInstanceId() const { return identifier_; }
 		const std::string& getHost() const { return host_; }
 		unsigned short getPort() const { return port_; }
+		const std::string& getUrlPath() const { return urlPath_; }
 		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getApplicationName() const { return "F2I-CONSULTING ETP CLIENT"; }
 		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getApplicationVersion() const { return "0.0"; }
 

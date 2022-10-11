@@ -137,12 +137,12 @@ namespace
 	}
 }
 
-std::shared_ptr<ETP_NS::PlainClientSession> ETP_NS::ClientSessionLaunchers::createWsClientSession(InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
+std::shared_ptr<ETP_NS::PlainClientSession> ETP_NS::ClientSessionLaunchers::createWsClientSession(InitializationParameters* initializationParams, const std::string & authorization,
 	const std::map<std::string, std::string>& additionalHandshakeHeaderFields, std::size_t preferredMaxFrameSize)
 {
 	boost::asio::io_context ioc;
 	auto httpClientSession = std::make_shared<HttpClientSession>(ioc);
-	std::string etpServerCapTarget = target.empty() ? "/" : target;
+	std::string etpServerCapTarget = "/" + initializationParams->getUrlPath();
 	if (etpServerCapTarget[etpServerCapTarget.size() - 1] != '/') {
 		etpServerCapTarget += '/';
 	}
@@ -153,7 +153,7 @@ std::shared_ptr<ETP_NS::PlainClientSession> ETP_NS::ClientSessionLaunchers::crea
 
 	preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(httpClientSession->getResponse().body(), preferredMaxFrameSize);
 
-	auto result = std::make_shared<PlainClientSession>(initializationParams, target.empty() ? "/" : target, authorization, additionalHandshakeHeaderFields, preferredMaxFrameSize);
+	auto result = std::make_shared<PlainClientSession>(initializationParams, "/" + initializationParams->getUrlPath(), authorization, additionalHandshakeHeaderFields, preferredMaxFrameSize);
 	initializationParams->postSessionCreationOperation(result.get());
 	return result;
 }
@@ -164,7 +164,7 @@ std::shared_ptr<ETP_NS::PlainClientSession> ETP_NS::ClientSessionLaunchers::crea
 
 namespace ssl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
 
-std::shared_ptr<ETP_NS::SslClientSession> ETP_NS::ClientSessionLaunchers::createWssClientSession(InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
+std::shared_ptr<ETP_NS::SslClientSession> ETP_NS::ClientSessionLaunchers::createWssClientSession(InitializationParameters* initializationParams, const std::string & authorization,
 	const std::map<std::string, std::string>& additionalHandshakeHeaderFields, std::size_t preferredMaxFrameSize, const std::string & additionalCertificates)
 {
 	// The SSL context is required, and holds certificates
@@ -189,7 +189,7 @@ std::shared_ptr<ETP_NS::SslClientSession> ETP_NS::ClientSessionLaunchers::create
 
 	boost::asio::io_context ioc;
 	auto httpsClientSession = std::make_shared<HttpsClientSession>(ioc, ctx);
-	std::string etpServerCapTarget = target.empty() ? "/" : target;
+	std::string etpServerCapTarget = "/" + initializationParams->getUrlPath();
 	if (etpServerCapTarget[etpServerCapTarget.size() - 1] != '/') {
 		etpServerCapTarget += '/';
 	}
@@ -200,7 +200,7 @@ std::shared_ptr<ETP_NS::SslClientSession> ETP_NS::ClientSessionLaunchers::create
 
 	preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(httpsClientSession->getResponse().body(), preferredMaxFrameSize);
 
-	auto result = std::make_shared<SslClientSession>(ctx, initializationParams, target.empty() ? "/" : target, authorization, additionalHandshakeHeaderFields, preferredMaxFrameSize);
+	auto result = std::make_shared<SslClientSession>(ctx, initializationParams, "/" + initializationParams->getUrlPath(), authorization, additionalHandshakeHeaderFields, preferredMaxFrameSize);
 	initializationParams->postSessionCreationOperation(result.get());
 	return result;
 }

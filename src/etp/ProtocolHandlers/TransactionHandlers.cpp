@@ -99,7 +99,7 @@ void TransactionHandlers::on_CommitTransaction(const Energistics::Etp::v12::Prot
 void TransactionHandlers::on_CommitTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse& msg, int64_t)
 {
 	if (msg.successful) {
-		std::fill(transactionUuid.array.begin(), transactionUuid.array.end(), 0);
+		std::fill(transactionUuid.array.begin(), transactionUuid.array.end(), static_cast<uint8_t>(0));
 	}
 	else {
 		lastTransactionFailure = msg.failureReason;
@@ -114,7 +114,7 @@ void TransactionHandlers::on_RollbackTransaction(const Energistics::Etp::v12::Pr
 void TransactionHandlers::on_RollbackTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse& msg, int64_t)
 {
 	if (msg.successful) {
-		std::fill(transactionUuid.array.begin(), transactionUuid.array.end(), 0);
+		std::fill(transactionUuid.array.begin(), transactionUuid.array.end(), static_cast<uint8_t>(0));
 	}
 	else {
 		lastTransactionFailure = msg.failureReason;

@@ -22,6 +22,36 @@ under the License.
 
 using namespace ETP_NS;
 
+InitializationParameters::InitializationParameters(const std::string & etpUrl)
+{
+	const size_t schemeSeparatorPos = etpUrl.find("://");
+
+	const size_t hostStart = schemeSeparatorPos == std::string::npos ? 0 : schemeSeparatorPos + 3;
+	size_t hostEnd;
+	size_t portStart = etpUrl.find(":", hostStart);
+	size_t portEnd;
+
+	if (portStart == std::string::npos) {
+		hostEnd = etpUrl.find("/", hostStart + 3);
+		portEnd = hostEnd;
+		port_ = etpUrl.find("wss://") == std::string::npos ? 443 : 80;
+	}
+	else {
+		hostEnd = portStart++;
+		portEnd = etpUrl.find("/", portStart);
+		port_ = stoi(etpUrl.substr(portStart, portEnd - portStart));
+	}
+
+	if (hostEnd == std::string::npos) {
+		urlPath_ = "";
+		host_ = etpUrl.substr(hostStart);
+	}
+	else {
+		urlPath_ = portEnd < etpUrl.size() - 1 ? etpUrl.substr(portEnd + 1) : "";
+		host_ = etpUrl.substr(hostStart, hostEnd - hostStart);
+	}
+}
+
 std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> InitializationParameters::makeEndpointCapabilities() const
 {
 	std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> result;

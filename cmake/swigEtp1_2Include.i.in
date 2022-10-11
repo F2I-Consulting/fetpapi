@@ -1935,7 +1935,8 @@ namespace ETP_NS
 	class InitializationParameters
 	{
 	public:
-		InitializationParameters(const std::string & instanceUuid, const std::string & host, unsigned short port);
+		InitializationParameters(const std::string& instanceUuid, const std::string & etpUrl)
+		InitializationParameters(const std::string & instanceUuid, const std::string & host, unsigned short port, const std::string & urlPath = "");
 		virtual ~InitializationParameters();
 
 		void setMaxWebSocketMessagePayloadSize(int64_t value);
@@ -1954,11 +1955,11 @@ namespace ETP_NS
 
 	namespace ClientSessionLaunchers
 	{
-		std::shared_ptr<ETP_NS::PlainClientSession> createWsClientSession(InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
+		std::shared_ptr<ETP_NS::PlainClientSession> createWsClientSession(InitializationParameters* initializationParams, const std::string & authorization,
 			const std::map<std::string, std::string>& additionalHandshakeHeaderFields = {}, std::size_t preferredMaxFrameSize = 4096);
 
 #ifdef WITH_ETP_SSL
-		std::shared_ptr<ETP_NS::SslClientSession> createWssClientSession(InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
+		std::shared_ptr<ETP_NS::SslClientSession> createWssClientSession(InitializationParameters* initializationParams, const std::string & authorization,
 			const std::map<std::string, std::string>& additionalHandshakeHeaderFields = {}, std::size_t preferredMaxFrameSize = 4096, const std::string & additionalCertificates = "");
 #endif
 	}
