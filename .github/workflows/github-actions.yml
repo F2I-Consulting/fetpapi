@@ -107,6 +107,37 @@ jobs:
           cd build
           cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.10.2-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.10.2-install/lib/libavrocpp_s.a ${{ github.workspace }}
           cmake --build . --config Release -j2
+  ubuntu-20-java8:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v2
+        with:
+          distribution: 'temurin' # See 'Supported distributions' for available options
+          java-version: '8'
+      - name: APT install
+        run: |
+          sudo apt update
+          sudo apt install -y libboost-all-dev
+      - name: AVRO INSTALL
+        run: |
+          curl https://archive.apache.org/dist/avro/avro-1.10.2/cpp/avro-cpp-1.10.2.tar.gz -o ${{ runner.temp }}/avro-cpp-1.10.2.tar.gz
+          cd ${{ runner.temp }}
+          tar xzf avro-cpp-1.10.2.tar.gz
+          sed -i 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' avro-cpp-1.10.2/CMakeLists.txt
+          sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.10.2/CMakeLists.txt
+          mkdir avro-cpp-1.10.2-build
+          cd avro-cpp-1.10.2-build
+          cmake -Wno-dev -Wno-deprecated -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-1.10.2-install ${{ runner.temp }}/avro-cpp-1.10.2
+          cmake --build . -j2
+          cmake --install .
+      - name: CMake build and install
+        run: |
+          cd ${{ github.workspace }}/..
+          mkdir build
+          cd build
+          cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.10.2-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.10.2-install/lib/libavrocpp_s.a -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }}
+          cmake --build . --config Release -j2
   ubuntu-20-java8-with-fesapi:
     runs-on: ubuntu-20.04
     steps:
