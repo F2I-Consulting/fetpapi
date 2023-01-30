@@ -18,19 +18,21 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
-#include <regex>
-#include <thread>
-#include <stdexcept>
-#include <vector>
 #include <fstream>
+#include <regex>
+#include <stdexcept>
+#include <thread>
+#include <vector>
 
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/signal_set.hpp>
-#include <boost/asio/strand.hpp>
 #include <boost/asio/bind_executor.hpp>
+#include <boost/asio/signal_set.hpp>
 #ifdef WITH_ETP_SSL
 #include <boost/asio/ssl.hpp>
 #endif
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/strand.hpp>
+#include <boost/asio/ip/tcp.hpp>
+
 #include <boost/beast/http/file_body.hpp>
 
 #include "avro/Compiler.hh"
