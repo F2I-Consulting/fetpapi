@@ -23,7 +23,7 @@ under the License.
 #include <stdexcept>
 #include <thread>
 #include <vector>
-
+#include <boost/asio/steady_timer.hpp>
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/signal_set.hpp>
 #ifdef WITH_ETP_SSL
