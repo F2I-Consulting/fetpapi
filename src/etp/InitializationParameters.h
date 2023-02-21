@@ -45,7 +45,7 @@ namespace ETP_NS
 	protected:
 		boost::uuids::uuid identifier_;
 		std::string host_;
-		unsigned short port_;
+		uint16_t port_;
 		std::string urlPath_;
 
 		// Capabilities

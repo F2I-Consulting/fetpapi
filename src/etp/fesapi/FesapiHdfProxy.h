@@ -134,16 +134,16 @@ namespace ETP_NS
 			const std::string & name,
 			COMMON_NS::AbstractObject::numericalDatatypeEnum cumulativeLengthDatatype,
 			const void * cumulativeLength,
-			unsigned long long cumulativeLengthSize,
+			uint64_t cumulativeLengthSize,
 			COMMON_NS::AbstractObject::numericalDatatypeEnum elementsDatatype,
 			const void * elements,
-			unsigned long long elementsSize) final;
+			uint64_t elementsSize) final;
 
 		/**
 		 * Get the number of elements in each dimension in an HDF dataset of the proxy.
 		 * @param datasetName	The absolute name of the dataset we want to get the number of elements.
 		 */
-		std::vector<unsigned long long> getElementCountPerDimension(const std::string & datasetName) final;
+		std::vector<uint32_t> getElementCountPerDimension(const std::string & datasetName) final;
 
 		/**
 		* Set the new compression level which will be used for all data to be written
@@ -165,7 +165,7 @@ namespace ETP_NS
 			const std::string & name,
 			COMMON_NS::AbstractObject::numericalDatatypeEnum datatype,
 			const void * values,
-			const unsigned long long * numValuesInEachDimension,
+			const uint64_t * numValuesInEachDimension,
 			unsigned int numDimensions) final;
 
 		/**
@@ -181,7 +181,7 @@ namespace ETP_NS
 			const std::string& groupName,
 			const std::string& name,
 			COMMON_NS::AbstractObject::numericalDatatypeEnum datatype,
-			const unsigned long long* numValuesInEachDimension,
+			const uint64_t* numValuesInEachDimension,
 			unsigned int numDimensions) final;
 
 		/**
@@ -199,8 +199,8 @@ namespace ETP_NS
 			const std::string& name,
 			COMMON_NS::AbstractObject::numericalDatatypeEnum datatype,
 			const void* values,
-			const unsigned long long* numValuesInEachDimension,
-			const unsigned long long* offsetValuesInEachDimension,
+			const uint64_t* numValuesInEachDimension,
+			const uint64_t* offsetValuesInEachDimension,
 			unsigned int numDimensions) final;
 
 		/**
@@ -290,7 +290,7 @@ namespace ETP_NS
 			throw std::logic_error("Attributes are not supported in ETP1.2");
 		}
 
-		int64_t readLongAttribute(const std::string&,
+		int64_t readInt64Attribute(const std::string&,
 			const std::string&) const final {
 			throw std::logic_error("Attributes are not supported in ETP1.2");
 		}
@@ -313,8 +313,8 @@ namespace ETP_NS
 		void readArrayNdOfDoubleValues(
 			const std::string & datasetName,
 			double* values,
-			unsigned long long const * numValuesInEachDimension,
-			unsigned long long const * offsetInEachDimension,
+			uint64_t const * numValuesInEachDimension,
+			uint64_t const * offsetInEachDimension,
 			unsigned int numDimensions) final;
 
 		/**
@@ -329,18 +329,18 @@ namespace ETP_NS
 		*/
 		void readArrayNdOfDoubleValues(
 			const std::string & datasetName, double* values,
-			unsigned long long const * blockCountPerDimension,
-			unsigned long long const * offsetInEachDimension,
-			unsigned long long const * strideInEachDimension,
-			unsigned long long const * blockSizeInEachDimension,
+			uint64_t const * blockCountPerDimension,
+			uint64_t const * offsetInEachDimension,
+			uint64_t const * strideInEachDimension,
+			uint64_t const * blockSizeInEachDimension,
 			unsigned int numDimensions) final;
 
 		void selectArrayNdOfValues(
 			const std::string & datasetName,
-			unsigned long long const * blockCountPerDimension,
-			unsigned long long const * offsetInEachDimension,
-			unsigned long long const * strideInEachDimension,
-			unsigned long long const * blockSizeInEachDimension,
+			uint64_t const * blockCountPerDimension,
+			uint64_t const * offsetInEachDimension,
+			uint64_t const * strideInEachDimension,
+			uint64_t const * blockSizeInEachDimension,
 			unsigned int numDimensions,
 			bool newSelection,
 			hdf5_hid_t & dataset,
@@ -357,7 +357,7 @@ namespace ETP_NS
 			hdf5_hid_t dataset,
 			hdf5_hid_t filespace,
 			void* values,
-			unsigned long long slabSize) final;
+			uint64_t slabSize) final;
 
 		/**
 		* Read an array Nd of float values stored in a specific dataset.
@@ -377,12 +377,12 @@ namespace ETP_NS
 		void readArrayNdOfFloatValues(
 			const std::string & datasetName,
 			float* values,
-			unsigned long long const * numValuesInEachDimension,
-			unsigned long long const * offsetInEachDimension,
+			uint64_t const * numValuesInEachDimension,
+			uint64_t const * offsetInEachDimension,
 			unsigned int numDimensions) final;
 
 		/**
-		* Read an array Nd of long values stored in a specific dataset.
+		* Read an array Nd of int 64 bits values stored in a specific dataset.
 		* @param datasetName	The absolute dataset name where to read the values
 		* @param values 		The values must be pre-allocated.
 		*/
@@ -391,7 +391,7 @@ namespace ETP_NS
 		/**
 		* Find the array associated with datasetName and read from it.
 		* @param datasetName                    The name of the array (potentially with multi dimensions).
-		* @param values                         1d array output of long values ordered firstly by fastest direction.
+		* @param values                         1d array output of int 64 bits values ordered firstly by fastest direction.
 		* @param numValuesInEachDimension       Number of values in each dimension of the array to read. They are ordered from fastest index to slowest index.
 		* @param offsetValuesInEachDimension    Offset values in each dimension of the array to read. They are ordered from fastest index to slowest index.
 		* @param numDimensions                  The number of the dimensions of the array to read.
@@ -399,12 +399,12 @@ namespace ETP_NS
 		void readArrayNdOfInt64Values(
 			const std::string & datasetName,
 			int64_t* values,
-			unsigned long long const * numValuesInEachDimension,
-			unsigned long long const * offsetInEachDimension,
+			uint64_t const * numValuesInEachDimension,
+			uint64_t const * offsetInEachDimension,
 			unsigned int numDimensions)  final;
 
 		/**
-		* Read an array Nd of unsigned long values stored in a specific dataset.
+		* Read an array Nd of unsigned int 64 bits values stored in a specific dataset.
 		* @param datasetName	The absolute dataset name where to read the values
 		* @param values 		The values must be pre-allocated.
 		*/
@@ -428,8 +428,8 @@ namespace ETP_NS
 		void readArrayNdOfIntValues(
 			const std::string & datasetName,
 			int* values,
-			unsigned long long const * numValuesInEachDimension,
-			unsigned long long const * offsetInEachDimension,
+			uint64_t const * numValuesInEachDimension,
+			uint64_t const * offsetInEachDimension,
 			unsigned int numDimensions
 		) final;
 
@@ -456,17 +456,17 @@ namespace ETP_NS
 		void readArrayNdOfUShortValues(const std::string & datasetName, unsigned short* values) final { readArrayNdOfValues(datasetName, values); }
 
 		/**
-		* Read an array Nd of char values stored in a specific dataset.
+		* Read an array Nd of int 8 bits values stored in a specific dataset.
 		* @param datasetName	The absolute dataset name where to read the values
 		* @param values 		The values must be pre-allocated.
 		*/
-		void readArrayNdOfCharValues(const std::string & datasetName, char* values) final { readArrayNdOfValues(datasetName, values); }
+		void readArrayNdOfInt8Values(const std::string & datasetName, int8_t* values) final { readArrayNdOfValues(datasetName, values); }
 
 		/**
-		* Read an array Nd of unsigned char values stored in a specific dataset.
+		* Read an array Nd of int 8 bits values stored in a specific dataset.
 		* @param datasetName	The absolute dataset name where to read the values
 		*/
-		void readArrayNdOfUCharValues(const std::string & datasetName, unsigned char* values) final { readArrayNdOfValues(datasetName, values); }
+		void readArrayNdOfUInt8Values(const std::string & datasetName, uint8_t* values) final { readArrayNdOfValues(datasetName, values); }
 
 		/**
 		* Check wether an absolute path exists in the hdf file or not.
@@ -483,7 +483,7 @@ namespace ETP_NS
 		 * If the dataset is not compressed, then it returns an empty vector.
 		 * @param datasetName	The absolute name of the dataset which we want to get the number of elements from.
 		 */
-		std::vector<unsigned long long> getElementCountPerChunkDimension(const std::string& ) final { return std::vector<unsigned long long>(); }
+		std::vector<uint32_t> getElementCountPerChunkDimension(const std::string&) final { return {}; }
 
 		/**
 		* Get the standard XML namespace for serializing this data object.
@@ -504,7 +504,7 @@ namespace ETP_NS
 		template<typename T> void readArrayNdOfValues(const std::string & datasetName, T* values)
 		{
 			// First get metadata about the data array
-			std::vector<unsigned long long> dimensions;
+			std::vector<uint64_t> dimensions;
 
 			const auto daMetadata = getDataArrayMetadata(datasetName);
 			size_t valueCount = 1;

@@ -87,18 +87,18 @@ int FesapiHdfProxy::getHdfDatatypeClassInDataset(const std::string&)
 void FesapiHdfProxy::writeItemizedListOfList(const string & groupName, const std::string & name,
 	COMMON_NS::AbstractObject::numericalDatatypeEnum cumulativeLengthDatatype,
 	const void * cumulativeLength,
-	unsigned long long cumulativeLengthSize,
+	uint64_t cumulativeLengthSize,
 	COMMON_NS::AbstractObject::numericalDatatypeEnum elementsDatatype,
 	const void * elements,
-	unsigned long long elementsSize)
+	uint64_t elementsSize)
 {
 	writeArrayNd(groupName + '/' + name, CUMULATIVE_LENGTH_DS_NAME, cumulativeLengthDatatype, cumulativeLength, &cumulativeLengthSize, 1);
 	writeArrayNd(groupName + '/' + name, ELEMENTS_DS_NAME, elementsDatatype, elements, &elementsSize, 1);
 }
 
-std::vector<unsigned long long> FesapiHdfProxy::getElementCountPerDimension(const std::string & datasetName)
+std::vector<uint32_t> FesapiHdfProxy::getElementCountPerDimension(const std::string & datasetName)
 {
-	std::vector<unsigned long long> result;
+	std::vector<uint32_t> result;
 
 	const auto daMetadata = getDataArrayMetadata(datasetName);
 	for (auto dim : daMetadata.dimensions) {
@@ -112,7 +112,7 @@ void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
 	const std::string & name,
 	COMMON_NS::AbstractObject::numericalDatatypeEnum datatype,
 	const void * values,
-	const unsigned long long * numValuesInEachDimension,
+	const uint64_t * numValuesInEachDimension,
 	unsigned int numDimensions)
 {
 	if (!isOpened()) {
@@ -178,7 +178,7 @@ void FesapiHdfProxy::createArrayNd(
 	const std::string& groupName,
 	const std::string& datasetName,
 	COMMON_NS::AbstractObject::numericalDatatypeEnum datatype,
-	const unsigned long long* numValuesInEachDimension,
+	const uint64_t* numValuesInEachDimension,
 	unsigned int numDimensions)
 {
 	throw logic_error("createArrayNdNot implemented yet");
@@ -189,8 +189,8 @@ void FesapiHdfProxy::writeArrayNdSlab(
 	const string& datasetName,
 	COMMON_NS::AbstractObject::numericalDatatypeEnum datatype,
 	const void* values,
-	const unsigned long long* numValuesInEachDimension,
-	const unsigned long long* offsetInEachDimension,
+	const uint64_t* numValuesInEachDimension,
+	const uint64_t* offsetInEachDimension,
 	unsigned int numDimensions)
 {
 	throw logic_error("writeArrayNdSlab Not implemented yet");
@@ -198,8 +198,8 @@ void FesapiHdfProxy::writeArrayNdSlab(
 
 void FesapiHdfProxy::readArrayNdOfDoubleValues(
 	const std::string & datasetName, double* values,
-	unsigned long long const * numValuesInEachDimension,
-	unsigned long long const * offsetInEachDimension,
+	uint64_t const * numValuesInEachDimension,
+	uint64_t const * offsetInEachDimension,
 	unsigned int numDimensions)
 {
 	throw logic_error("readArrayNdOfDoubleValues Not implemented yet");
@@ -207,10 +207,10 @@ void FesapiHdfProxy::readArrayNdOfDoubleValues(
 
 void FesapiHdfProxy::readArrayNdOfDoubleValues(
 	const std::string & datasetName, double* values,
-	unsigned long long const * blockCountPerDimension,
-	unsigned long long const * offsetInEachDimension,
-	unsigned long long const * strideInEachDimension,
-	unsigned long long const * blockSizeInEachDimension,
+	uint64_t const * blockCountPerDimension,
+	uint64_t const * offsetInEachDimension,
+	uint64_t const * strideInEachDimension,
+	uint64_t const * blockSizeInEachDimension,
 	unsigned int numDimensions)
 {
 	throw logic_error("readArrayNdOfDoubleValues Not implemented yet");
@@ -218,10 +218,10 @@ void FesapiHdfProxy::readArrayNdOfDoubleValues(
 
 void FesapiHdfProxy::selectArrayNdOfValues(
 	const std::string & datasetName,
-	unsigned long long const * blockCountPerDimension,
-	unsigned long long const * offsetInEachDimension,
-	unsigned long long const * strideInEachDimension,
-	unsigned long long const * blockSizeInEachDimension,
+	uint64_t const * blockCountPerDimension,
+	uint64_t const * offsetInEachDimension,
+	uint64_t const * strideInEachDimension,
+	uint64_t const * blockSizeInEachDimension,
 	unsigned int numDimensions,
 	bool newSelection,
 	hdf5_hid_t & dataset,
@@ -234,15 +234,15 @@ void FesapiHdfProxy::readArrayNdOfDoubleValues(
 	hdf5_hid_t dataset,
 	hdf5_hid_t filespace,
 	void* values,
-	unsigned long long slabSize)
+	uint64_t slabSize)
 {
 	throw logic_error("readArrayNdOfDoubleValues Not implemented yet");
 }
 
 void FesapiHdfProxy::readArrayNdOfFloatValues(
 	const std::string& datasetName, float* values,
-	unsigned long long const * numValuesInEachDimension,
-	unsigned long long const * offsetInEachDimension,
+	uint64_t const * numValuesInEachDimension,
+	uint64_t const * offsetInEachDimension,
 	unsigned int numDimensions)
 {
 	throw logic_error("readArrayNdOfFloatValues Not implemented yet");
@@ -250,8 +250,8 @@ void FesapiHdfProxy::readArrayNdOfFloatValues(
 
 void FesapiHdfProxy::readArrayNdOfInt64Values(
 	const std::string& datasetName, int64_t* values,
-	unsigned long long const * numValuesInEachDimension,
-	unsigned long long const * offsetInEachDimension,
+	uint64_t const * numValuesInEachDimension,
+	uint64_t const * offsetInEachDimension,
 	unsigned int numDimensions)
 {
 	throw logic_error("readArrayNdOfInt64Values Not implemented yet");
@@ -259,8 +259,8 @@ void FesapiHdfProxy::readArrayNdOfInt64Values(
 
 void FesapiHdfProxy::readArrayNdOfIntValues(
 	const std::string& datasetName, int* values,
-	unsigned long long const * numValuesInEachDimension,
-	unsigned long long const * offsetInEachDimension,
+	uint64_t const * numValuesInEachDimension,
+	uint64_t const * offsetInEachDimension,
 	unsigned int numDimensions)
 {
 	throw logic_error("readArrayNdOfIntValues Not implemented yet");

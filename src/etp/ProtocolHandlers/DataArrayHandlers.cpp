@@ -164,7 +164,7 @@ void DataArrayHandlers::on_GetDataArraysResponse(const Energistics::Etp::v12::Pr
 			Energistics::Etp::v12::Datatypes::ArrayOfLong avroArray = da.data.item.get_ArrayOfLong();
 			auto values = avroArray.values;
 			for (auto i = 0; i < values.size() && i < 20; ++i) {
-				std::cout << "long value " << i << " == " << values[i] << std::endl;
+				std::cout << "int 64 bits value " << i << " == " << values[i] << std::endl;
 			}
 		}
 		else if (da.data.item.idx() == 3) {

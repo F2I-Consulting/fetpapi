@@ -18,6 +18,8 @@ under the License.
 -----------------------------------------------------------------------*/
 #include "InitializationParameters.h"
 
+#include <stdexcept>
+
 #include "AbstractSession.h"
 
 using namespace ETP_NS;
@@ -39,7 +41,11 @@ InitializationParameters::InitializationParameters(const std::string & etpUrl)
 	else {
 		hostEnd = portStart++;
 		portEnd = etpUrl.find("/", portStart);
-		port_ = stoi(etpUrl.substr(portStart, portEnd - portStart));
+		int readPort = stoi(etpUrl.substr(portStart, portEnd - portStart));
+		if (readPort < 1 || readPort >(std::numeric_limits<int16_t>::max)()) {
+			throw std::out_of_range("The port " + std::to_string(readPort) + " is out of the allowad range for TCP ports ]0..2^16]");
+		}
+		port_ = static_cast<uint16_t>(readPort);
 	}
 
 	if (hostEnd == std::string::npos) {

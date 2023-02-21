@@ -342,7 +342,7 @@ namespace ETP_NS
 		*
 		* @param storeLastWriteFilter	An optional filter to limit the dataspaces returned by date/time last saved to the store.
 		*								The store returns a list of dataspaces whose last changed date/time is greater than the specified date/time.
-		*								It must be a UTC dateTime value, serialized as a positive long, using the Avro logical type timestamp-micros (microseconds from the Unix Epoch, 1 January 1970 00:00:00.000000 UTC).
+		*								It must be a UTC dateTime value, serialized as a positive int 64bits, using the Avro logical type timestamp-micros (microseconds from the Unix Epoch, 1 January 1970 00:00:00.000000 UTC).
 		* @param return	The available dataspaces the store could return.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> getDataspaces(int64_t storeLastWriteFilter = -1);
@@ -382,7 +382,7 @@ namespace ETP_NS
 		*								It indicates which direction in the graph that the operation should proceed (targets or sources) and whether or not to include the starting point (self).
 		* @param storeLastWriteFilter	An optional filter to filter the discovery on a date when the data object was last written in a particular store.
 		*								The store returns resources whose storeLastWrite date/time is GREATER than the date/time specified in this filter field.
-		*								It must be a UTC dateTime value, serialized as a positive long, using the Avro logical type timestamp-micros (microseconds from the Unix Epoch, 1 January 1970 00:00:00.000000 UTC).
+		*								It must be a UTC dateTime value, serialized as a positive int 64bits, using the Avro logical type timestamp-micros (microseconds from the Unix Epoch, 1 January 1970 00:00:00.000000 UTC).
 		* @param countObjects			If true, the store provides counts of sources and targets for each resource identified by Discovery.
 		* @param return					The resources corresponding to this query.
 		*/
@@ -400,7 +400,7 @@ namespace ETP_NS
 		* @param dataspaceUri			The URI of the dataspace where the objects were deleted.
 		* @param deleteTimeFilter		An optional filter to filter the discovery on a date when the data object was deleted in a particular store.
 		*								The store returns resources for objects whose delete times are greater than this value.
-		*								It must be a UTC dateTime value, serialized as a positive long, using the Avro logical type timestamp-micros (microseconds from the Unix Epoch, 1 January 1970 00:00:00.000000 UTC).
+		*								It must be a UTC dateTime value, serialized as a positive int 64bits, using the Avro logical type timestamp-micros (microseconds from the Unix Epoch, 1 January 1970 00:00:00.000000 UTC).
 		* @param dataObjectTypes		Filter for the types of data objects you want. EXAMPLES: "witsml20.Well", "resqml20.obj_TectonicBoundaryFeature", "resqml20.*" 
 		* @param return					The deleted resources corresponding to this query.
 		*/

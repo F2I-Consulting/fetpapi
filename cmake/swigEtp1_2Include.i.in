@@ -19,43 +19,21 @@ under the License.
 %module(directors="1") fetpapi
 %catches(Swig::DirectorException);
 
+%{
+#if defined(__clang__) || defined(_MSC_VER)
+#elif defined(__GNUC__) || defined(__GNUG__)
+#pragma GCC diagnostic ignored "-Wcast-qual"
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#endif
+%}
+
 #ifdef WITH_FESAPI
 %import "${FESAPI_INCLUDE_DIR}/fesapi/common/DataObjectReference.h"
 %import "${FESAPI_INCLUDE_DIR}/fesapi/common/HdfProxyFactory.h"
 %import "${FESAPI_INCLUDE_DIR}/fesapi/common/AbstractObject.h"
 #endif
 
-%{
-#include <stdint.h>		// Use the C99 official header
-%}
-
-%include <swigarch.i>
-
-/* Exact integral types.  */
-
-/* Signed.  */
-
-typedef signed char		int8_t;
-typedef short int		int16_t;
-typedef int			int32_t;
-#if defined(SWIGWORDSIZE64)
-typedef long int		int64_t;
-#else
-typedef long long int		int64_t;
-#endif
-
-/* Unsigned.  */
-typedef unsigned char		uint8_t;
-typedef unsigned short int	uint16_t;
-typedef unsigned int		uint32_t;
-#ifndef SWIGJAVA	
-#if defined(SWIGWORDSIZE64)
-typedef unsigned long int	uint64_t;
-#else
-typedef unsigned long long int	uint64_t;
-#endif
-#endif
-
+%include "stdint.i"
 %include "std_string.i"
 
 %include "../src/nsDefinitions.h"
@@ -64,13 +42,19 @@ typedef unsigned long long int	uint64_t;
 // JAVA
 //************************/
 
-#ifdef SWIGJAVA		
+#ifdef SWIGJAVA
+	// https://stackoverflow.com/a/60208989
+	%define PRIMITIVE_TYPEMAP(NEW_TYPE, TYPE)
+	%clear NEW_TYPE;
+	%apply TYPE { NEW_TYPE };
+	%enddef // PRIMITIVE_TYPEMAP
+#if defined(SWIGWORDSIZE64)
+	PRIMITIVE_TYPEMAP(long int, long long);
+	PRIMITIVE_TYPEMAP(unsigned long int, long long);
+#endif
 	// We don't want to use BigInteger in java.
-	#if defined(SWIGWORDSIZE64)
-	typedef long int		uint64_t;
-	#else
-	typedef long long int		uint64_t;
-	#endif	
+	PRIMITIVE_TYPEMAP(unsigned long long int, long long);
+#undef PRIMITIVE_TYPEMAP
 	
 	/*
 	 When using multiple modules or the nspace feature it is common to invoke SWIG with a different -package command line option for each module.
@@ -122,8 +106,10 @@ typedef unsigned long long int	uint64_t;
 %include "std_vector.i"
 
 %template(StringVector) std::vector< std::string >;
-%template(Int32Vector) std::vector< int >;
-%template(Int64Vector) std::vector< long long >;
+%template(Int32Vector) std::vector< int32_t >;
+%template(UInt32Vector) std::vector< uint32_t >;
+// Vector of int64 and uint64 are tough to port because of long vs long long platform
+// Indeed c++ long corresponds to int in java where c++ long long corresponds to long in java
 %template(FloatVector) std::vector< float >;
 %template(DoubleVector) std::vector< double >;
 %template(BoolVector) std::vector< bool >;

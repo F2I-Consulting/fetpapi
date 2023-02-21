@@ -66,7 +66,7 @@ jobs:
           cmake --build . --config Release --target INSTALL
       - name: FESAPI install
         run: |
-          git clone --branch v2.4.0.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
+          git clone --branch v2.6.0.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
           cd ${{ runner.temp }}
           mkdir fesapi-build
           cd fesapi-build
@@ -78,7 +78,7 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.10.2-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.10.2-install/lib/avrocpp_s.lib -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=${{ runner.temp }}/fesapi-install/include -DFESAPI_LIBRARY_RELEASE=${{ runner.temp }}/fesapi-install/lib/FesapiCpp.2.4.0.0.lib -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
+          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.10.2-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.10.2-install/lib/avrocpp_s.lib -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=${{ runner.temp }}/fesapi-install/include -DFESAPI_LIBRARY_RELEASE=${{ runner.temp }}/fesapi-install/lib/FesapiCpp.2.6.0.0.lib -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
           cmake --build . --config Release -j2
   ubuntu-20:
     runs-on: ubuntu-20.04
@@ -90,14 +90,14 @@ jobs:
           sudo apt install -y libboost-all-dev
       - name: AVRO INSTALL
         run: |
-          curl https://archive.apache.org/dist/avro/avro-1.10.2/cpp/avro-cpp-1.10.2.tar.gz -o ${{ runner.temp }}/avro-cpp-1.10.2.tar.gz
+          curl https://archive.apache.org/dist/avro/avro-1.11.0/cpp/avro-cpp-1.11.0.tar.gz -o ${{ runner.temp }}/avro-cpp-1.11.0.tar.gz
           cd ${{ runner.temp }}
-          tar xzf avro-cpp-1.10.2.tar.gz
-          sed -i 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' avro-cpp-1.10.2/CMakeLists.txt
-          sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.10.2/CMakeLists.txt
-          mkdir avro-cpp-1.10.2-build
-          cd avro-cpp-1.10.2-build
-          cmake -Wno-dev -Wno-deprecated -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-1.10.2-install ${{ runner.temp }}/avro-cpp-1.10.2
+          tar xzf avro-cpp-1.11.0.tar.gz
+          sed -i 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' avro-cpp-1.11.0/CMakeLists.txt
+          sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.11.0/CMakeLists.txt
+          mkdir avro-cpp-1.11.0-build
+          cd avro-cpp-1.11.0-build
+          cmake -Wno-dev -Wno-deprecated -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-1.11.0-install ${{ runner.temp }}/avro-cpp-1.11.0
           cmake --build . -j2
           cmake --install .
       - name: CMake build and install
@@ -105,7 +105,7 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.10.2-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.10.2-install/lib/libavrocpp_s.a ${{ github.workspace }}
+          cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.11.0-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.11.0-install/lib/libavrocpp_s.a ${{ github.workspace }}
           cmake --build . --config Release -j2
   ubuntu-20-java8:
     runs-on: ubuntu-20.04
@@ -121,14 +121,14 @@ jobs:
           sudo apt install -y libboost-all-dev
       - name: AVRO INSTALL
         run: |
-          curl https://archive.apache.org/dist/avro/avro-1.10.2/cpp/avro-cpp-1.10.2.tar.gz -o ${{ runner.temp }}/avro-cpp-1.10.2.tar.gz
+          curl https://archive.apache.org/dist/avro/avro-1.11.0/cpp/avro-cpp-1.11.0.tar.gz -o ${{ runner.temp }}/avro-cpp-1.11.0.tar.gz
           cd ${{ runner.temp }}
-          tar xzf avro-cpp-1.10.2.tar.gz
-          sed -i 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' avro-cpp-1.10.2/CMakeLists.txt
-          sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.10.2/CMakeLists.txt
-          mkdir avro-cpp-1.10.2-build
-          cd avro-cpp-1.10.2-build
-          cmake -Wno-dev -Wno-deprecated -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-1.10.2-install ${{ runner.temp }}/avro-cpp-1.10.2
+          tar xzf avro-cpp-1.11.0.tar.gz
+          sed -i 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' avro-cpp-1.11.0/CMakeLists.txt
+          sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.11.0/CMakeLists.txt
+          mkdir avro-cpp-1.11.0-build
+          cd avro-cpp-1.11.0-build
+          cmake -Wno-dev -Wno-deprecated -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-1.11.0-install ${{ runner.temp }}/avro-cpp-1.11.0
           cmake --build . -j2
           cmake --install .
       - name: CMake build and install
@@ -136,7 +136,7 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.10.2-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.10.2-install/lib/libavrocpp_s.a -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }}
+          cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.11.0-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.11.0-install/lib/libavrocpp_s.a -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }}
           cmake --build . --config Release -j2
   ubuntu-20-java8-with-fesapi:
     runs-on: ubuntu-20.04
@@ -152,7 +152,7 @@ jobs:
           sudo apt install -y libhdf5-dev libminizip-dev libboost-all-dev
       - name: FESAPI install
         run: |
-          git clone --branch v2.4.0.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
+          git clone --branch v2.6.0.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
           cd ${{ runner.temp }}
           mkdir fesapi-build
           cd fesapi-build
@@ -161,14 +161,14 @@ jobs:
           cmake --install .
       - name: AVRO INSTALL
         run: |
-          curl https://archive.apache.org/dist/avro/avro-1.10.2/cpp/avro-cpp-1.10.2.tar.gz -o ${{ runner.temp }}/avro-cpp-1.10.2.tar.gz
+          curl https://archive.apache.org/dist/avro/avro-1.11.0/cpp/avro-cpp-1.11.0.tar.gz -o ${{ runner.temp }}/avro-cpp-1.11.0.tar.gz
           cd ${{ runner.temp }}
-          tar xzf avro-cpp-1.10.2.tar.gz
-          sed -i 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' avro-cpp-1.10.2/CMakeLists.txt
-          sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.10.2/CMakeLists.txt
-          mkdir avro-cpp-1.10.2-build
-          cd avro-cpp-1.10.2-build
-          cmake -Wno-dev -Wno-deprecated -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-1.10.2-install ${{ runner.temp }}/avro-cpp-1.10.2
+          tar xzf avro-cpp-1.11.0.tar.gz
+          sed -i 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' avro-cpp-1.11.0/CMakeLists.txt
+          sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.11.0/CMakeLists.txt
+          mkdir avro-cpp-1.11.0-build
+          cd avro-cpp-1.11.0-build
+          cmake -Wno-dev -Wno-deprecated -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-1.11.0-install ${{ runner.temp }}/avro-cpp-1.11.0
           cmake --build . -j2
           cmake --install .
       - name: CMake build and install
@@ -176,5 +176,5 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.10.2-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.10.2-install/lib/libavrocpp_s.a -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=${{ runner.temp }}/fesapi-install/include -DFESAPI_LIBRARY_RELEASE=${{ runner.temp }}/fesapi-install/lib/libFesapiCpp.so -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.4.0.0.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }}
+          cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.11.0-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.11.0-install/lib/libavrocpp_s.a -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=${{ runner.temp }}/fesapi-install/include -DFESAPI_LIBRARY_RELEASE=${{ runner.temp }}/fesapi-install/lib/libFesapiCpp.so -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.6.0.0.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }}
           cmake --build . --config Release -j2
