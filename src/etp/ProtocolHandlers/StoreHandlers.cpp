@@ -33,47 +33,39 @@ void StoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Me
 	if (mh.messageType == Energistics::Etp::v12::Protocol::Store::GetDataObjects::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Store::GetDataObjects getO;
 		avro::decode(*d, getO);
-		session->flushReceivingBuffer();
 		on_GetDataObjects(getO, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse obj;
 		avro::decode(*d, obj);
-		session->flushReceivingBuffer();
 		on_GetDataObjectsResponse(obj, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Store::PutDataObjects::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Store::PutDataObjects putO;
 		avro::decode(*d, putO);
-		session->flushReceivingBuffer();
 		on_PutDataObjects(putO, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_PutDataObjectsResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Store::DeleteDataObjects::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Store::DeleteDataObjects deleteO;
 		avro::decode(*d, deleteO);
-		session->flushReceivingBuffer();
 		on_DeleteDataObjects(deleteO, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_DeleteDataObjectsResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Store::Chunk::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Store::Chunk msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_Chunk(msg, mh.messageId);
 	}
 	else {
-		session->flushReceivingBuffer();
 		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(3, "The message type ID " + std::to_string(mh.messageType) + " is invalid for the store protocol."), mh.messageId, 0x02);
 	}
 }

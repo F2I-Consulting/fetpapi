@@ -35,65 +35,54 @@ void StoreNotificationHandlers::decodeMessageBody(const Energistics::Etp::v12::D
 	if (mh.messageType == Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications::messageTypeId) {
 		Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_SubscribeNotifications(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_SubscribeNotificationsResponse(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications::messageTypeId) {
 		Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_UnsubscribeNotifications(msg, mh.messageId, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications::messageTypeId) {
 		Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_UnsolicitedStoreNotifications(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::StoreNotification::SubscriptionEnded::messageTypeId) {
 		Energistics::Etp::v12::Protocol::StoreNotification::SubscriptionEnded msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_SubscriptionEnded(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged::messageTypeId) {
 		Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_ObjectChanged(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted::messageTypeId) {
 		Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_ObjectDeleted(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked::messageTypeId) {
 		Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_ObjectAccessRevoked(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged::messageTypeId) {
 		Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_ObjectActiveStatusChanged(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::StoreNotification::Chunk::messageTypeId) {
 		Energistics::Etp::v12::Protocol::StoreNotification::Chunk msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_Chunk(msg, mh.messageId);
 	}
 	else {
-		session->flushReceivingBuffer();
 		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(3, "The message type ID " + std::to_string(mh.messageType) + " is invalid for the store notification protocol."), mh.messageId, 0x02);
 	}
 }

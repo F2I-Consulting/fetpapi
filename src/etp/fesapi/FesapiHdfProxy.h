@@ -516,9 +516,9 @@ namespace ETP_NS
 			switch (daMetadata.transportArrayType) {
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::bytes:
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfBoolean: break;
-			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt: valueSize = 6; break; // 25% more because of zig zag encoding wort case scenario
+			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt: valueSize = 6; break; // 25% more because of zig zag encoding worst case scenario
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfFloat: valueSize = 4; break;
-			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong:  valueSize = 10; break; // 25% more because of zig zag encoding wort case scenario
+			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong:  valueSize = 10; break; // 25% more because of zig zag encoding worst case scenario
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble: valueSize = 8; break;
 			default: throw std::logic_error("Array of strings are not implemented yet");
 			}

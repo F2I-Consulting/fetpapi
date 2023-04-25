@@ -33,61 +33,51 @@ void DataArrayHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 	if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::GetDataArrays::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrays gda;
 		avro::decode(*d, gda);
-		session->flushReceivingBuffer();
 		on_GetDataArrays(gda, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse gdar;
 		avro::decode(*d, gdar);
-		session->flushReceivingBuffer();
 		on_GetDataArraysResponse(gdar, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutDataArrays::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::PutDataArrays pda;
 		avro::decode(*d, pda);
-		session->flushReceivingBuffer();
 		on_PutDataArrays(pda, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutDataArraysResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::PutDataArraysResponse msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_PutDataArraysResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_GetDataSubarrays(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::GetDataSubarraysResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::GetDataSubarraysResponse msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_GetDataSubarraysResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_PutDataSubarrays(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutDataSubarraysResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::PutDataSubarraysResponse msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_PutDataSubarraysResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata gdam;
 		avro::decode(*d, gdam);
-		session->flushReceivingBuffer();
 		on_GetDataArrayMetadata(gdam, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse gdamr;
 		avro::decode(*d, gdamr);
-		session->flushReceivingBuffer();
 
 		// Validation
 		bool valid = true;
@@ -125,7 +115,6 @@ void DataArrayHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 		on_GetDataArrayMetadataResponse(gdamr, mh.correlationId);
 	}
 	else {
-		session->flushReceivingBuffer();
 		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(3, "The message type ID " + std::to_string(mh.messageType) + " is invalid for the data array protocol."), mh.messageId, 0x02);
 	}
 }

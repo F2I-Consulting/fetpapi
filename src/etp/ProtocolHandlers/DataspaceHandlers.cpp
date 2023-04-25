@@ -33,41 +33,34 @@ void DataspaceHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 	if (mh.messageType == Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces getO;
 		avro::decode(*d, getO);
-		session->flushReceivingBuffer();
 		on_GetDataspaces(getO, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse obj;
 		avro::decode(*d, obj);
-		session->flushReceivingBuffer();
 		on_GetDataspacesResponse(obj, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces putO;
 		avro::decode(*d, putO);
-		session->flushReceivingBuffer();
 		on_PutDataspaces(putO, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_PutDataspacesResponse(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces deleteO;
 		avro::decode(*d, deleteO);
-		session->flushReceivingBuffer();
 		on_DeleteDataspaces(deleteO, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_DeleteDataspacesResponse(msg, mh.messageId);
 	}
 	else {
-		session->flushReceivingBuffer();
 		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(3, "The message type ID " + std::to_string(mh.messageType) + " is invalid for the Dataspace protocol."), mh.messageId, 0x02);
 	}
 }

@@ -11,7 +11,7 @@
 # Prepare the dependencies
 Download (build and install if necessary) third party libraries:
 - BOOST : All versions from version 1.66 should be ok but you may experience some [min/max build issues](https://github.com/boostorg/beast/issues/1980) using version 1.72 or 1.73.
-- AVRO : https://avro.apache.org/releases.html#Download (starting from version 1.9.0, build it with the above boost library)
+- AVRO : https://avro.apache.org/releases.html#Download (starting from version 1.9.0 [except 1.11.1](https://issues.apache.org/jira/browse/AVRO-3601), build it with the above boost library.)
 - (OPTIONALLY) OpenSSL : version 1.1 is known to work.
 - (OPTIONALLY) [FESAPI](https://github.com/F2I-Consulting/fesapi/releases) : All versions from version 2.6.0.0 should be ok.
 
@@ -19,7 +19,7 @@ We advise you to install these third party libraries respectively into
 - fesapiEnv/dependencies/boost-particularVersion
 - fesapiEnv/dependencies/avro-particularVersion
 # Configure the build
-FETPAPI uses cmake as its build tool. A 3.12 version or later of cmake is required https://cmake.org/download/. We also recommend using cmake-gui (already included in the bin folder of the binary releases of cmake) which provides a graphical user interface on top of cmake. If you want to use cmake in command line, you would find example in [Azure Pipeline file](./azure-pipelines.yml). Follow the below instructions :
+FETPAPI uses cmake as its build tool. A 3.12 version or later of cmake is required https://cmake.org/download/. We also recommend using cmake-gui (already included in the bin folder of the binary releases of cmake) which provides a graphical user interface on top of cmake. If you want to use cmake in command line, you would find example in [Github Actions file](./.github/workflows/github-actions.yml). Follow the below instructions :
 
 - yourPath/fesapiEnv/fetpapi defines where is the source code folder
 - yourPath/fesapiEnv/build/theNameYouWant defines where to build the binaries

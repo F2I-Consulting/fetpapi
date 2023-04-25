@@ -33,41 +33,34 @@ void TransactionHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatyp
 	if (mh.messageType == Energistics::Etp::v12::Protocol::Transaction::StartTransaction::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Transaction::StartTransaction getO;
 		avro::decode(*d, getO);
-		session->flushReceivingBuffer();
 		on_StartTransaction(getO, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse obj;
 		avro::decode(*d, obj);
-		session->flushReceivingBuffer();
 		on_StartTransactionResponse(obj, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Transaction::CommitTransaction::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Transaction::CommitTransaction putO;
 		avro::decode(*d, putO);
-		session->flushReceivingBuffer();
 		on_CommitTransaction(putO, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_CommitTransactionResponse(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction deleteO;
 		avro::decode(*d, deleteO);
-		session->flushReceivingBuffer();
 		on_RollbackTransaction(deleteO, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_RollbackTransactionResponse(msg, mh.messageId);
 	}
 	else {
-		session->flushReceivingBuffer();
 		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(3, "The message type ID " + std::to_string(mh.messageType) + " is invalid for the Transaction protocol."), mh.messageId, 0x02);
 	}
 }

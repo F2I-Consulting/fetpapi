@@ -49,20 +49,16 @@ namespace ETP_NS
 		const std::string& getAuthorization() const { return authorization; }
 
 		/**
-		* Run the websocket and then the ETP session.
-		* Everything related to this session (including the completion handlers) will operate on the same unique thread in a single event loop.
+		* Run the websocket and then the ETP session in a processing loop.
+		* Everything related to this session (including the completion handlers) will operate on the current thread in a single event loop.
+		* Since this is a loop, you may want to operate this method on a dedicated thread not to block your program.
+		* This method returns only when the session is closed.
 		*/
 		bool run() {
-			// We run the io_service off in its own thread so that it operates completely asynchronously with respect to the rest of the program.
-			auto work = boost::asio::make_work_guard(ioc);
-			std::thread thread([this]() {
-				std::cerr << "Start IOC" << std::endl;
-				this->getIoContext().run(); // Run the I/O service. The call will never return since we have used boost::asio::make_work_guard. We need to reset the worker if we want it to return.
-				std::cerr << "End IOC" << std::endl;
-			});
-
 			successfulConnection = false;
-			// Look up the domain name
+
+			// Look up the domain name before to run the session
+			// It is important to do this before to run the io context. Otherwise running the io context would return immediately if nothing has to be done.
 			resolver.async_resolve(
 				host,
 				port,
@@ -72,11 +68,9 @@ namespace ETP_NS
 					std::placeholders::_1,
 					std::placeholders::_2));
 
-			// Resetting the work make ioc (in a separate thread) return when there will no more be any uncomplete operations (such as a reading operation for example)
-			// ioc does no more honor boost::asio::make_work_guard.
-			work.reset();
-			// Wait for ioc.run() (in the other thread) to return
-			thread.join();
+			// Run the io_context to perform the resolver and all other binding functions
+			// Run will return only when there will no more be any uncomplete operations (such as a reading operation for example)
+			getIoContext().run();
 
 			return successfulConnection;
 		}
@@ -123,46 +117,6 @@ namespace ETP_NS
 					std::static_pointer_cast<AbstractClientSession>(shared_from_this()),
 					std::placeholders::_1));
 #endif
-		}
-
-		void do_write() {
-			if (sendingQueue.empty()) {
-				std::cout << "*************************************************" << std::endl;
-				std::cout << "The sending queue is empty." << std::endl;
-				std::cout << "*************************************************" << std::endl;
-				return;
-			}
-
-			if (specificProtocolHandlers.size() == maxSentAndNonRespondedMessageCount) {
-				std::cout << "*************************************************" << std::endl;
-				std::cout << "Cannot send Message id : " << std::get<0>(sendingQueue.front()) << " because the max number of sent and non processed message has been reached." << std::endl;
-				std::cout << "*************************************************" << std::endl;
-				return;
-			}
-
-			bool previousSentMessageCompleted = specificProtocolHandlers.find(std::get<0>(sendingQueue.front())) == specificProtocolHandlers.end();
-
-			if (!previousSentMessageCompleted) {
-				std::cout << "*************************************************" << std::endl;
-				std::cout << "Cannot send Message id : " << std::get<0>(sendingQueue.front()) << " because the previous messgae has not finished to be sent." << std::endl;
-				std::cout << "*************************************************" << std::endl;
-			}
-			else {
-				std::cout << "*************************************************" << std::endl;
-				std::cout << "Sending Message id : " << std::get<0>(sendingQueue.front()) << std::endl;
-				std::cout << "*************************************************" << std::endl;
-
-				derived().ws().async_write(
-					boost::asio::buffer(std::get<1>(sendingQueue.front())),
-					std::bind(
-						&AbstractSession::on_write,
-						shared_from_this(),
-						std::placeholders::_1,
-						std::placeholders::_2));
-
-				// Register the handler to respond to the sent message
-				specificProtocolHandlers[std::get<0>(sendingQueue.front())] = std::get<2>(sendingQueue.front());
-			}
 		}
 
 		/**
@@ -287,6 +241,34 @@ namespace ETP_NS
 			}
 
 			maxWebSocketMessagePayloadSize = initializationParams->getMaxWebSocketMessagePayloadSize();
+		}
+
+		void do_write() {
+			const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
+			if (sendingQueue.empty()) {
+				std::cout << "The sending queue is empty." << std::endl;
+				return;
+			}
+
+			bool previousSentMessageCompleted = specificProtocolHandlers.find(std::get<0>(sendingQueue.front())) == specificProtocolHandlers.end();
+
+			if (!previousSentMessageCompleted) {
+				std::cout << "Cannot send Message id : " << std::get<0>(sendingQueue.front()) << " because the previous message has not finished to be sent." << std::endl;
+			}
+			else {
+				std::cout << "Sending Message id : " << std::get<0>(sendingQueue.front()) << std::endl;
+
+				derived().ws().async_write(
+					boost::asio::buffer(std::get<1>(sendingQueue.front())),
+					std::bind(
+						&AbstractSession::on_write,
+						shared_from_this(),
+						std::placeholders::_1,
+						std::placeholders::_2));
+
+				// Register the handler to respond to the sent message
+				specificProtocolHandlers[std::get<0>(sendingQueue.front())] = std::get<2>(sendingQueue.front());
+			}
 		}
 	};
 }

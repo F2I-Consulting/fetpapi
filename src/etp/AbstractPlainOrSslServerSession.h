@@ -30,6 +30,9 @@ under the License.
 
 namespace ETP_NS
 {
+	// IMPORTANT : This class is no more maintained now that the OSDU RDDMS acts as a Reference Implementation
+
+
 	// Echoes back all received WebSocket messages.
 	// This uses the Curiously Recurring Template Pattern so that the same code works with both SSL streams and regular sockets.
 	template<class Derived>
@@ -42,6 +45,37 @@ namespace ETP_NS
 	protected:
 		boost::asio::strand<boost::asio::io_context::executor_type> strand;
 		ServerInitializationParameters* serverInitializationParams_;
+
+		void do_write() {
+			if (sendingQueue.empty()) {
+				std::cout << "*************************************************" << std::endl;
+				std::cout << "The sending queue is empty." << std::endl;
+				std::cout << "*************************************************" << std::endl;
+				return;
+			}
+
+			bool previousSentMessageCompleted = specificProtocolHandlers.find(std::get<0>(sendingQueue.front())) == specificProtocolHandlers.end();
+
+			if (!previousSentMessageCompleted) {
+				std::cout << "*************************************************" << std::endl;
+				std::cout << "Cannot send Message id : " << std::get<0>(sendingQueue.front()) << " because the previous messgae has not finished to be sent." << std::endl;
+				std::cout << "*************************************************" << std::endl;
+			}
+			else {
+				derived().ws().async_write(
+					boost::asio::buffer(std::get<1>(sendingQueue.front())),
+					boost::asio::bind_executor(
+						strand,
+						std::bind(
+							&AbstractSession::on_write,
+							shared_from_this(),
+							std::placeholders::_1,
+							std::placeholders::_2)));
+
+				// Register the handler to respond to the sent message
+				specificProtocolHandlers[std::get<0>(sendingQueue.front())] = std::get<2>(sendingQueue.front());
+			}
+		}
 
 	public:
 		AbstractPlainOrSslServerSession(boost::asio::io_context& ioc, ServerInitializationParameters* serverInitializationParams) :
@@ -138,44 +172,6 @@ namespace ETP_NS
 						std::static_pointer_cast<AbstractPlainOrSslServerSession>(shared_from_this()),
 						std::placeholders::_1)));
 #endif
-		}
-
-		void do_write() {
-			if (sendingQueue.empty()) {
-				std::cout << "*************************************************" << std::endl;
-				std::cout << "The sending queue is empty." << std::endl;
-				std::cout << "*************************************************" << std::endl;
-				return;
-			}
-
-			if (specificProtocolHandlers.size() == maxSentAndNonRespondedMessageCount) {
-				std::cout << "*************************************************" << std::endl;
-				std::cout << "Cannot send Message id : " << std::get<0>(sendingQueue.front()) << " because the max number of setn and non processed message has been reached." << std::endl;
-				std::cout << "*************************************************" << std::endl;
-				return;
-			}
-
-			bool previousSentMessageCompleted = specificProtocolHandlers.find(std::get<0>(sendingQueue.front())) == specificProtocolHandlers.end();
-
-			if (!previousSentMessageCompleted) {
-				std::cout << "*************************************************" << std::endl;
-				std::cout << "Cannot send Message id : " << std::get<0>(sendingQueue.front()) << " because the previous messgae has not finished to be sent." << std::endl;
-				std::cout << "*************************************************" << std::endl;
-			}
-			else {
-				derived().ws().async_write(
-					boost::asio::buffer(std::get<1>(sendingQueue.front())),
-					boost::asio::bind_executor(
-						strand,
-						std::bind(
-							&AbstractSession::on_write,
-							shared_from_this(),
-							std::placeholders::_1,
-							std::placeholders::_2)));
-
-				// Register the handler to respond to the sent message
-				specificProtocolHandlers[std::get<0>(sendingQueue.front())] = std::get<2>(sendingQueue.front());
-			}
 		}
 
 		 void do_close() {

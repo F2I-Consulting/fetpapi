@@ -84,13 +84,5 @@ namespace ETP_NS
 		* @param correlationId	It is the correlation ID to use if a response is needed to this message. It corresponds to the message ID of the received ETP message.
 		*/
 		virtual void on_AuthorizeResponse(const Energistics::Etp::v12::Protocol::Core::AuthorizeResponse& msg, int64_t correlationId);
-
-		std::map<std::string, Energistics::Etp::v12::Datatypes::ErrorInfo> getProtocolExceptions() const {
-			return protocolExceptions;
-		}
-		void clearProtocolExceptions() { protocolExceptions.clear(); }
-
-	private:
-		std::map<std::string, Energistics::Etp::v12::Datatypes::ErrorInfo> protocolExceptions;
 	};
 }

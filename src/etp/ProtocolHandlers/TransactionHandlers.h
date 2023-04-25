@@ -50,7 +50,7 @@ namespace ETP_NS
 		const Energistics::Etp::v12::Datatypes::Uuid& getTransactionUuid() const { return transactionUuid; }
 		const std::string& getLastTransactionFailure() const { return lastTransactionFailure; }
 	private:
-		/// ETP1.2intentionally supports a single open transaction on a session.
+		/// ETP1.2 intentionally supports a single open transaction on a session.
 		Energistics::Etp::v12::Datatypes::Uuid transactionUuid = {};
 		std::string lastTransactionFailure;
 	};

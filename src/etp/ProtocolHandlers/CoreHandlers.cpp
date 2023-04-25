@@ -39,14 +39,12 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 	if (mh.messageType == Energistics::Etp::v12::Protocol::Core::RequestSession::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Core::RequestSession rs;
 		avro::decode(*d, rs);
-		session->flushReceivingBuffer();
 		session->setEtpSessionClosed(false);
 		on_RequestSession(rs, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::OpenSession::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Core::OpenSession os;
 		avro::decode(*d, os);
-		session->flushReceivingBuffer();
 
 		// Check MaxWebSocketMessagePayloadSize capability
 		auto search = os.endpointCapabilities.find("MaxWebSocketMessagePayloadSize");
@@ -65,48 +63,40 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::CloseSession::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Core::CloseSession cs;
 		avro::decode(*d, cs);
-		session->flushReceivingBuffer();
 		session->setEtpSessionClosed(true);
 		on_CloseSession(cs, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::ProtocolException::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Core::ProtocolException pe;
 		avro::decode(*d, pe);
-		session->flushReceivingBuffer();
 		on_ProtocolException(pe, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::Acknowledge::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Core::Acknowledge ack;
 		avro::decode(*d, ack);
-		session->flushReceivingBuffer();
 		on_Acknowledge(ack, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::Ping::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Core::Ping ping;
 		avro::decode(*d, ping);
-		session->flushReceivingBuffer();
 		on_Ping(ping, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::Pong::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Core::Pong pong;
 		avro::decode(*d, pong);
-		session->flushReceivingBuffer();
 		on_Pong(pong, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::Authorize::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Core::Authorize msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_Authorize(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::AuthorizeResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Core::AuthorizeResponse msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_AuthorizeResponse(msg, mh.messageId);
 	}
 	else {
-		session->flushReceivingBuffer();
 		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(3, "The message type ID " + std::to_string(mh.messageType) + " is invalid for the core protocol."), mh.messageId, 0x02);
 	}
 }
@@ -225,11 +215,16 @@ void CoreHandlers::on_ProtocolException(const Energistics::Etp::v12::Protocol::C
 {
 	std::cerr << "EXCEPTION received for message_id " << correlationId << std::endl;
 	if (pe.error) {
-		protocolExceptions["EXCEPTION about message id " + std::to_string(correlationId)] = pe.get_error();
+		std::cerr << "Single error code " << pe.error.get().code << " : " << pe.error.get().message << std::endl;
 	}
 	else {
+		std::cerr << "One or more error code :" << std::endl;
 		for (const auto& error : pe.errors) {
-			protocolExceptions["EXCEPTION about message id " + std::to_string(correlationId) + " key " + error.first] = error.second;
+			std::cerr << "*************************************************" << std::endl;
+			std::cerr << "Resource non received : " << std::endl;
+			std::cerr << "key : " << error.first << std::endl;
+			std::cerr << "message : " << error.second.message << std::endl;
+			std::cerr << "code : " << error.second.code << std::endl;
 		}
 	}
 }

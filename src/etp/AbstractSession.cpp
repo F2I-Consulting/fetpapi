@@ -98,37 +98,36 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 			// Receive Protocol Exception
 			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Core)]->decodeMessageBody(receivedMh, d);
 			if ((receivedMh.messageFlags & 0x02) != 0) {
+				const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
 				auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
 				if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
 					specificProtocolHandlers.erase(specificProtocolHandlerIt);
-					if (specificProtocolHandlers.size() == maxSentAndNonRespondedMessageCount - 1) {
-						do_write();
-					}
 				}
 			}
 		}
 		else {
+			specificProtocolHandlersMutex.lock();
 			auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
 			if (specificProtocolHandlerIt != specificProtocolHandlers.end() && specificProtocolHandlerIt->second != nullptr) {
 				// Receive a message which has been asked to be processed with a specific protocol handler
 				specificProtocolHandlerIt->second->decodeMessageBody(receivedMh, d);
 				if ((receivedMh.messageFlags & 0x02) != 0) {
 					specificProtocolHandlers.erase(specificProtocolHandlerIt);
-					if (specificProtocolHandlers.size() == maxSentAndNonRespondedMessageCount - 1) {
-						do_write();
-					}
 				}
+				specificProtocolHandlersMutex.unlock();
 			}
 			else if (receivedMh.protocol < protocolHandlers.size() && protocolHandlers[receivedMh.protocol] != nullptr) {
+				specificProtocolHandlersMutex.unlock();
 				// Receive a message to be processed with a common protocol handler in case for example an unsollicited notification
 				protocolHandlers[receivedMh.protocol]->decodeMessageBody(receivedMh, d);
 			}
 			else {
+				specificProtocolHandlersMutex.unlock();
 				std::cerr << "Received a message with id " << receivedMh.messageId << " for which non protocol handlers is associated. Protocol " << receivedMh.protocol << std::endl;
-				flushReceivingBuffer();
 				send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(4, "The agent does not support the protocol " + std::to_string(receivedMh.protocol) + " identified in a message header."), receivedMh.messageId, 0x02);
 			}
 		}
+		flushReceivingBuffer();
 	}
 	catch (avro::Exception& e)
 	{
@@ -143,19 +142,6 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 	}
 
 	do_read();
-}
-
-/****************
-***** CORE ******
-****************/
-
-std::map<std::string, Energistics::Etp::v12::Datatypes::ErrorInfo> AbstractSession::getProtocolExceptions()
-{
-	std::shared_ptr<CoreHandlers> handlers = getCoreProtocolHandlers();
-	if (handlers == nullptr) {
-		throw std::logic_error("You did not register any core protocol handlers.");
-	}
-	return handlers->getProtocolExceptions();
 }
 
 /****************
