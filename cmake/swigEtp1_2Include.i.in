@@ -1698,7 +1698,7 @@ namespace ETP_NS
 		/**
 		* Check wether a particular ETP message has been responded or not by the other agent.
 		*/
-		bool isMessageStillProcessing(int64_t msgId) const;
+		bool isMessageStillProcessing(int64_t msgId);
 		
 		/****************
 		***** CORE ******
@@ -1713,8 +1713,6 @@ namespace ETP_NS
 		* Check if the ETP session (starting after the Core.OpenSession or Core.RequestSession message) is not opened yet or has been closed.
 		*/
 		bool isEtpSessionClosed() const;
-
-		std::map<std::string, Energistics::Etp::v12::Datatypes::ErrorInfo> getProtocolExceptions();
 
 		/****************
 		*** DATASPACE ***

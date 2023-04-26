@@ -34,9 +34,8 @@ namespace ETP_NS
 		*/
 		FesapiHdfProxy(AbstractSession* session, COMMON_NS::DataObjectRepository * repo, const std::string & guid, const std::string & title, const std::string & packageDirAbsolutePath, const std::string & externalFilePath, COMMON_NS::DataObjectRepository::openingMode hdfPermissionAccess) :
 			EML2_NS::AbstractHdfProxy(packageDirAbsolutePath, externalFilePath, hdfPermissionAccess), session_(session), compressionLevel(0) {
-			initGsoapProxy(repo, guid, title, 20);
-
 			xmlNs_ = repo->getDefaultEmlVersion() == COMMON_NS::DataObjectRepository::EnergisticsStandard::EML2_0 ? "eml20" : "eml23";
+			initGsoapProxy(repo, guid, title, 20);
 		}
 
 		/**
