@@ -106,23 +106,29 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 			}
 		}
 		else {
-			specificProtocolHandlersMutex.lock();
-			auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
-			if (specificProtocolHandlerIt != specificProtocolHandlers.end() && specificProtocolHandlerIt->second != nullptr) {
+			std::shared_ptr<ETP_NS::ProtocolHandlers> specificProtocolHandler;
+			{
+				const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
+				auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
+				if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
+					specificProtocolHandler = specificProtocolHandlerIt->second;
+				}
+			} // Scope for specificProtocolHandlersLock
+
+			if (specificProtocolHandler) {
 				// Receive a message which has been asked to be processed with a specific protocol handler
-				specificProtocolHandlerIt->second->decodeMessageBody(receivedMh, d);
+				specificProtocolHandler->decodeMessageBody(receivedMh, d);
 				if ((receivedMh.messageFlags & 0x02) != 0) {
+					const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
+					auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
 					specificProtocolHandlers.erase(specificProtocolHandlerIt);
 				}
-				specificProtocolHandlersMutex.unlock();
 			}
 			else if (receivedMh.protocol < protocolHandlers.size() && protocolHandlers[receivedMh.protocol] != nullptr) {
-				specificProtocolHandlersMutex.unlock();
 				// Receive a message to be processed with a common protocol handler in case for example an unsollicited notification
 				protocolHandlers[receivedMh.protocol]->decodeMessageBody(receivedMh, d);
 			}
 			else {
-				specificProtocolHandlersMutex.unlock();
 				std::cerr << "Received a message with id " << receivedMh.messageId << " for which non protocol handlers is associated. Protocol " << receivedMh.protocol << std::endl;
 				send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(4, "The agent does not support the protocol " + std::to_string(receivedMh.protocol) + " identified in a message header."), receivedMh.messageId, 0x02);
 			}
