@@ -334,7 +334,9 @@ namespace ETP_NS
 		****************/
 
 		/**
-		* Wait for all sent messages to be responded and then close the websocket connection
+		* Send a message for closing to the server after having sent all previous messages.
+		* The session would really close only after all messages have been sent and responded.
+		* This method does not block.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT void close() {
 			isCloseRequested = true;
@@ -349,6 +351,21 @@ namespace ETP_NS
 			else {
 				sendingQueueMutex.unlock();
 				specificProtocolHandlersMutex.unlock();
+			}
+		}
+
+		/**
+		* Send a message for closing to the server after having sent all previous messages.
+		* The session would really close only after all messages have been sent and responded.
+		* This method does block.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT void closeAndBlock() {
+			close();
+			auto t_start = std::chrono::high_resolution_clock::now();
+			while (!isEtpSessionClosed()) {
+				if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > _timeOut) {
+					throw std::runtime_error("Time out waiting for closing");
+				}
 			}
 		}
 

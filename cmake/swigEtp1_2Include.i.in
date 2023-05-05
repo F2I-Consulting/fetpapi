@@ -1710,10 +1710,19 @@ namespace ETP_NS
 		****************/
 		
 		/**
-		* Wait for all sent messages to be responded and then close the websocket connection
+		* Send a message for closing to the server after having sent all previous messages.
+		* The session would really close only after all messages have been sent and responded.
+		* This method does not block.
 		*/
 		void close();
 
+		/**
+		* Send a message for closing to the server after having sent all previous messages.
+		* The session would really close only after all messages have been sent and responded.
+		* This method does block.
+		*/
+		void closeAndBlock();
+		
 		/**
 		* Check if the ETP session (starting after the Core.OpenSession or Core.RequestSession message) is not opened yet or has been closed.
 		*/
