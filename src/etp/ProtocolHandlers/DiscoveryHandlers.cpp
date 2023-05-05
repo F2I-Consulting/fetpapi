@@ -72,7 +72,7 @@ void DiscoveryHandlers::on_GetResourcesResponse(const Energistics::Etp::v12::Pro
 void DiscoveryHandlers::on_GetResourcesEdgesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse & msg, int64_t)
 {
 	for (const auto& edge : msg.edges) {
-		std::cout << "DISCOVERED EDGE (" << edge.sourceUri << " -> " << edge.targetUri << ')' << std::endl;
+		session->fesapi_log("DISCOVERED EDGE (", edge.sourceUri, "->", edge.targetUri, ")");
 	}
 }
 
