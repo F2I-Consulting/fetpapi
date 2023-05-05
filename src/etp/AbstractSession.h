@@ -75,6 +75,13 @@ namespace ETP_NS
 		}
 
 		/**
+		* Set the time out in milliseconds used when blocking waiting for message
+		*/
+		void setTimeOut(double timeOut) {
+			_timeOut = timeOut;
+		}
+
+		/**
 		* The list of subscriptions recorded by customers on this session.
 		*/
 		std::unordered_map<int64_t, Energistics::Etp::v12::Datatypes::Object::SubscriptionInfo> subscriptions;
@@ -207,16 +214,23 @@ namespace ETP_NS
 
 		/**
 		* Send a message to the server and block the thread until the answer of the server has been processed by the handlers
+		* Please look at setTimeOut if you want to set the default timeout value which is 10 000 ms.
 		*
-		* @param mb The ETP message body to send
-		* @param correlationId The ID of the message which this message is answering to.
-		* @param messageFlags The message flags to be sent within the header
+		* @param mb				The ETP message body to send
+		* @param correlationId	The ID of the message which this message is answering to.
+		* @param messageFlags	The message flags to be sent within the header
 		* @return The ID of the message that has been put in the sending queue.
 		*/
 		template<typename T> void sendAndBlock(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
 			int64_t msgId = send(mb, correlationId, messageFlags);
-			while (isMessageStillProcessing(msgId)) {}
+
+			auto t_start = std::chrono::high_resolution_clock::now();
+			while (isMessageStillProcessing(msgId)) {
+				if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > _timeOut) {
+					throw std::runtime_error("Time out waiting for a response of message id " + std::to_string(msgId));
+				}
+			}
 		}
 
 		/**
@@ -502,6 +516,8 @@ namespace ETP_NS
 		std::atomic<bool> webSocketSessionClosed = true;
 		/// Indicates if the ETP1.2 session is opened or not. It becomes false after the requestSession and openSession message
 		std::atomic<bool> etpSessionClosed = true;
+		/// Timeout in milliseconds used when blocking waiting for message
+		std::atomic<double> _timeOut = 10000;
 		/// The queue of messages to be sent where the tuple respectively define message id, message and protocol handlers for responding to this message.
 		std::queue< std::tuple<int64_t, std::vector<uint8_t>, std::shared_ptr<ETP_NS::ProtocolHandlers>> > sendingQueue;
 		std::mutex sendingQueueMutex;

@@ -1475,6 +1475,11 @@ namespace ETP_NS
 	class AbstractSession
 	{
 	public:
+		/**
+		* Set the time out in milliseconds used when blocking waiting for message
+		*/
+		void setTimeOut(double timeOut);
+	
 		void setCoreProtocolHandlers(std::shared_ptr<ETP_NS::CoreHandlers> coreHandlers);
 		void setDiscoveryProtocolHandlers(std::shared_ptr<DiscoveryHandlers> discoveryHandlers);
 		void setStoreProtocolHandlers(std::shared_ptr<StoreHandlers> storeHandlers);
