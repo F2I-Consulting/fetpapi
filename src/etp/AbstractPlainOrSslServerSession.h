@@ -48,18 +48,14 @@ namespace ETP_NS
 
 		void do_write() {
 			if (sendingQueue.empty()) {
-				std::cout << "*************************************************" << std::endl;
-				std::cout << "The sending queue is empty." << std::endl;
-				std::cout << "*************************************************" << std::endl;
+				fesapi_log("The sending queue is empty.");
 				return;
 			}
 
 			bool previousSentMessageCompleted = specificProtocolHandlers.find(std::get<0>(sendingQueue.front())) == specificProtocolHandlers.end();
 
 			if (!previousSentMessageCompleted) {
-				std::cout << "*************************************************" << std::endl;
-				std::cout << "Cannot send Message id : " << std::get<0>(sendingQueue.front()) << " because the previous messgae has not finished to be sent." << std::endl;
-				std::cout << "*************************************************" << std::endl;
+				fesapi_log("Cannot send Message id :", std::to_string(std::get<0>(sendingQueue.front())), " because the previous messgae has not finished to be sent.");
 			}
 			else {
 				derived().ws().async_write(
@@ -115,17 +111,6 @@ namespace ETP_NS
 			}
 
 #ifndef LINUX
-			// Show the HTTP request
-			/*
-			boost::beast::flat_buffer buffer;
-			boost::beast::http::request<boost::beast::http::string_body> req;
-			boost::beast::http::read(derived().ws().next_layer(), buffer, req);
-			*/
-			if (boost::beast::websocket::is_upgrade(req))
-			{
-				std::cout << req << std::endl;
-			}
-
 			// Accept the websocket handshake
 #if BOOST_VERSION < 107000
 			derived().ws().async_accept_ex(req,
@@ -149,7 +134,6 @@ namespace ETP_NS
 						std::static_pointer_cast<AbstractPlainOrSslServerSession>(shared_from_this()),
 						std::placeholders::_1)));
 #else
-			// does not show up the HTTP request
 #if BOOST_VERSION < 107000
 			derived().ws().async_accept_ex(
 				[](websocket::response_type& m)
@@ -198,7 +182,7 @@ namespace ETP_NS
 		void do_read()
 		{
 			if (webSocketSessionClosed) {
-				std::cout << "CLOSED : NOTHING MORE TO DO" << std::endl;
+				fesapi_log("CLOSED : NOTHING MORE TO DO");
 				return;
 			}
 

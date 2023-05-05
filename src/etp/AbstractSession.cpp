@@ -27,16 +27,13 @@ Energistics::Etp::v12::Datatypes::MessageHeader AbstractSession::decodeMessageHe
 {
 	Energistics::Etp::v12::Datatypes::MessageHeader receivedMh;
 	avro::decode(*decoder, receivedMh);
-#ifndef NDEBUG
-	std::cout << "*************************************************" << std::endl;
-	std::cout << "Message Header received : " << std::endl;
-	std::cout << "protocol : " << receivedMh.protocol << std::endl;
-	std::cout << "type : " << receivedMh.messageType << std::endl;
-	std::cout << "id : " << receivedMh.messageId << std::endl;
-	std::cout << "correlation id : " << receivedMh.correlationId << std::endl;
-	std::cout << "flags : " << receivedMh.messageFlags << std::endl;
-	std::cout << "*************************************************" << std::endl;
-#endif
+
+	fesapi_log("Message Header received :");
+	fesapi_log("protocol :", std::to_string(receivedMh.protocol));
+	fesapi_log("type :", std::to_string(receivedMh.messageType));
+	fesapi_log("id :", std::to_string(receivedMh.messageId));
+	fesapi_log("correlation id :", std::to_string(receivedMh.correlationId));
+	fesapi_log("flags :", std::to_string(receivedMh.messageFlags));
 
 	return receivedMh;
 }
@@ -49,13 +46,13 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 
 		if (ec == websocket::error::closed) {
 			// This indicates that the web socket (and consequently etp) session was closed
-			std::cout << "The other endpoint closed the web socket (and consequently etp) connection." << std::endl;
+			fesapi_log("The other endpoint closed the web socket (and consequently etp) connection.");
 			webSocketSessionClosed = true;
 			flushReceivingBuffer();
 		}
 		else {
 			// This indicates an unexpected error
-			std::cerr << "on_read : error code number " << ec.value() << " -> " << ec.message() << std::endl;
+			fesapi_log("on_read : error code number", ec.value(), "->", ec.message());
 		}
 
 		return;
@@ -65,7 +62,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 		return;
 	}
 
-	std::cout << "Receiving " << bytes_transferred << " bytes" << std::endl;
+	fesapi_log("Receiving", std::to_string(bytes_transferred), "bytes");
 	avro::InputStreamPtr in = avro::memoryInputStream(static_cast<const uint8_t*>(receivedBuffer.data().data()), bytes_transferred);
 	avro::DecoderPtr d = avro::binaryDecoder();
 	d->init(*in);

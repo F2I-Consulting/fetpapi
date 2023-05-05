@@ -106,5 +106,5 @@ void StoreHandlers::on_DeleteDataObjectsResponse(const Energistics::Etp::v12::Pr
 
 void StoreHandlers::on_Chunk(const Energistics::Etp::v12::Protocol::Store::Chunk&, int64_t)
 {
-	std::cout << "Received Store Chunk" << std::endl;
+	session->fesapi_log("Received Store Chunk");
 }

@@ -1860,6 +1860,11 @@ namespace ETP_NS
 		* It actually sends a message and block the current thread untill a response has been received from the store.
 		*/
 		std::string commitTransaction();
+		
+		/**
+		* Indicates if the session must be verbose or not
+		*/
+		void setVerbose(bool verbose);
 	};
 
 	namespace EtpHelpers {

@@ -89,19 +89,19 @@ void StoreNotificationHandlers::decodeMessageBody(const Energistics::Etp::v12::D
 
 void StoreNotificationHandlers::on_SubscribeNotifications(const Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications &, int64_t)
 {
-	std::cout << "on_SubscribeNotifications" << std::endl;
+	session->fesapi_log("on_SubscribeNotifications");
 
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The StoreHandlers::on_SubscribeNotifications method has not been overriden by the agent."), 0x02);
 }
 
 void StoreNotificationHandlers::on_SubscribeNotificationsResponse(const Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse&, int64_t)
 {
-	std::cout << "Received SubscribeNotificationsResponse" << std::endl;
+	session->fesapi_log("Received SubscribeNotificationsResponse");
 }
 
 void StoreNotificationHandlers::on_UnsubscribeNotifications(const Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications & msg, int64_t messageId, int64_t)
 {
-	std::cout << "on_UnsubscribeNotifications" << std::endl;
+	session->fesapi_log("on_UnsubscribeNotifications");
 
 	int64_t toRemove = (std::numeric_limits<int64_t>::max)();
 	for (const auto& pair : session->subscriptions) {
@@ -121,46 +121,44 @@ void StoreNotificationHandlers::on_UnsubscribeNotifications(const Energistics::E
 
 void StoreNotificationHandlers::on_UnsolicitedStoreNotifications(const Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications &, int64_t)
 {
-	std::cout << "Received UnsolicitedStoreNotifications" << std::endl;
+	session->fesapi_log("Received UnsolicitedStoreNotifications");
 }
 
 void StoreNotificationHandlers::on_SubscriptionEnded(const Energistics::Etp::v12::Protocol::StoreNotification::SubscriptionEnded &, int64_t)
 {
-	std::cout << "Received SubscriptionEnded " << std::endl;
+	session->fesapi_log("Received SubscriptionEnded ");
 }
 
 void StoreNotificationHandlers::on_ObjectChanged(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged & msg, int64_t)
 {
 	switch (msg.change.changeKind) {
-	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::authorized: std::cout << "authorized "; break;
-	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::insert: std::cout << "insert "; break;
-	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::update: std::cout << "update "; break;
+	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::authorized: session->fesapi_log("authorized"); break;
+	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::insert: session->fesapi_log("insert"); break;
+	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::update: session->fesapi_log("update"); break;
 	}
 
 	auto duration = std::chrono::microseconds(msg.change.changeTime);
-	std::cout << "on " << date::format("%FT%TZ", date::floor<std::chrono::microseconds>(duration)) << std::endl;
+	session->fesapi_log("on", date::format("%FT%TZ", date::floor<std::chrono::microseconds>(duration)));
 
 	printDataObject(msg.change.dataObject);
-
-	std::cout << std::endl;
 }
 
 void StoreNotificationHandlers::on_ObjectDeleted(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted &, int64_t)
 {
-	std::cout << "on_ObjectDeleted" << std::endl;
+	session->fesapi_log("on_ObjectDeleted");
 }
 
 void StoreNotificationHandlers::on_ObjectAccessRevoked(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked &, int64_t)
 {
-	std::cout << "on_ObjectAccessRevoked" << std::endl;
+	session->fesapi_log("on_ObjectAccessRevoked");
 }
 
 void StoreNotificationHandlers::on_ObjectActiveStatusChanged(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged&, int64_t)
 {
-	std::cout << "Received ObjectActiveStatusChanged" << std::endl;
+	session->fesapi_log("Received ObjectActiveStatusChanged");
 }
 
 void StoreNotificationHandlers::on_Chunk(const Energistics::Etp::v12::Protocol::StoreNotification::Chunk&, int64_t)
 {
-	std::cout << "Received StoreNotification Chunk" << std::endl;
+	session->fesapi_log("Received StoreNotification Chunk");
 }

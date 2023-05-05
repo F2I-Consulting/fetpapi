@@ -501,7 +501,7 @@ namespace ETP_NS
 			auto session = std::make_shared<PlainServerSession>(std::move(socket), serverInitializationParams);
 			serverInitializationParams->postSessionCreationOperation(session.get());
 			session->run(std::move(req));
-			std::cout << "Opening the plain websocket session " << sessions.size() << std::endl;
+			session->fesapi_log("Opening the plain websocket session", std::to_string(sessions.size()));
 			sessions.push_back(session);
 		}
 
@@ -517,7 +517,7 @@ namespace ETP_NS
 			auto session = std::make_shared<SslServerSession>(std::move(stream), serverInitializationParams);
 			serverInitializationParams->postSessionCreationOperation(session.get());
 			session->run(std::move(req));
-			std::cout << "Opening the secured websocket session " << sessions.size() << std::endl;
+			session->fesapi_log("Opening the secured websocket session", std::to_string(sessions.size()));
 			sessions.push_back(session);
 		}
 #endif
@@ -1256,10 +1256,10 @@ namespace ETP_NS
 					[&ioc]
 			{
 				auto handlersExecuted = ioc.run();
-				std::cout << "The thread has executed " << handlersExecuted << " handlers." << std::endl;
+				session->fesapi_log("The thread has executed", std::to_string(handlersExecuted), "handlers.");
 			});
 			auto handlersExecuted = ioc.run();
-			std::cout << handlersExecuted << " handlers have been executed." << std::endl;
+			session->fesapi_log(std::to_string(handlersExecuted), "handlers have been executed.");
 		}
 	};
 }

@@ -134,7 +134,7 @@ namespace ETP_NS
 		FETPAPI_DLL_IMPORT_OR_EXPORT void do_read()
 		{
 			if (webSocketSessionClosed) {
-				std::cout << "CLOSED : NOTHING MORE TO DO" << std::endl;
+				fesapi_log("CLOSED : NOTHING MORE TO DO");
 				return;
 			}
 
@@ -152,10 +152,6 @@ namespace ETP_NS
 
 		void on_handshake(boost::system::error_code ec)
 		{
-#ifndef NDEBUG
-			std::cout << responseType << std::endl;
-#endif
-
 			if (ec) {
 				std::cerr << "on_handshake : " << ec.message() << std::endl;
 				return;
@@ -246,17 +242,17 @@ namespace ETP_NS
 		void do_write() {
 			const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
 			if (sendingQueue.empty()) {
-				std::cout << "The sending queue is empty." << std::endl;
+				fesapi_log("The sending queue is empty.");
 				return;
 			}
 
 			bool previousSentMessageCompleted = specificProtocolHandlers.find(std::get<0>(sendingQueue.front())) == specificProtocolHandlers.end();
 
 			if (!previousSentMessageCompleted) {
-				std::cout << "Cannot send Message id : " << std::get<0>(sendingQueue.front()) << " because the previous message has not finished to be sent." << std::endl;
+				fesapi_log("Cannot send Message id :", std::to_string(std::get<0>(sendingQueue.front())), "because the previous message has not finished to be sent.");
 			}
 			else {
-				std::cout << "Sending Message id : " << std::get<0>(sendingQueue.front()) << std::endl;
+				fesapi_log("Sending Message id :", std::to_string(std::get<0>(sendingQueue.front())));
 
 				derived().ws().async_write(
 					boost::asio::buffer(std::get<1>(sendingQueue.front())),

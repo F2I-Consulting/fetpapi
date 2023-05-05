@@ -18,6 +18,11 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
+#include <iostream>
+#include <queue>
+#include <unordered_map>
+#include <utility>
+
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
 #include <boost/asio/ip/tcp.hpp>
@@ -34,9 +39,6 @@ under the License.
 #include "ProtocolHandlers/DataArrayHandlers.h"
 #include "ProtocolHandlers/TransactionHandlers.h"
 #include "ProtocolHandlers/DataspaceHandlers.h"
-
-#include <unordered_map>
-#include <queue>
 
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
@@ -252,15 +254,15 @@ namespace ETP_NS
 			std::get<2>(queueItem) = specificHandler;
 			// Push the message into the queue
 			sendingQueue.push(queueItem);
-			std::cout << "*************************************************" << std::endl;
-			std::cout << "Message Header put in the queue : " << std::endl;
-			std::cout << "protocol : " << mb.protocolId << std::endl;
-			std::cout << "type : " << mb.messageTypeId << std::endl;
-			std::cout << "id : " << std::get<0>(queueItem) << std::endl;
-			std::cout << "correlation id : " << correlationId << std::endl;
-			std::cout << "flags : " << messageFlags << std::endl;
-			std::cout << "Whole message size : " << std::get<1>(queueItem).size() << " bytes." << std::endl;
-			std::cout << "*************************************************" << std::endl;
+			fesapi_log("*************************************************");
+			fesapi_log("Message Header put in the queue : ");
+			fesapi_log("protocol :", std::to_string(mb.protocolId));
+			fesapi_log("type :" , std::to_string(mb.messageTypeId));
+			fesapi_log("id :" , std::to_string(std::get<0>(queueItem)));
+			fesapi_log("correlation id :" , std::to_string(correlationId));
+			fesapi_log("flags :" , std::to_string(messageFlags));
+			fesapi_log("Whole message size :" , std::to_string(std::get<1>(queueItem).size()) , "bytes.");
+			fesapi_log("*************************************************");
 
 			// Send the message directly if the sending queue was empty.
 			if (sendingQueue.size() == 1) {
@@ -499,6 +501,29 @@ namespace ETP_NS
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::string commitTransaction();
 
+		/***************************/
+		// LOGGING
+		/***************************/
+
+		/**
+		* Indicates if the session must be verbose or not
+		*/
+		void setVerbose(bool verbose) {
+			_verbose = verbose;
+		}
+
+		//terminating log
+		void fesapi_log() { std::cout << std::endl; }
+
+		template<typename First, typename ...Rest>
+		void fesapi_log(First && first, Rest && ...rest)
+		{
+			if (_verbose) {
+				std::cout << std::forward<First>(first) << " ";
+				fesapi_log(std::forward<Rest>(rest)...);
+			}
+		}
+
 	protected:
 		boost::beast::flat_buffer receivedBuffer;
 		/// The default handlers for each subprotocol. Default handlers are at the index of the corresponding subprotocol id.
@@ -518,6 +543,8 @@ namespace ETP_NS
 		std::atomic<bool> etpSessionClosed = true;
 		/// Timeout in milliseconds used when blocking waiting for message
 		std::atomic<double> _timeOut = 10000;
+		/// Indicates if the session must be verbose or not
+		std::atomic<bool> _verbose = false;
 		/// The queue of messages to be sent where the tuple respectively define message id, message and protocol handlers for responding to this message.
 		std::queue< std::tuple<int64_t, std::vector<uint8_t>, std::shared_ptr<ETP_NS::ProtocolHandlers>> > sendingQueue;
 		std::mutex sendingQueueMutex;

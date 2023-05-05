@@ -197,41 +197,41 @@ void CoreHandlers::on_RequestSession(const Energistics::Etp::v12::Protocol::Core
 
 	session->send(openSession, correlationId, 0x02);
 
-	std::cout << "A new websocket session " + to_string(session->getIdentifier()) + " has been opened";
+	session->fesapi_log("A new websocket session", session->getIdentifier(), "has been opened by a client");
 }
 
 void CoreHandlers::on_OpenSession(const Energistics::Etp::v12::Protocol::Core::OpenSession &, int64_t)
 {
-	std::cout << "The session has been opened with the default core protocol handlers." << std::endl;
+	session->fesapi_log("The session has been opened with the default core protocol handlers.");
 }
 
 void CoreHandlers::on_CloseSession(const Energistics::Etp::v12::Protocol::Core::CloseSession &, int64_t)
 {
-	std::cout << "Close session after receiving ETP message to close session." << std::endl;
+	session->fesapi_log("Close session after receiving ETP message to close session.");
 	session->do_close();
 }
 
 void CoreHandlers::on_ProtocolException(const Energistics::Etp::v12::Protocol::Core::ProtocolException & pe, int64_t correlationId)
 {
-	std::cerr << "EXCEPTION received for message_id " << correlationId << std::endl;
+	session->fesapi_log("EXCEPTION received for message_id", correlationId);
 	if (pe.error) {
-		std::cerr << "Single error code " << pe.error.get().code << " : " << pe.error.get().message << std::endl;
+		session->fesapi_log("Single error code", pe.error.get().code, ":", pe.error.get().message);
 	}
 	else {
-		std::cerr << "One or more error code :" << std::endl;
+		session->fesapi_log("One or more error code :");
 		for (const auto& error : pe.errors) {
-			std::cerr << "*************************************************" << std::endl;
-			std::cerr << "Resource non received : " << std::endl;
-			std::cerr << "key : " << error.first << std::endl;
-			std::cerr << "message : " << error.second.message << std::endl;
-			std::cerr << "code : " << error.second.code << std::endl;
+			session->fesapi_log("*************************************************");
+			session->fesapi_log("Resource non received :");
+			session->fesapi_log("key :", error.first);
+			session->fesapi_log("message :", error.second.message);
+			session->fesapi_log("code :", error.second.code);
 		}
 	}
 }
 
 void CoreHandlers::on_Acknowledge(const Energistics::Etp::v12::Protocol::Core::Acknowledge &, int64_t correlationId)
 {
-	std::cout << "Acknowledge message_id " << correlationId << std::endl;
+	session->fesapi_log("Acknowledge message_id", std::to_string(correlationId));
 }
 
 void CoreHandlers::on_Ping(const Energistics::Etp::v12::Protocol::Core::Ping &, int64_t correlationId)
@@ -244,7 +244,7 @@ void CoreHandlers::on_Ping(const Energistics::Etp::v12::Protocol::Core::Ping &, 
 
 void CoreHandlers::on_Pong(const Energistics::Etp::v12::Protocol::Core::Pong & pong, int64_t correlationId)
 {
-	std::cout << "Received Pong at " << pong.currentDateTime << " with message id " << correlationId << std::endl;
+	session->fesapi_log("Received Pong at", std::to_string(pong.currentDateTime), "with message id", std::to_string(correlationId));
 }
 
 void CoreHandlers::on_Authorize(const Energistics::Etp::v12::Protocol::Core::Authorize &, int64_t correlationId)
@@ -254,5 +254,5 @@ void CoreHandlers::on_Authorize(const Energistics::Etp::v12::Protocol::Core::Aut
 
 void CoreHandlers::on_AuthorizeResponse(const Energistics::Etp::v12::Protocol::Core::AuthorizeResponse &, int64_t)
 {
-	std::cout << "Renewed token" << std::endl;
+	session->fesapi_log("Renewed token");
 }
