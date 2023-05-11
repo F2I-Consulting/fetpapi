@@ -84,6 +84,13 @@ namespace ETP_NS
 		}
 
 		/**
+		* Get the time out in milliseconds used when blocking waiting for message
+		*/
+		double getTimeOut() const {
+			return _timeOut;
+		}
+
+		/**
 		* The list of subscriptions recorded by customers on this session.
 		*/
 		std::unordered_map<int64_t, Energistics::Etp::v12::Datatypes::Object::SubscriptionInfo> subscriptions;

@@ -59,7 +59,14 @@ Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata FesapiHdfPro
 		0, 0x02);
 
 	// Blocking loop
-	while (session_->isMessageStillProcessing(msgId)) {}
+	auto t_start = std::chrono::high_resolution_clock::now();
+	// Use timeOut value for session.
+	auto timeOut = session_->getTimeOut();
+	while (session_->isMessageStillProcessing(msgId)) {
+		if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > timeOut) {
+			throw std::runtime_error("Time out waiting for a response of message id " + std::to_string(msgId));
+		}
+	}
 
 	return handlers->getDataArrayMetadata();
 }
