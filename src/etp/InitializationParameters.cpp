@@ -36,14 +36,14 @@ InitializationParameters::InitializationParameters(const std::string & etpUrl)
 	if (portStart == std::string::npos) {
 		hostEnd = etpUrl.find("/", hostStart + 3);
 		portEnd = hostEnd;
-		port_ = etpUrl.find("wss://") == std::string::npos ? 443 : 80;
+		port_ = etpUrl.find("wss://") == 0 ? 443 : 80;
 	}
 	else {
 		hostEnd = portStart++;
 		portEnd = etpUrl.find("/", portStart);
 		int readPort = stoi(etpUrl.substr(portStart, portEnd - portStart));
 		if (readPort < 1 || readPort >(std::numeric_limits<int16_t>::max)()) {
-			throw std::out_of_range("The port " + std::to_string(readPort) + " is out of the allowad range for TCP ports ]0..2^16]");
+			throw std::out_of_range("The port " + std::to_string(readPort) + " is out of the allowed range for TCP ports ]0..2^16]");
 		}
 		port_ = static_cast<uint16_t>(readPort);
 	}
