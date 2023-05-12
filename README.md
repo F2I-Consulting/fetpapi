@@ -13,7 +13,7 @@ Download (build and install if necessary) third party libraries:
 - BOOST : All versions from version 1.66 should be ok but you may experience some [min/max build issues](https://github.com/boostorg/beast/issues/1980) using version 1.72 or 1.73.
 - AVRO : https://avro.apache.org/releases.html#Download (starting from version 1.9.0 [except 1.11.1](https://issues.apache.org/jira/browse/AVRO-3601), build it with the above boost library.)
 - (OPTIONALLY) OpenSSL : version 1.1 is known to work.
-- (OPTIONALLY) [FESAPI](https://github.com/F2I-Consulting/fesapi/releases) : All versions from version 2.6.0.0 should be ok.
+- (OPTIONALLY) [FESAPI](https://github.com/F2I-Consulting/fesapi/releases) : All versions from version 2.7.0.0 should be ok.
 
 We advise you to install these third party libraries respectively into
 - fesapiEnv/dependencies/boost-particularVersion
@@ -40,7 +40,7 @@ FETPAPI uses cmake as its build tool. A 3.12 version or later of cmake is requir
 	- OPENSSL_INCLUDE_DIR : the OpenSSL include directory
 	- LIB_EAY_RELEASE : the OpenSSL crypto library you want to link with.
 	- SSL_EAY_RELEASE : the OpenSSL ssl library you want to link with. 
-- OPTIONALLY, for FESAPI (v2.6.0.0 as a minimal version) support (see [here](https://github.com/F2I-Consulting/fesapi) for documentation on how to build fesapi), please enable the WITH_FESAPI variable and set the following variables :
+- OPTIONALLY, for FESAPI (v2.7.0.0 as a minimal version) support (see [here](https://github.com/F2I-Consulting/fesapi) for documentation on how to build fesapi), please enable the WITH_FESAPI variable and set the following variables :
 	- FESAPI_INCLUDE_DIR : the directory where the FESAPI headers are located (generally the include subdirectory of the fesapi installation directory). 
 	- (ONLY FOR WINDOWS) FESAPI_LIBRARY_DEBUG : Optional, only used by Visual studio Debug configuration, the FESAPI debug library you want to link to.
 	- FESAPI_LIBRARY_RELEASE : the FESAPI library you want to link to.

@@ -44,9 +44,6 @@ namespace ETP_NS
 		FesapiHdfProxy(AbstractSession* session, gsoap_resqml2_0_1::_eml20__EpcExternalPartReference* fromGsoap) :
 			EML2_NS::AbstractHdfProxy(fromGsoap), session_(session), compressionLevel(0), xmlNs_("eml20") {}
 
-		FesapiHdfProxy(AbstractSession* session, gsoap_eml2_1::_eml21__EpcExternalPartReference* fromGsoap) :
-			EML2_NS::AbstractHdfProxy(fromGsoap), session_(session), compressionLevel(0), xmlNs_("eml21") {}
-
 		/**
 		* Only for partial transfer
 		*/
@@ -55,14 +52,11 @@ namespace ETP_NS
 			if (partialObject->ContentType.find("2.0") != std::string::npos) {
 				xmlNs_ = "eml20";
 			}
-			else if (partialObject->ContentType.find("2.1") != std::string::npos) {
-				xmlNs_ = "eml21";
-			}
-			else if (partialObject->ContentType.find("2.2") != std::string::npos) {
-				xmlNs_ = "eml22";
-			}
 			else if (partialObject->ContentType.find("2.3") != std::string::npos) {
 				xmlNs_ = "eml23";
+			}
+			else {
+				throw std::invalid_argument("The partial HDF Proxy does not look to be eml20 or eml23 neither : " + partialObject->ContentType);
 			}
 		}
 
@@ -72,14 +66,11 @@ namespace ETP_NS
 			if (ct.find("2.0") != std::string::npos) {
 				xmlNs_ = "eml20";
 			}
-			else if (ct.find("2.1") != std::string::npos) {
-				xmlNs_ = "eml21";
-			}
-			else if (ct.find("2.2") != std::string::npos) {
-				xmlNs_ = "eml22";
-			}
 			else if (ct.find("2.3") != std::string::npos) {
 				xmlNs_ = "eml23";
+			}
+			else {
+				throw std::invalid_argument("The HDF Proxay DataObjectReference does not look to be eml20 or eml23 neither : " + ct);
 			}
 		}
 

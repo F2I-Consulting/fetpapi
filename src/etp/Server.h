@@ -1255,11 +1255,9 @@ namespace ETP_NS
 				v.emplace_back(
 					[&ioc]
 			{
-				auto handlersExecuted = ioc.run();
-				session->fesapi_log("The thread has executed", std::to_string(handlersExecuted), "handlers.");
+				ioc.run();
 			});
-			auto handlersExecuted = ioc.run();
-			session->fesapi_log(std::to_string(handlersExecuted), "handlers have been executed.");
+			ioc.run();
 		}
 	};
 }
