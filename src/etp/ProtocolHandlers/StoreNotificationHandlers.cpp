@@ -135,6 +135,10 @@ void StoreNotificationHandlers::on_ObjectChanged(const Energistics::Etp::v12::Pr
 	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::authorized: session->fesapi_log("authorized"); break;
 	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::insert: session->fesapi_log("insert"); break;
 	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::update: session->fesapi_log("update"); break;
+	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::joined: session->fesapi_log("joined"); break;
+	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::unjoined: session->fesapi_log("unjoined"); break;
+	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::joinedSubscription: session->fesapi_log("joinedSubscription"); break;
+	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::unjoinedSubscription: session->fesapi_log("unjoinedSubscription"); break;
 	}
 
 	auto duration = std::chrono::microseconds(msg.change.changeTime);

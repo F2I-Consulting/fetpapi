@@ -223,8 +223,6 @@ namespace ETP_NS
 			requestSession.applicationName = initializationParams->getApplicationName();
 			requestSession.applicationVersion = initializationParams->getApplicationVersion();
 
-			boost::uuids::random_generator gen;
-			auto instanceUuid = gen();
 			std::copy(std::begin(initializationParams->getInstanceId().data), std::end(initializationParams->getInstanceId().data), requestSession.clientInstanceId.array.begin());
 
 			requestSession.requestedProtocols = initializationParams->makeSupportedProtocols();

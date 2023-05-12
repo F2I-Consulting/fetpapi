@@ -140,6 +140,21 @@ jobs:
           cmake --build . --config Release -j2
   ubuntu-20-java8-with-fesapi:
     runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false  # 'false' means Don't stop matrix workflows even if some matrix failed.
+      matrix:
+        include: [
+          { xcc_name: 'gcc 9',      xcc_pkg: gcc-9,       cc: gcc-9,      cxx: g++-9 },
+          { xcc_name: 'gcc 10',     xcc_pkg: gcc-10,      cc: gcc-10,     cxx: g++-10 },
+          { xcc_name: 'clang 9',    xcc_pkg: clang-9,     cc: clang-9,    cxx: clang++-9 },
+          { xcc_name: 'clang 10',   xcc_pkg: clang-10,    cc: clang-10,   cxx: clang++-10 },
+          { xcc_name: 'clang 11',   xcc_pkg: clang-11,    cc: clang-11,   cxx: clang++-11 },
+          # { xcc_name: 'clang 12',   xcc_pkg: clang-12,    cc: clang,   cxx: clang++ },
+        ]
+    env:
+      XCC: $${{ matrix.xcc_name }}                        # Set environment variables
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v2
@@ -149,14 +164,14 @@ jobs:
       - name: APT install
         run: |
           sudo apt update
-          sudo apt install -y libhdf5-dev libminizip-dev libboost-all-dev
+          sudo apt install -y ${{ matrix.xcc_pkg }} libhdf5-dev libminizip-dev libboost-all-dev
       - name: FESAPI install
         run: |
           git clone --branch v2.6.0.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
           cd ${{ runner.temp }}
           mkdir fesapi-build
           cd fesapi-build
-          cmake -DMINIZIP_INCLUDE_DIR=/usr/include/minizip -DMINIZIP_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libminizip.so.1.0.0 -DCMAKE_BUILD_TYPE=Release -DWITH_JAVA_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fesapi-install ${{ runner.temp }}/fesapi-src
+          cmake -DMINIZIP_INCLUDE_DIR=/usr/include/minizip -DMINIZIP_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libminizip.so.1.0.0 -DCMAKE_BUILD_TYPE=Release -DWITH_JAVA_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fesapi-install -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} ${{ runner.temp }}/fesapi-src
           cmake --build . -j2
           cmake --install .
       - name: AVRO INSTALL
@@ -168,7 +183,7 @@ jobs:
           sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.11.0/CMakeLists.txt
           mkdir avro-cpp-1.11.0-build
           cd avro-cpp-1.11.0-build
-          cmake -Wno-dev -Wno-deprecated -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-1.11.0-install ${{ runner.temp }}/avro-cpp-1.11.0
+          cmake -Wno-dev -Wno-deprecated -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-1.11.0-install -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} ${{ runner.temp }}/avro-cpp-1.11.0
           cmake --build . -j2
           cmake --install .
       - name: CMake build and install
@@ -176,5 +191,5 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.11.0-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.11.0-install/lib/libavrocpp_s.a -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=${{ runner.temp }}/fesapi-install/include -DFESAPI_LIBRARY_RELEASE=${{ runner.temp }}/fesapi-install/lib/libFesapiCpp.so -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.6.0.0.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }}
+          cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.11.0-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.11.0-install/lib/libavrocpp_s.a -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=${{ runner.temp }}/fesapi-install/include -DFESAPI_LIBRARY_RELEASE=${{ runner.temp }}/fesapi-install/lib/libFesapiCpp.so -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.6.0.0.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
           cmake --build . --config Release -j2

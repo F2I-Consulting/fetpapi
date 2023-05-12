@@ -47,19 +47,6 @@ namespace ETP_NS
 		/**
 		* Only for partial transfer
 		*/
-		FesapiHdfProxy(AbstractSession* session, gsoap_resqml2_0_1::eml20__DataObjectReference* partialObject) :
-			EML2_NS::AbstractHdfProxy(partialObject), session_(session), compressionLevel(0) {
-			if (partialObject->ContentType.find("2.0") != std::string::npos) {
-				xmlNs_ = "eml20";
-			}
-			else if (partialObject->ContentType.find("2.3") != std::string::npos) {
-				xmlNs_ = "eml23";
-			}
-			else {
-				throw std::invalid_argument("The partial HDF Proxy does not look to be eml20 or eml23 neither : " + partialObject->ContentType);
-			}
-		}
-
 		FesapiHdfProxy(AbstractSession* session, const COMMON_NS::DataObjectReference& dor) :
 			EML2_NS::AbstractHdfProxy(dor), session_(session), compressionLevel(0) {
 			std::string ct = dor.getContentType();
@@ -70,7 +57,7 @@ namespace ETP_NS
 				xmlNs_ = "eml23";
 			}
 			else {
-				throw std::invalid_argument("The HDF Proxay DataObjectReference does not look to be eml20 or eml23 neither : " + ct);
+				throw std::invalid_argument("The HDF Proxy DataObjectReference does not look to be eml20 or eml23 neither : " + ct);
 			}
 		}
 
@@ -608,10 +595,6 @@ namespace ETP_NS
 		/**
 		* Only to be used in partial transfer context
 		*/
-		EML2_NS::AbstractHdfProxy* make(gsoap_resqml2_0_1::eml20__DataObjectReference* partialObject) {
-			FesapiHdfProxy* result = new FesapiHdfProxy(session_, partialObject);
-			return result;
-		}
 		EML2_NS::AbstractHdfProxy* make(const COMMON_NS::DataObjectReference& dor) {
 			FesapiHdfProxy* result = new FesapiHdfProxy(session_, dor);
 			return result;
