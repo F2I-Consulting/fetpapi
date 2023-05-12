@@ -19,6 +19,7 @@ under the License.
 #pragma once
 
 #include <iostream>
+#include <mutex>
 #include <queue>
 #include <unordered_map>
 #include <utility>
@@ -560,15 +561,15 @@ namespace ETP_NS
 		/// which should be determined by the limits imposed by the WebSocket library used by each endpoint. 
 		/// See https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/using_websocket/messages.html
 		/// and https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/read_message_max/overload1.html
-		int64_t maxWebSocketMessagePayloadSize = 16000000;
+		int64_t maxWebSocketMessagePayloadSize{ 16000000 };
 		/// Indicates if the websocket session is opened or not. It becomes false after the websocket handshake
-		std::atomic<bool> webSocketSessionClosed = true;
+		std::atomic<bool> webSocketSessionClosed{ true };
 		/// Indicates if the ETP1.2 session is opened or not. It becomes false after the requestSession and openSession message
-		std::atomic<bool> etpSessionClosed = true;
+		std::atomic<bool> etpSessionClosed{ true };
 		/// Timeout in milliseconds used when blocking waiting for message
-		std::atomic<double> _timeOut = 10000;
+		std::atomic<double> _timeOut{ 10000 };
 		/// Indicates if the session must be verbose or not
-		std::atomic<bool> _verbose = false;
+		std::atomic<bool> _verbose{ false };
 		/// The queue of messages to be sent where the tuple respectively define message id, message and protocol handlers for responding to this message.
 		std::queue< std::tuple<int64_t, std::vector<uint8_t>, std::shared_ptr<ETP_NS::ProtocolHandlers>> > sendingQueue;
 		std::mutex sendingQueueMutex;
@@ -577,7 +578,7 @@ namespace ETP_NS
 		/// The identifier of the session
 		boost::uuids::uuid identifier;
 		/// Indicates that the endpoint request to close the websocket session 
-		bool isCloseRequested = false;
+		bool isCloseRequested{ false };
 
 		AbstractSession() = default;
 
