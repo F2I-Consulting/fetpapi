@@ -599,15 +599,6 @@ namespace ETP_NS
 		 */
 		Energistics::Etp::v12::Datatypes::MessageHeader decodeMessageHeader(avro::DecoderPtr decoder);
 
-		/**
-		* Return the current message id and increment it for next call.
-		*/
-		int64_t incrementMessageId() {
-			const int64_t result = messageId;
-			messageId += 2;
-			return  result;
-		}
-
 		template<typename T> std::tuple<int64_t, std::vector<uint8_t>, std::shared_ptr<ETP_NS::ProtocolHandlers>> encode(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
 			// Build message header
@@ -615,7 +606,7 @@ namespace ETP_NS
 			mh.protocol = mb.protocolId;
 			mh.messageType = mb.messageTypeId;
 			mh.correlationId = correlationId;
-			mh.messageId = incrementMessageId();
+			mh.messageId = messageId.fetch_add(2);
 			mh.messageFlags = messageFlags;
 
 			avro::OutputStreamPtr out = avro::memoryOutputStream();

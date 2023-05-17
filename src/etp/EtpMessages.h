@@ -2442,7 +2442,7 @@ namespace Energistics {
 						std::vector<std::string> supportedCompression;
 						std::vector<std::string> supportedFormats = { "xml" };
 						int64_t currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-						int64_t earliestRetainedChangeTime;
+						int64_t earliestRetainedChangeTime = 0;
 						bool serverAuthorizationRequired=false;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> endpointCapabilities;
 						static constexpr int messageTypeId=1;
