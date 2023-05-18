@@ -170,7 +170,7 @@ namespace Energistics {
 			namespace Protocol {
 				namespace Core {
 					struct Pong {
-						int64_t currentDateTime;
+						int64_t currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 						static constexpr int messageTypeId=9;
 						static constexpr int protocolId = static_cast<int>(Energistics::Etp::v12::Datatypes::Protocol::Core);
 					};
@@ -195,7 +195,7 @@ namespace Energistics {
 			namespace Protocol {
 				namespace Core {
 					struct Ping {
-						int64_t currentDateTime;
+						int64_t currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 						static constexpr int messageTypeId=8;
 						static constexpr int protocolId = static_cast<int>(Energistics::Etp::v12::Datatypes::Protocol::Core);
 					};
@@ -1082,7 +1082,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				struct AnySubarray {
-					int64_t start;
+					int64_t start = 0;
 					Energistics::Etp::v12::Datatypes::AnyArray slice;
 				};
 			}
@@ -1720,7 +1720,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				struct DataAttribute {
-					int32_t attributeId;
+					int32_t attributeId = 0;
 					Energistics::Etp::v12::Datatypes::DataValue attributeValue;
 				};
 			}
@@ -1781,11 +1781,11 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				struct MessageHeader {
-					int32_t protocol;
-					int32_t messageType;
-					int64_t correlationId;
-					int64_t messageId;
-					int32_t messageFlags;
+					int32_t protocol = 0;
+					int32_t messageType = 0;
+					int64_t correlationId = 0;
+					int64_t messageId = 0;
+					int32_t messageFlags = 0;
 				};
 			}
 		}
@@ -1815,7 +1815,7 @@ namespace Energistics {
 			namespace Datatypes {
 				struct ErrorInfo {
 					std::string message;
-					int32_t code;
+					int32_t code = 0;
 				};
 			}
 		}
@@ -2031,7 +2031,7 @@ namespace Energistics {
 				namespace StoreNotification {
 					struct ObjectDeleted {
 						std::string uri;
-						int64_t changeTime;
+						int64_t changeTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						static constexpr int messageTypeId=3;
 						static constexpr int protocolId = static_cast<int>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
@@ -2348,7 +2348,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				struct SupportedProtocol {
-					int32_t protocol;
+					int32_t protocol = 0;
 					Energistics::Etp::v12::Datatypes::Version protocolVersion;
 					std::string role;
 					std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> protocolCapabilities;
@@ -2387,7 +2387,7 @@ namespace Energistics {
 						std::string supportedCompression;
 						std::vector<std::string> supportedFormats;
 						int64_t currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-						int64_t earliestRetainedChangeTime;
+						int64_t earliestRetainedChangeTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 						Energistics::Etp::v12::Datatypes::Uuid sessionId;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> endpointCapabilities;
 						static constexpr int messageTypeId=2;
@@ -2442,7 +2442,7 @@ namespace Energistics {
 						std::vector<std::string> supportedCompression;
 						std::vector<std::string> supportedFormats = { "xml" };
 						int64_t currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-						int64_t earliestRetainedChangeTime = 0;
+						int64_t earliestRetainedChangeTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 						bool serverAuthorizationRequired=false;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> endpointCapabilities;
 						static constexpr int messageTypeId=1;
@@ -2534,7 +2534,7 @@ namespace Energistics {
 			namespace Datatypes {
 				namespace ChannelData {
 					struct ChannelChangeRequestInfo {
-						int64_t sinceChangeTime;
+						int64_t sinceChangeTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 						std::vector<int64_t> channelIds;
 					};
 				}
@@ -2593,7 +2593,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				struct AttributeMetadataRecord {
-					int32_t attributeId;
+					int32_t attributeId = 0;
 					std::string attributeName;
 					Energistics::Etp::v12::Datatypes::ChannelData::ChannelDataKind dataKind;
 					std::string uom;
@@ -2739,9 +2739,9 @@ namespace Energistics {
 			namespace Datatypes {
 				namespace ChannelData {
 					struct PassIndexedDepth {
-						int64_t pass;
-						Energistics::Etp::v12::Datatypes::ChannelData::PassDirection direction;
-						double depth;
+						int64_t pass = 0;
+						Energistics::Etp::v12::Datatypes::ChannelData::PassDirection direction = Energistics::Etp::v12::Datatypes::ChannelData::PassDirection::Up;
+						double depth = .0;
 					};
 				}
 			}
@@ -2913,7 +2913,7 @@ namespace Energistics {
 			namespace Datatypes {
 				namespace ChannelData {
 					struct ChannelSubscribeInfo {
-						int64_t channelId;
+						int64_t channelId = 0;
 						Energistics::Etp::v12::Datatypes::IndexValue startIndex;
 						bool dataChanges=false;
 						boost::optional<int32_t> requestLatestIndexCount;
@@ -2947,7 +2947,7 @@ namespace Energistics {
 			namespace Datatypes {
 				namespace ChannelData {
 					struct DataItem {
-						int64_t channelId;
+						int64_t channelId = 0;
 						std::vector<Energistics::Etp::v12::Datatypes::IndexValue> indexes;
 						Energistics::Etp::v12::Datatypes::DataValue value;
 						std::vector<Energistics::Etp::v12::Datatypes::DataAttribute> valueAttributes;
@@ -3005,7 +3005,7 @@ namespace Energistics {
 			namespace Datatypes {
 				namespace ChannelData {
 					struct TruncateInfo {
-						int64_t channelId;
+						int64_t channelId = 0;
 						Energistics::Etp::v12::Datatypes::IndexValue newEndIndex;
 					};
 				}
@@ -3241,8 +3241,8 @@ namespace Energistics {
 						std::vector<int64_t> preferredSubarrayDimensions;
 						Energistics::Etp::v12::Datatypes::AnyArrayType transportArrayType;
 						Energistics::Etp::v12::Datatypes::AnyLogicalArrayType logicalArrayType;
-						int64_t storeLastWrite;
-						int64_t storeCreated;
+						int64_t storeLastWrite = 0;
+						int64_t storeCreated = 0;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
 				}
@@ -3491,11 +3491,11 @@ namespace Energistics {
 					struct FrameChannelMetadataRecord {
 						std::string uri;
 						std::string channelName;
-						Energistics::Etp::v12::Datatypes::ChannelData::ChannelDataKind dataKind;
+						Energistics::Etp::v12::Datatypes::ChannelData::ChannelDataKind dataKind = Energistics::Etp::v12::Datatypes::ChannelData::ChannelDataKind::DateTime;
 						std::string uom;
 						std::string depthDatum;
 						std::string channelPropertyKindUri;
-						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind status;
+						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind status = Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind::Active;
 						std::string source;
 						std::vector<int32_t> axisVectorLengths;
 						std::vector<Energistics::Etp::v12::Datatypes::AttributeMetadataRecord> attributeMetadata;
@@ -3571,8 +3571,8 @@ namespace Energistics {
 					struct Dataspace {
 						std::string uri;
 						std::string path;
-						int64_t storeLastWrite;
-						int64_t storeCreated;
+						int64_t storeLastWrite = 0;
+						int64_t storeCreated = 0;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
 				}
@@ -3655,7 +3655,7 @@ namespace Energistics {
 				namespace Object {
 					struct DeletedResource {
 						std::string uri;
-						int64_t deletedTime;
+						int64_t deletedTime = 0;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
 				}
@@ -3814,14 +3814,14 @@ namespace Energistics {
 				namespace ChannelData {
 					struct ChannelMetadataRecord {
 						std::string uri;
-						int64_t id;
+						int64_t id = 0;
 						std::vector<Energistics::Etp::v12::Datatypes::ChannelData::IndexMetadataRecord> indexes;
 						std::string channelName;
-						Energistics::Etp::v12::Datatypes::ChannelData::ChannelDataKind dataKind;
+						Energistics::Etp::v12::Datatypes::ChannelData::ChannelDataKind dataKind = Energistics::Etp::v12::Datatypes::ChannelData::ChannelDataKind::DateTime;
 						std::string uom;
 						std::string depthDatum;
 						std::string channelClassUri;
-						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind status;
+						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind status = Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind::Active;
 						std::string source;
 						std::vector<int32_t> axisVectorLengths;
 						std::vector<Energistics::Etp::v12::Datatypes::AttributeMetadataRecord> attributeMetadata;
@@ -3901,7 +3901,7 @@ namespace Energistics {
 			namespace Datatypes {
 				namespace Object {
 					struct ChangeAnnotation {
-						int64_t changeTime;
+						int64_t changeTime = 0;
 						Energistics::Etp::v12::Datatypes::Object::IndexInterval interval;
 					};
 				}
@@ -3927,7 +3927,7 @@ namespace Energistics {
 			namespace Datatypes {
 				namespace Object {
 					struct ChangeResponseInfo {
-						int64_t responseTimestamp;
+						int64_t responseTimestamp = 0;
 						std::map<std::string, std::vector<Energistics::Etp::v12::Datatypes::Object::ChangeAnnotation> > changes;
 					};
 				}
@@ -4349,9 +4349,9 @@ namespace Energistics {
 						boost::optional<int32_t> targetCount;
 						bool has_targetCount() const { return targetCount.is_initialized(); }
 						int32_t get_targetCount() const { return targetCount.get(); }
-						int64_t lastChanged;
-						int64_t storeLastWrite;
-						int64_t storeCreated;
+						int64_t lastChanged = 0;
+						int64_t storeLastWrite = 0;
+						int64_t storeCreated = 0;
 						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind activeStatus = Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind::Inactive;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
@@ -4448,7 +4448,7 @@ namespace Energistics {
 				namespace StoreNotification {
 					struct ObjectActiveStatusChanged {
 						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind activeStatus = Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind::Inactive;
-						int64_t changeTime;
+						int64_t changeTime = 0;
 						Energistics::Etp::v12::Datatypes::Object::Resource resource;
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						static constexpr int messageTypeId=11;
@@ -4596,8 +4596,8 @@ namespace Energistics {
 			namespace Datatypes {
 				namespace Object {
 					struct ObjectChange {
-						Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind changeKind;
-						int64_t changeTime;
+						Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind changeKind = Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::insert;
+						int64_t changeTime = 0;
 						Energistics::Etp::v12::Datatypes::Object::DataObject dataObject;
 					};
 				}

@@ -184,19 +184,14 @@ namespace ETP_NS
 		std::map<std::string, std::string> additionalHandshakeHeaderFields_;
 		websocket::response_type responseType; // In order to check handshake sec_websocket_protocol
 		Energistics::Etp::v12::Protocol::Core::RequestSession requestSession;
-		bool successfulConnection;
+		bool successfulConnection = false;
 
 		// Access the derived class, this is part of the Curiously Recurring Template Pattern idiom.
 		Derived& derived() { return static_cast<Derived&>(*this); }
 
 		AbstractClientSession() :
 			ioc(4),
-			resolver(ioc),
-			host(),
-			port(),
-			target(),
-			authorization(),
-			successfulConnection(false) {
+			resolver(ioc) {
 			messageId = 2; // The client side of the connection MUST use ONLY non-zero even-numbered messageIds. 
 		}
 
@@ -212,8 +207,7 @@ namespace ETP_NS
 			host(initializationParams->getHost()),
 			port(std::to_string(initializationParams->getPort())),
 			target(target),
-			authorization(authorization),
-			successfulConnection(false)
+			authorization(authorization)
 		{
 			messageId = 2; // The client side of the connection MUST use ONLY non-zero even-numbered messageIds. 
 
