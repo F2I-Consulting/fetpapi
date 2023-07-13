@@ -23,6 +23,8 @@ under the License.
 #include "../AbstractSession.h"
 #include "../ProtocolHandlers/GetFullDataArrayHandlers.h"
 
+#include <type_traits>
+
 namespace ETP_NS
 {
 	class FETPAPI_DLL_IMPORT_OR_EXPORT FesapiHdfProxy : public EML2_NS::AbstractHdfProxy
@@ -127,6 +129,240 @@ namespace ETP_NS
 		* @param compressionLevel				Lower compression levels are faster but result in less compression. Range [0..9] is allowed.
 		*/
 		void setCompressionLevel(unsigned int newCompressionLevel) final { if (newCompressionLevel > 9) compressionLevel = 9; else compressionLevel = newCompressionLevel; }
+
+		/**
+		* Recursively write sub arrays (potentially with 2 dimensions) of a specific datatype into the HDF file by means of a single dataset.
+		* @param uri							The uri of the original data array.
+		* @param pathInResource					The path of the original data array.
+		* @param totalNumberOfColumns			The total number of columns in the original data array.
+		* @param starts							The starting indices in each dimension of the subarray to be written.
+		* @param counts							The number of values in each dimension of the subarray to be written.
+		* @param values							1d array of specific datatype ordered firstly by fastest direction.
+		*/
+		template<typename T>
+		void writeSubArray2d(
+			const std::string& uri,
+			const std::string& pathInResource,
+			const int64_t& totalNumberOfColumns,
+			std::vector<int64_t> starts,
+			std::vector<int64_t> counts,
+			const void* values)
+		{
+			// Calculate array size
+			size_t totalCount{ 1 };
+
+			for (const auto& count : counts)
+				totalCount *= count;
+
+			// [Base Condition] Array size is OK to be transmitted.
+			if ((totalCount * sizeof(T)) <= maxArraySize_)
+			{
+				// PUT DATA SUB ARRAYS
+				Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays pdsa{};
+				pdsa.dataSubarrays["0"].uid.uri = uri;
+				pdsa.dataSubarrays["0"].uid.pathInResource = pathInResource;
+				pdsa.dataSubarrays["0"].starts = starts;
+				pdsa.dataSubarrays["0"].counts = counts;
+
+				// Cast values in T values.
+				const T* typeValues{ static_cast<const T*>(values) };
+
+				// Create 1D Array from 2D Array.
+				T* subValues = new T[totalCount];
+				size_t valueIndex{ 0 };
+				size_t rowIndex = starts[0];
+
+				for (size_t i = 0; i < counts[0]; ++i) // rows
+				{
+					size_t colIndex = starts[1];
+
+					for (size_t j = 0; j < counts[1]; ++j) // columns
+					{
+						subValues[valueIndex] =
+							typeValues[(rowIndex * totalNumberOfColumns) + colIndex]; // Convert rowIndex and colIndex in row major order Index.
+
+						++colIndex;
+						++valueIndex;
+					}
+
+					++rowIndex;
+				}
+
+				// Create AVRO Array
+				Energistics::Etp::v12::Datatypes::AnyArray data;
+				createAnyArray<T>(data, totalCount, subValues);
+				pdsa.dataSubarrays["0"].data = data;
+
+				// Send putDataSubarrays Message
+				session_->sendAndBlock(pdsa, 0, 0x02);
+
+				// Delete Array
+				delete[] subValues;
+			}
+			else // [Divide and Conquer Approach] If sub array is still large, partition it into more sub arrays.
+			{
+				int64_t rows = counts[0];
+				int64_t cols = counts[1];
+
+				int64_t firsthalfRows = rows / 2;
+				int64_t secondHalfRows = rows - firsthalfRows;
+
+				int64_t firsthalfCols = cols / 2;
+				int64_t secondHalfCols = cols - firsthalfCols;
+
+				// Case 1
+				writeSubArray2d<T>(
+					uri, pathInResource, totalNumberOfColumns,
+					{ starts[0], starts[1] },
+					{ firsthalfRows, firsthalfCols },
+					values);
+
+				// Case 2
+				writeSubArray2d<T>(
+					uri, pathInResource, totalNumberOfColumns,
+					{ starts[0] + firsthalfRows, starts[1] },
+					{ secondHalfRows, firsthalfCols },
+					values);
+
+				// Case 3
+				writeSubArray2d<T>(
+					uri, pathInResource, totalNumberOfColumns,
+					{ starts[0], starts[1] + firsthalfCols },
+					{ firsthalfRows, secondHalfCols },
+					values);
+
+				// Case 4
+				writeSubArray2d<T>(
+					uri, pathInResource, totalNumberOfColumns,
+					{ starts[0] + firsthalfRows, starts[1] + firsthalfCols },
+					{ secondHalfRows, secondHalfCols },
+					values);
+			}
+		}
+
+		/**
+		* Create AnyArray from given data array of type T.
+		* @param data							The reference to AnyArray to be populated.
+		* @param totalCount						Total number of values.
+		* @param values							1d array of specific datatype ordered firstly by fastest direction.
+		*/
+		template<typename T>
+		void createAnyArray(
+			Energistics::Etp::v12::Datatypes::AnyArray& data,
+			size_t totalCount,
+			T* values)
+		{
+			throw logic_error(
+				"Subarrays are implemented for primitive types only: double, float, int64, int32, short, char");
+		}
+
+		/**
+		* Create AnyArray from given data array of type double.
+		* @param data							The reference to AnyArray to be populated.
+		* @param totalCount						Total number of values.
+		* @param values							1d array of specific datatype ordered firstly by fastest direction.
+		*/
+		template<>
+		void createAnyArray<double>(
+			Energistics::Etp::v12::Datatypes::AnyArray& data,
+			size_t totalCount,
+			double* values)
+		{		
+			Energistics::Etp::v12::Datatypes::ArrayOfDouble avroArray;
+			avroArray.values = std::vector<double>(values, values + totalCount);
+			data.item.set_ArrayOfDouble(avroArray);	
+		}
+
+		/**
+		* Create AnyArray from given data array of type float.
+		* @param data							The reference to AnyArray to be populated.
+		* @param totalCount						Total number of values.
+		* @param values							1d array of specific datatype ordered firstly by fastest direction.
+		*/
+		template<>
+		void createAnyArray<float>(
+			Energistics::Etp::v12::Datatypes::AnyArray& data,
+			size_t totalCount,
+			float* values)
+		{
+			Energistics::Etp::v12::Datatypes::ArrayOfFloat avroArray;
+			avroArray.values = std::vector<float>(values, values + totalCount);
+			data.item.set_ArrayOfFloat(avroArray);
+		}
+
+		/**
+		* Create AnyArray from given data array of type int64_t.
+		* @param data							The reference to AnyArray to be populated.
+		* @param totalCount						Total number of values.
+		* @param values							1d array of specific datatype ordered firstly by fastest direction.
+		*/
+		template<>
+		void createAnyArray<int64_t>(
+			Energistics::Etp::v12::Datatypes::AnyArray& data,
+			size_t totalCount,
+			int64_t* values)
+		{
+			Energistics::Etp::v12::Datatypes::ArrayOfLong avroArray;
+			avroArray.values = std::vector<int64_t>(values, values + totalCount);
+			data.item.set_ArrayOfLong(avroArray);
+		}
+
+		/**
+		* Create AnyArray from given data array of type int32_t.
+		* @param data							The reference to AnyArray to be populated.
+		* @param totalCount						Total number of values.
+		* @param values							1d array of specific datatype ordered firstly by fastest direction.
+		*/
+		template<>
+		void createAnyArray<int32_t>(
+			Energistics::Etp::v12::Datatypes::AnyArray& data,
+			size_t totalCount,
+			int32_t* values)
+		{
+			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
+			avroArray.values = std::vector<int32_t>(values, values + totalCount);
+			data.item.set_ArrayOfInt(avroArray);
+		}
+
+		/**
+		* Create AnyArray from given data array of type short.
+		* @param data							The reference to AnyArray to be populated.
+		* @param totalCount						Total number of values.
+		* @param values							1d array of specific datatype ordered firstly by fastest direction.
+		*/
+		template<>
+		void createAnyArray<short>(
+			Energistics::Etp::v12::Datatypes::AnyArray& data,
+			size_t totalCount,
+			short* values)
+		{
+			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
+
+			for (size_t i = 0; i < totalCount; ++i)
+				avroArray.values.push_back(values[i]);
+
+			data.item.set_ArrayOfInt(avroArray);
+		}
+
+		/**
+		* Create AnyArray from given data array of type char.
+		* @param data							The reference to AnyArray to be populated.
+		* @param totalCount						Total number of values.
+		* @param values							1d array of specific datatype ordered firstly by fastest direction.
+		*/
+		template<>
+		void createAnyArray<char>(
+			Energistics::Etp::v12::Datatypes::AnyArray& data,
+			size_t totalCount,
+			char* values)
+		{
+			std::string avroArray{};
+
+			for (size_t i = 0; i < totalCount; ++i)
+				avroArray.push_back(values[i]);
+
+			data.item.set_bytes(avroArray);
+		}
 
 		/**
 		* Write an array (potentially with multi dimensions) of a specific datatype into the HDF file by means of a single dataset.
@@ -471,6 +707,7 @@ namespace ETP_NS
 		AbstractSession* session_;
 		unsigned int compressionLevel;
 		std::string xmlNs_;
+		int maxArraySize_{ 4000000 }; // Bytes
 
 		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier buildDataArrayIdentifier(const std::string & datasetName) const;
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrays buildGetDataArraysMessage(const std::string & datasetName) const;
