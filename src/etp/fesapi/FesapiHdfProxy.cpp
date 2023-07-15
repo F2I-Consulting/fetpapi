@@ -312,172 +312,61 @@ void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
 		// Send Uninitialized Data Arrays
 		session_->sendAndBlock(puda, 0, 0x02);
 
-		// SEND MULTIPLE PUT DATA SUB ARRAYS MESSAGES
+		// SEND MULTIPLE PUT DATA SUBARRAYS MESSAGES
+		std::cout << "Writing Subarrays: This may take some time." << std::endl;
+		std::cout << "Please wait..." << std::endl;
+
+		// Initial Starts and Counts
+		std::vector<int64_t> starts{};
+		std::vector<int64_t> counts{};
+
+		for (size_t i = 0; i < numDimensions; ++i) {
+			starts.push_back(0);
+			counts.push_back(numValuesInEachDimension[i]);
+		}
+
+		// Recursively Write Subarrays
 		if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE) {
-			if (numDimensions == 2)
-			{
-				// Create PutDataSubarray message
-				std::vector<int64_t> starts{};
-				std::vector<int64_t> counts{};
-
-				for (size_t i = 0; i < numDimensions; ++i) 
-				{
-					starts.push_back(0);
-					counts.push_back(numValuesInEachDimension[i]);
-				}
-
-				std::cout << "Writing Sub Arrays: This may take some time." << std::endl;
-				std::cout << "Please wait..." << std::endl;
-				
-				writeSubArray2d<double>(
-					uri, pathInResource, numValuesInEachDimension[1],
-					starts,
-					counts,
-					values);
-			}
-			else
-			{
-				throw logic_error("Subarrays are implemented for 2D double data arrays only.");
-			}
+			writeSubArrayNd<double>(uri, pathInResource, counts,
+				starts,
+				counts,
+				values);
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT) {
-			if (numDimensions == 2)
-			{
-				// Create PutDataSubarray message
-				std::vector<int64_t> starts{};
-				std::vector<int64_t> counts{};
-
-				for (size_t i = 0; i < numDimensions; ++i)
-				{
-					starts.push_back(0);
-					counts.push_back(numValuesInEachDimension[i]);
-				}
-
-				std::cout << "Writing Sub Arrays: This may take some time." << std::endl;
-				std::cout << "Please wait..." << std::endl;
-
-				writeSubArray2d<float>(
-					uri, pathInResource, numValuesInEachDimension[1],
-					starts,
-					counts,
-					values);
-			}
-			else
-			{
-				throw logic_error("Subarrays are implemented for 2D float data arrays only.");
-			}
+			writeSubArrayNd<float>(uri, pathInResource, counts,
+				starts,
+				counts,
+				values);
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64 || 
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64) {
-				if (numDimensions == 2)
-				{
-					// Create PutDataSubarray message
-					std::vector<int64_t> starts{};
-					std::vector<int64_t> counts{};
-
-					for (size_t i = 0; i < numDimensions; ++i)
-					{
-						starts.push_back(0);
-						counts.push_back(numValuesInEachDimension[i]);
-					}
-
-					std::cout << "Writing Sub Arrays: This may take some time." << std::endl;
-					std::cout << "Please wait..." << std::endl;
-
-					writeSubArray2d<int64_t>(
-						uri, pathInResource, numValuesInEachDimension[1],
-						starts,
-						counts,
-						values);
-				}
-				else
-				{
-					throw logic_error("Subarrays are implemented for 2D int64 data arrays only.");
-				}
+			writeSubArrayNd<int64_t>(uri, pathInResource, counts,
+				starts,
+				counts,
+				values);
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32 || 
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32) {
-				if (numDimensions == 2)
-				{
-					// Create PutDataSubarray message
-					std::vector<int64_t> starts{};
-					std::vector<int64_t> counts{};
-
-					for (size_t i = 0; i < numDimensions; ++i)
-					{
-						starts.push_back(0);
-						counts.push_back(numValuesInEachDimension[i]);
-					}
-
-					std::cout << "Writing Sub Arrays: This may take some time." << std::endl;
-					std::cout << "Please wait..." << std::endl;
-
-					writeSubArray2d<int32_t>(
-						uri, pathInResource, numValuesInEachDimension[1],
-						starts,
-						counts,
-						values);
-				}
-				else
-				{
-					throw logic_error("Subarrays are implemented for 2D int32 data arrays only.");
-				}
+			writeSubArrayNd<int32_t>(uri, pathInResource, counts,
+				starts,
+				counts,
+				values);
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16 || 
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16) {
-				if (numDimensions == 2)
-				{
-					// Create PutDataSubarray message
-					std::vector<int64_t> starts{};
-					std::vector<int64_t> counts{};
-
-					for (size_t i = 0; i < numDimensions; ++i)
-					{
-						starts.push_back(0);
-						counts.push_back(numValuesInEachDimension[i]);
-					}
-
-					std::cout << "Writing Sub Arrays: This may take some time." << std::endl;
-					std::cout << "Please wait..." << std::endl;
-
-					writeSubArray2d<short>(
-						uri, pathInResource, numValuesInEachDimension[1],
-						starts,
-						counts,
-						values);
-				}
-				else
-				{
-					throw logic_error("Subarrays are implemented for 2D short data arrays only.");
-				}
+			writeSubArrayNd<short>(
+				uri, pathInResource, counts,
+				starts,
+				counts,
+				values);
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8 || 
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8) {
-				if (numDimensions == 2)
-				{
-					// Create PutDataSubarray message
-					std::vector<int64_t> starts{};
-					std::vector<int64_t> counts{};
-
-					for (size_t i = 0; i < numDimensions; ++i)
-					{
-						starts.push_back(0);
-						counts.push_back(numValuesInEachDimension[i]);
-					}
-
-					std::cout << "Writing Sub Arrays: This may take some time." << std::endl;
-					std::cout << "Please wait..." << std::endl;
-
-					writeSubArray2d<char>(
-						uri, pathInResource, numValuesInEachDimension[1],
-						starts,
-						counts,
-						values);
-				}
-				else
-				{
-					throw logic_error("Subarrays are implemented for 2D byte data arrays only.");
-				}
+			writeSubArrayNd<char>(
+				uri, pathInResource, counts,
+				starts,
+				counts,
+				values);
 		}
 		else {
 			throw logic_error(

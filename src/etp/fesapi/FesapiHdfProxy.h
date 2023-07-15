@@ -132,22 +132,22 @@ namespace ETP_NS
 
 		/**
 		* Recursively write sub arrays (potentially with 2 dimensions) of a specific datatype into the HDF file by means of a single dataset.
-		* @param uri							The uri of the original data array.
-		* @param pathInResource					The path of the original data array.
-		* @param totalNumberOfColumns			The total number of columns in the original data array.
+		* @param uri							The uri of the original array.
+		* @param pathInResource					The path of the original array.
+		* @param totalCounts					The total number of values in each dimension of the original array.
 		* @param starts							The starting indices in each dimension of the subarray to be written.
 		* @param counts							The number of values in each dimension of the subarray to be written.
 		* @param values							1d array of specific datatype ordered firstly by fastest direction.
 		*/
 		template<typename T>
-		void writeSubArray2d(
+		void writeSubArrayNd(
 			const std::string& uri,
 			const std::string& pathInResource,
-			const int64_t& totalNumberOfColumns,
+			std::vector<int64_t>& totalCounts,
 			std::vector<int64_t> starts,
 			std::vector<int64_t> counts,
-			const void* values)
-		{
+			const void* values) {
+
 			// Calculate array size
 			size_t totalCount{ 1 };
 
@@ -155,9 +155,9 @@ namespace ETP_NS
 				totalCount *= count;
 
 			// [Base Condition] Array size is OK to be transmitted.
-			if ((totalCount * sizeof(T)) <= maxArraySize_)
-			{
-				// PUT DATA SUB ARRAYS
+			if ((totalCount * sizeof(T)) <= maxArraySize_) {
+
+				// PUT DATA SUBARRAYS
 				Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays pdsa{};
 				pdsa.dataSubarrays["0"].uid.uri = uri;
 				pdsa.dataSubarrays["0"].uid.pathInResource = pathInResource;
@@ -167,31 +167,22 @@ namespace ETP_NS
 				// Cast values in T values.
 				const T* typeValues{ static_cast<const T*>(values) };
 
-				// Create 1D Array from 2D Array.
+				// Create 1D Array for Sub Values.
 				T* subValues = new T[totalCount];
 				size_t valueIndex{ 0 };
-				size_t rowIndex = starts[0];
 
-				for (size_t i = 0; i < counts[0]; ++i) // rows
-				{
-					size_t colIndex = starts[1];
-
-					for (size_t j = 0; j < counts[1]; ++j) // columns
-					{
-						subValues[valueIndex] =
-							typeValues[(rowIndex * totalNumberOfColumns) + colIndex]; // Convert rowIndex and colIndex in row major order Index.
-
-						++colIndex;
-						++valueIndex;
-					}
-
-					++rowIndex;
-				}
+				// Recursively populate subValues starting from first dimension.
+				populateSubValuesNd<T>(
+					0,
+					totalCounts, starts, counts,
+					valueIndex, typeValues, subValues);
 
 				// Create AVRO Array
 				Energistics::Etp::v12::Datatypes::AnyArray data;
-				createAnyArray<T>(data, totalCount, subValues);
+				createAnyArray<T>(data, totalCount, subValues); // Type-specific code is written in specialized template functions for createAnyArray().
 				pdsa.dataSubarrays["0"].data = data;
+
+				std::cout << "Writing subarray..." << std::endl;
 
 				// Send putDataSubarrays Message
 				session_->sendAndBlock(pdsa, 0, 0x02);
@@ -199,43 +190,169 @@ namespace ETP_NS
 				// Delete Array
 				delete[] subValues;
 			}
-			else // [Divide and Conquer Approach] If sub array is still large, partition it into more sub arrays.
-			{
-				int64_t rows = counts[0];
-				int64_t cols = counts[1];
+			// [Divide and Conquer Approach] If sub array is still large, partition it into more sub arrays.
+			else {
+				// Recursively divide all dimensions starting from first dimension.
+				createSubArrayNd<T>(
+					0,
+					uri, pathInResource, totalCounts,
+					starts, counts, values);
+			}
+		};
 
-				int64_t firsthalfRows = rows / 2;
-				int64_t secondHalfRows = rows - firsthalfRows;
+		/**
+		* Recursively populate subValues array from original values array.
+		* @param dimensionIndex					The index of dimension in nD array.
+		* @param totalCounts					The total number of values in each dimension of the original array.				
+		* @param starts							The starting indices in each dimension of the subarray to be written.
+		* @param counts							The number of values in each dimension of the subarray to be written.
+		* @param valueIndex						The index of subValues array.
+		* @param values							1d array of specific datatype ordered firstly by fastest direction.
+		* @param subValues						1d subarray to be populated.
+		*/
+		template<typename T>
+		void populateSubValuesNd(
+			size_t dimensionIndex,
+			std::vector<int64_t>& totalCounts,
+			std::vector<int64_t>& starts,
+			std::vector<int64_t>& counts,
+			size_t& valueIndex,
+			const T* values,
+			T* subValues) {
 
-				int64_t firsthalfCols = cols / 2;
-				int64_t secondHalfCols = cols - firsthalfCols;
+			// [Base Condition] If dimensionIndex exceeds last dimension.
+			if (dimensionIndex >= starts.size()) {
+				// Add value in subValues.
+				subValues[valueIndex] =
+					values[getRowMajorIndex(0, totalCounts, starts)]; // Convert nD indices to row major order index.
 
-				// Case 1
-				writeSubArray2d<T>(
-					uri, pathInResource, totalNumberOfColumns,
-					{ starts[0], starts[1] },
-					{ firsthalfRows, firsthalfCols },
+				++valueIndex;
+			}
+			else {
+				// Save starting index.
+				int64_t start = starts[dimensionIndex];
+
+				for (size_t i = 0; i < counts[dimensionIndex]; ++i) {
+					// Recursively populate subValues for next dimensions.
+					populateSubValuesNd<T>(
+						dimensionIndex + 1,
+						totalCounts,
+						starts, counts,
+						valueIndex, values, subValues);
+
+					starts[dimensionIndex]++;
+				}
+
+				// Restore starting index.
+				starts[dimensionIndex] = start;
+			}
+		}
+
+		/*
+			HOW ROW MAJOR INDEX IN CALCULATED FROM N INDICES	
+			index = i0 * (dim1 * dim2 * ... * dimn) + i1 * (dim2 * dim3 * ... * dimn) + i2 * (dim3 * dim4 * ... * dimn) + ... + in-1 * dimn + in
+			Here:
+
+				1.	index is the calculated index value.
+				2.	i0, i1, i2, ..., in-1, in represent the indices of the element in each dimension. 
+					For example, i0 is the index in the first dimension, i1 is the index in the second dimension, and so on.
+				3.	dim1, dim2, dim3, ..., dimn are the sizes of the array along each dimension. 
+					These represent the number of elements in each dimension.
+		*/
+
+		/**
+		* Recursively calculate row major index from n indices.
+		* @param dimensionIndex					The index of dimension in nD array.
+		* @param totalCounts					The total number of values in each dimension of the original array.
+		* @param starts							The starting indices in each dimension of the subarray to be written.
+		*/
+		int64_t getRowMajorIndex(
+			size_t dimensionIndex,
+			std::vector<int64_t>& totalCounts,
+			std::vector<int64_t>& starts) {
+			// [Base Condition] If dimensionIndex is the last dimension.	
+			if (dimensionIndex == (starts.size() - 1)) {
+				return starts[dimensionIndex];
+			}
+			else {
+				return starts[dimensionIndex] * getCountsProduct(dimensionIndex + 1, totalCounts) + 
+					getRowMajorIndex((dimensionIndex + 1), totalCounts, starts);
+			}
+		}
+
+		/**
+		* Recursively calculate product of total counts for calculating row major index.
+		* @param dimensionIndex					The index of dimension in nD array.
+		* @param totalCounts					The total number of values in each dimension of the original array.
+		*/
+		int64_t getCountsProduct(
+			size_t dimensionIndex,
+			std::vector<int64_t>& totalCounts) {
+			// [Base Condition] If dimensionIndex exceeds the last dimension.	
+			if (dimensionIndex >= totalCounts.size()) {
+				return 1;
+			}
+			else {
+				return totalCounts[dimensionIndex] * 
+					getCountsProduct(dimensionIndex + 1, totalCounts);
+			}
+		}
+
+		/**
+		* Recursively divide each dimension into half and create an n-D subbarray.
+		* @param dimensionIndex					The index of dimension in nD array.
+		* @param uri							The uri of the original array.
+		* @param pathInResource					The path of the original array.
+		* @param totalCounts					The total number of values in each dimension of the original array.
+		* @param starts							The starting indices in each dimension of the subarray to be written.
+		* @param counts							The number of values in each dimension of the subarray to be written.
+		* @param values							1d array of specific datatype ordered firstly by fastest direction.
+		*/
+		template<typename T>
+		void createSubArrayNd(
+			size_t dimensionIndex,
+			const std::string& uri,
+			const std::string& pathInResource,
+			std::vector<int64_t>& totalCounts,
+			std::vector<int64_t> starts,
+			std::vector<int64_t> counts,
+			const void* values) {
+			// [Base Condition] If dimensionIndex exceeds the last dimension.
+			if (dimensionIndex >= starts.size()) {
+				// Recursively Write Subarray.
+				writeSubArrayNd<T>(
+					uri, pathInResource, totalCounts,
+					starts,
+					counts,
+					values);
+			}
+			else {
+				int64_t numberOfValues = counts[dimensionIndex];
+
+				int64_t firstHalfValues = numberOfValues / 2;
+				int64_t secondHalfValues = numberOfValues - firstHalfValues;
+
+				std::vector<int64_t> newCounts{ counts };
+				newCounts[dimensionIndex] = firstHalfValues;
+
+				// Recursively divide next dimension.
+				createSubArrayNd<T>(
+					dimensionIndex + 1,
+					uri, pathInResource, totalCounts,
+					starts,
+					newCounts,
 					values);
 
-				// Case 2
-				writeSubArray2d<T>(
-					uri, pathInResource, totalNumberOfColumns,
-					{ starts[0] + firsthalfRows, starts[1] },
-					{ secondHalfRows, firsthalfCols },
-					values);
+				std::vector<int64_t> newStarts{ starts };
+				newStarts[dimensionIndex] = newStarts[dimensionIndex] + firstHalfValues;
+				newCounts[dimensionIndex] = secondHalfValues;
 
-				// Case 3
-				writeSubArray2d<T>(
-					uri, pathInResource, totalNumberOfColumns,
-					{ starts[0], starts[1] + firsthalfCols },
-					{ firsthalfRows, secondHalfCols },
-					values);
-
-				// Case 4
-				writeSubArray2d<T>(
-					uri, pathInResource, totalNumberOfColumns,
-					{ starts[0] + firsthalfRows, starts[1] + firsthalfCols },
-					{ secondHalfRows, secondHalfCols },
+				// Recursively divide next dimension.
+				createSubArrayNd<T>(
+					dimensionIndex + 1,
+					uri, pathInResource, totalCounts,
+					newStarts,
+					newCounts,
 					values);
 			}
 		}
@@ -250,8 +367,7 @@ namespace ETP_NS
 		void createAnyArray(
 			Energistics::Etp::v12::Datatypes::AnyArray& data,
 			size_t totalCount,
-			T* values)
-		{
+			T* values) {
 			throw logic_error(
 				"Subarrays are implemented for primitive types only: double, float, int64, int32, short, char");
 		}
@@ -266,8 +382,7 @@ namespace ETP_NS
 		void createAnyArray<double>(
 			Energistics::Etp::v12::Datatypes::AnyArray& data,
 			size_t totalCount,
-			double* values)
-		{		
+			double* values) {		
 			Energistics::Etp::v12::Datatypes::ArrayOfDouble avroArray;
 			avroArray.values = std::vector<double>(values, values + totalCount);
 			data.item.set_ArrayOfDouble(avroArray);	
@@ -283,8 +398,7 @@ namespace ETP_NS
 		void createAnyArray<float>(
 			Energistics::Etp::v12::Datatypes::AnyArray& data,
 			size_t totalCount,
-			float* values)
-		{
+			float* values) {
 			Energistics::Etp::v12::Datatypes::ArrayOfFloat avroArray;
 			avroArray.values = std::vector<float>(values, values + totalCount);
 			data.item.set_ArrayOfFloat(avroArray);
@@ -300,8 +414,7 @@ namespace ETP_NS
 		void createAnyArray<int64_t>(
 			Energistics::Etp::v12::Datatypes::AnyArray& data,
 			size_t totalCount,
-			int64_t* values)
-		{
+			int64_t* values) {
 			Energistics::Etp::v12::Datatypes::ArrayOfLong avroArray;
 			avroArray.values = std::vector<int64_t>(values, values + totalCount);
 			data.item.set_ArrayOfLong(avroArray);
@@ -317,8 +430,7 @@ namespace ETP_NS
 		void createAnyArray<int32_t>(
 			Energistics::Etp::v12::Datatypes::AnyArray& data,
 			size_t totalCount,
-			int32_t* values)
-		{
+			int32_t* values) {
 			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
 			avroArray.values = std::vector<int32_t>(values, values + totalCount);
 			data.item.set_ArrayOfInt(avroArray);
@@ -334,8 +446,7 @@ namespace ETP_NS
 		void createAnyArray<short>(
 			Energistics::Etp::v12::Datatypes::AnyArray& data,
 			size_t totalCount,
-			short* values)
-		{
+			short* values) {
 			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
 
 			for (size_t i = 0; i < totalCount; ++i)
@@ -354,8 +465,7 @@ namespace ETP_NS
 		void createAnyArray<char>(
 			Energistics::Etp::v12::Datatypes::AnyArray& data,
 			size_t totalCount,
-			char* values)
-		{
+			char* values) {
 			std::string avroArray{};
 
 			for (size_t i = 0; i < totalCount; ++i)
