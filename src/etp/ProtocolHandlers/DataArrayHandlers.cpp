@@ -122,13 +122,11 @@ void DataArrayHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_PutUninitializedDataArrays(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse msg;
 		avro::decode(*d, msg);
-		session->flushReceivingBuffer();
 		on_PutUninitializedDataArraysResponse(msg, mh.correlationId);
 	}
 	else {
