@@ -122,63 +122,257 @@ void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
 	const uint64_t * numValuesInEachDimension,
 	unsigned int numDimensions)
 {
-	if (!isOpened()) {
+	if (!isOpened())
 		open();
-	}
 
-	Energistics::Etp::v12::Protocol::DataArray::PutDataArrays pda;
-	pda.dataArrays["0"].uid.uri = buildEtp12Uri();
-	pda.dataArrays["0"].uid.pathInResource = (groupName.back() == '/' ? groupName : groupName + '/') + name;
+	// URI AND PATH
+	std::string uri{ buildEtp12Uri() };
 
-	size_t totalCount = 1;
-	std::vector<int64_t> dimensions;
-	for (size_t i = 0; i < numDimensions; ++i) {
+	std::string pathInResource{ (groupName.back() == '/' ? 
+		groupName : groupName + '/') + name };
+
+	// Create Dimensions and Total Count
+	size_t totalCount{ 1 };
+	std::vector<int64_t> dimensions{};
+
+	for (size_t i = 0; i < numDimensions; ++i)
+	{
 		dimensions.push_back(numValuesInEachDimension[i]);
 		totalCount *= numValuesInEachDimension[i];
 	}
-	pda.dataArrays["0"].array.dimensions = dimensions;
 
-	Energistics::Etp::v12::Datatypes::AnyArray data;
-	if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE) {
-		Energistics::Etp::v12::Datatypes::ArrayOfDouble avroArray;
-		avroArray.values = std::vector<double>(static_cast<const double*>(values), static_cast<const double*>(values) + totalCount);
-		data.item.set_ArrayOfDouble(avroArray);
-	}
-	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT) {
-		Energistics::Etp::v12::Datatypes::ArrayOfFloat avroArray;
-		avroArray.values = std::vector<float>(static_cast<const float*>(values), static_cast<const float*>(values) + totalCount);
-		data.item.set_ArrayOfFloat(avroArray);
-	}
-	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64 || datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64) {
-		Energistics::Etp::v12::Datatypes::ArrayOfLong avroArray;
-		avroArray.values = std::vector<int64_t>(static_cast<const int64_t*>(values), static_cast<const int64_t*>(values) + totalCount);
-		data.item.set_ArrayOfLong(avroArray);
-	}
-	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32 || datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32) {
-		Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
-		avroArray.values = std::vector<int32_t>(static_cast<const int32_t*>(values), static_cast<const int32_t*>(values) + totalCount);
-		data.item.set_ArrayOfInt(avroArray);
-	}
-	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16 || datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16) {
-		Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
-		for (size_t i = 0; i < totalCount; ++i) {
-			avroArray.values.push_back(static_cast<const short*>(values)[i]);
-		}
-		data.item.set_ArrayOfInt(avroArray);
-	}
-	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8 || datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8) {
-		std::string avroArray;
-		for (size_t i = 0; i < totalCount; ++i) {
-			avroArray.push_back(static_cast<const char*>(values)[i]);
-		}
-		data.item.set_bytes(avroArray);
-	}
-	else {
-		throw logic_error("You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
-	}
-	pda.dataArrays["0"].array.data = data;
+	// Determine Value Size (bytes)
+	int valueSize{ 1 };
 
-	session_->send(pda, 0, 0x02);
+	if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE)
+	{
+		valueSize = sizeof(double);
+	}
+	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT)
+	{
+		valueSize = sizeof(float);
+	}
+	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64 ||
+		datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64)
+	{
+		valueSize = sizeof(int64_t);
+	}
+	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32 ||
+		datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32)
+	{
+		valueSize = sizeof(int32_t);
+	}
+	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16 ||
+		datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16)
+	{
+		valueSize = sizeof(short);
+	}
+	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8 ||
+		datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8)
+	{
+		valueSize = sizeof(char);
+	}
+	else
+	{
+		throw logic_error(
+			"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
+	}
+
+	if (totalCount * valueSize <= maxArraySize_)
+	{
+		// PUT DATA ARRAYS
+		Energistics::Etp::v12::Protocol::DataArray::PutDataArrays pda{};
+		pda.dataArrays["0"].uid.uri = uri;
+		pda.dataArrays["0"].uid.pathInResource = pathInResource;
+		pda.dataArrays["0"].array.dimensions = dimensions;
+
+		// Create AVRO Array
+		Energistics::Etp::v12::Datatypes::AnyArray data;
+		if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE) 
+		{
+			Energistics::Etp::v12::Datatypes::ArrayOfDouble avroArray;
+
+			avroArray.values = std::vector<double>(
+				static_cast<const double*>(values), 
+				static_cast<const double*>(values) + totalCount);
+
+			data.item.set_ArrayOfDouble(avroArray);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT) 
+		{
+			Energistics::Etp::v12::Datatypes::ArrayOfFloat avroArray;
+
+			avroArray.values = std::vector<float>(
+				static_cast<const float*>(values), 
+				static_cast<const float*>(values) + totalCount);
+
+			data.item.set_ArrayOfFloat(avroArray);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64 || 
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64) {
+			Energistics::Etp::v12::Datatypes::ArrayOfLong avroArray;
+
+			avroArray.values = std::vector<int64_t>(
+				static_cast<const int64_t*>(values), 
+				static_cast<const int64_t*>(values) + totalCount);
+
+			data.item.set_ArrayOfLong(avroArray);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32 || 
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32) {
+			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
+
+			avroArray.values = std::vector<int32_t>(
+				static_cast<const int32_t*>(values), 
+				static_cast<const int32_t*>(values) + totalCount);
+
+			data.item.set_ArrayOfInt(avroArray);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16 || 
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16) {
+			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
+
+			for (size_t i = 0; i < totalCount; ++i) 
+			{
+				avroArray.values.push_back(static_cast<const short*>(values)[i]);
+			}
+
+			data.item.set_ArrayOfInt(avroArray);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8 || 
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8) {
+			std::string avroArray;
+
+			for (size_t i = 0; i < totalCount; ++i)
+			{
+				avroArray.push_back(static_cast<const char*>(values)[i]);
+			}
+
+			data.item.set_bytes(avroArray);
+		}
+		else {
+			throw logic_error(
+				"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
+		}
+
+		pda.dataArrays["0"].array.data = data;
+
+		// Send Data Arrays
+		session_->send(pda, 0, 0x02);
+	}
+	else 
+	{
+		// PUT UNINITIALIZED DATA ARRAYS
+		Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays puda;
+		puda.dataArrays["0"].uid.uri = uri;
+		puda.dataArrays["0"].uid.pathInResource = pathInResource;
+		puda.dataArrays["0"].metadata.dimensions = dimensions;
+
+		// Assign Data Type
+		if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE)
+		{
+			puda.dataArrays["0"].metadata.transportArrayType =
+				Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble;
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT)
+		{
+			puda.dataArrays["0"].metadata.transportArrayType =
+				Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfFloat;
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64 ||
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64)
+		{
+			puda.dataArrays["0"].metadata.transportArrayType =
+				Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong;
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32 ||
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32)
+		{
+			puda.dataArrays["0"].metadata.transportArrayType =
+				Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt;
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16 ||
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16)
+		{
+			puda.dataArrays["0"].metadata.transportArrayType =
+				Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt;
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8 ||
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8)
+		{
+			puda.dataArrays["0"].metadata.transportArrayType =
+				Energistics::Etp::v12::Datatypes::AnyArrayType::bytes;
+		}
+		else
+		{
+			throw logic_error(
+				"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
+		}
+
+		// Send Uninitialized Data Arrays
+		session_->sendAndBlock(puda, 0, 0x02);
+
+		// SEND MULTIPLE PUT DATA SUBARRAYS MESSAGES
+		std::cout << "Writing Subarrays: This may take some time." << std::endl;
+		std::cout << "Please wait..." << std::endl;
+
+		// Initial Starts and Counts
+		std::vector<int64_t> starts{};
+		std::vector<int64_t> counts{};
+
+		for (size_t i = 0; i < numDimensions; ++i) {
+			starts.push_back(0);
+			counts.push_back(numValuesInEachDimension[i]);
+		}
+
+		// Recursively Write Subarrays
+		if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE) {
+			writeSubArrayNd<double>(uri, pathInResource, counts,
+				starts,
+				counts,
+				values);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT) {
+			writeSubArrayNd<float>(uri, pathInResource, counts,
+				starts,
+				counts,
+				values);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64 || 
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64) {
+			writeSubArrayNd<int64_t>(uri, pathInResource, counts,
+				starts,
+				counts,
+				values);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32 || 
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32) {
+			writeSubArrayNd<int32_t>(uri, pathInResource, counts,
+				starts,
+				counts,
+				values);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16 || 
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16) {
+			writeSubArrayNd<short>(
+				uri, pathInResource, counts,
+				starts,
+				counts,
+				values);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8 || 
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8) {
+			writeSubArrayNd<char>(
+				uri, pathInResource, counts,
+				starts,
+				counts,
+				values);
+		}
+		else {
+			throw logic_error(
+				"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
+		}
+	}
 }
 
 void FesapiHdfProxy::createArrayNd(
