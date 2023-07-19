@@ -249,7 +249,7 @@ namespace ETP_NS
 		}
 
 		/*
-			HOW ROW MAJOR INDEX IN CALCULATED FROM N INDICES	
+			HOW ROW MAJOR INDEX IS CALCULATED FROM N INDICES	
 			index = i0 * (dim1 * dim2 * ... * dimn) + i1 * (dim2 * dim3 * ... * dimn) + i2 * (dim3 * dim4 * ... * dimn) + ... + in-1 * dimn + in
 			Here:
 
@@ -367,112 +367,7 @@ namespace ETP_NS
 		void createAnyArray(
 			Energistics::Etp::v12::Datatypes::AnyArray& data,
 			size_t totalCount,
-			T* values) {
-			throw logic_error(
-				"Subarrays are implemented for primitive types only: double, float, int64, int32, short, char");
-		}
-
-		/**
-		* Create AnyArray from given data array of type double.
-		* @param data							The reference to AnyArray to be populated.
-		* @param totalCount						Total number of values.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		template<>
-		void createAnyArray<double>(
-			Energistics::Etp::v12::Datatypes::AnyArray& data,
-			size_t totalCount,
-			double* values) {		
-			Energistics::Etp::v12::Datatypes::ArrayOfDouble avroArray;
-			avroArray.values = std::vector<double>(values, values + totalCount);
-			data.item.set_ArrayOfDouble(avroArray);	
-		}
-
-		/**
-		* Create AnyArray from given data array of type float.
-		* @param data							The reference to AnyArray to be populated.
-		* @param totalCount						Total number of values.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		template<>
-		void createAnyArray<float>(
-			Energistics::Etp::v12::Datatypes::AnyArray& data,
-			size_t totalCount,
-			float* values) {
-			Energistics::Etp::v12::Datatypes::ArrayOfFloat avroArray;
-			avroArray.values = std::vector<float>(values, values + totalCount);
-			data.item.set_ArrayOfFloat(avroArray);
-		}
-
-		/**
-		* Create AnyArray from given data array of type int64_t.
-		* @param data							The reference to AnyArray to be populated.
-		* @param totalCount						Total number of values.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		template<>
-		void createAnyArray<int64_t>(
-			Energistics::Etp::v12::Datatypes::AnyArray& data,
-			size_t totalCount,
-			int64_t* values) {
-			Energistics::Etp::v12::Datatypes::ArrayOfLong avroArray;
-			avroArray.values = std::vector<int64_t>(values, values + totalCount);
-			data.item.set_ArrayOfLong(avroArray);
-		}
-
-		/**
-		* Create AnyArray from given data array of type int32_t.
-		* @param data							The reference to AnyArray to be populated.
-		* @param totalCount						Total number of values.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		template<>
-		void createAnyArray<int32_t>(
-			Energistics::Etp::v12::Datatypes::AnyArray& data,
-			size_t totalCount,
-			int32_t* values) {
-			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
-			avroArray.values = std::vector<int32_t>(values, values + totalCount);
-			data.item.set_ArrayOfInt(avroArray);
-		}
-
-		/**
-		* Create AnyArray from given data array of type short.
-		* @param data							The reference to AnyArray to be populated.
-		* @param totalCount						Total number of values.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		template<>
-		void createAnyArray<short>(
-			Energistics::Etp::v12::Datatypes::AnyArray& data,
-			size_t totalCount,
-			short* values) {
-			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
-
-			for (size_t i = 0; i < totalCount; ++i)
-				avroArray.values.push_back(values[i]);
-
-			data.item.set_ArrayOfInt(avroArray);
-		}
-
-		/**
-		* Create AnyArray from given data array of type char.
-		* @param data							The reference to AnyArray to be populated.
-		* @param totalCount						Total number of values.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		template<>
-		void createAnyArray<char>(
-			Energistics::Etp::v12::Datatypes::AnyArray& data,
-			size_t totalCount,
-			char* values) {
-			std::string avroArray{};
-
-			for (size_t i = 0; i < totalCount; ++i)
-				avroArray.push_back(values[i]);
-
-			data.item.set_bytes(avroArray);
-		}
+			T* values);
 
 		/**
 		* Write an array (potentially with multi dimensions) of a specific datatype into the HDF file by means of a single dataset.
