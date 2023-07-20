@@ -119,6 +119,16 @@ void DataArrayHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 		}
 		on_GetDataArrayMetadataResponse(gdamr, mh.correlationId);
 	}
+	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays::messageTypeId) {
+		Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays msg;
+		avro::decode(*d, msg);
+		on_PutUninitializedDataArrays(msg, mh.messageId);
+	}
+	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse::messageTypeId) {
+		Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse msg;
+		avro::decode(*d, msg);
+		on_PutUninitializedDataArraysResponse(msg, mh.correlationId);
+	}
 	else {
 		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(3, "The message type ID " + std::to_string(mh.messageType) + " is invalid for the data array protocol."), mh.messageId, 0x02);
 	}
