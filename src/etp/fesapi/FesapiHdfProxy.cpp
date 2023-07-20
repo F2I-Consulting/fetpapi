@@ -116,10 +116,190 @@ std::vector<uint32_t> FesapiHdfProxy::getElementCountPerDimension(const std::str
 }
 
 template<typename T>
+void FesapiHdfProxy::writeSubArrayNd(
+	const std::string& uri,
+	const std::string& pathInResource,
+	std::vector<int64_t>& totalCounts,
+	std::vector<int64_t> starts,
+	std::vector<int64_t> counts,
+	const void* values) 
+{
+	// Calculate array size
+	size_t totalCount{ 1 };
+
+	for (const auto& count : counts) {
+		totalCount *= count;
+	}
+
+	// [Base Condition] Array size is OK to be transmitted.
+	if ((totalCount * sizeof(T)) <= maxArraySize_) {
+
+		// PUT DATA SUBARRAYS
+		Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays pdsa{};
+		pdsa.dataSubarrays["0"].uid.uri = uri;
+		pdsa.dataSubarrays["0"].uid.pathInResource = pathInResource;
+		pdsa.dataSubarrays["0"].starts = starts;
+		pdsa.dataSubarrays["0"].counts = counts;
+
+		// Cast values in T values.
+		const T* typeValues{ static_cast<const T*>(values) };
+
+		// Create 1D Array for Sub Values.
+		T* subValues = new T[totalCount];
+		size_t valueIndex{ 0 };
+
+		// Recursively populate subValues starting from first dimension.
+		populateSubValuesNd<T>(
+			0,
+			totalCounts, starts, counts,
+			valueIndex, typeValues, subValues);
+
+		// Create AVRO Array
+		Energistics::Etp::v12::Datatypes::AnyArray data;
+		createAnyArray<T>(data, totalCount, subValues); // Type-specific code is written in explicit specializations for createAnyArray().
+		pdsa.dataSubarrays["0"].data = data;
+
+		std::cout << "Writing subarray..." << std::endl;
+
+		// Send putDataSubarrays Message
+		session_->sendAndBlock(pdsa, 0, 0x02);
+
+		// Delete Array
+		delete[] subValues;
+	}
+	// [Divide and Conquer Approach] If sub array is still large, partition it into more sub arrays.
+	else {
+		// Recursively divide all dimensions starting from first dimension.
+		createSubArrayNd<T>(
+			0,
+			uri, pathInResource, totalCounts,
+			starts, counts, values);
+	}
+}
+
+template<typename T>
+void FesapiHdfProxy::populateSubValuesNd(
+	size_t dimensionIndex,
+	std::vector<int64_t>& totalCounts,
+	std::vector<int64_t>& starts,
+	std::vector<int64_t>& counts,
+	size_t& valueIndex,
+	const T* values,
+	T* subValues) 
+{
+	// [Base Condition] If dimensionIndex exceeds last dimension.
+	if (dimensionIndex >= starts.size()) {
+		// Add value in subValues.
+		subValues[valueIndex] =
+			values[getRowMajorIndex(0, totalCounts, starts)]; // Convert nD indices to row major order index.
+
+		++valueIndex;
+	}
+	else {
+		// Save starting index.
+		int64_t start = starts[dimensionIndex];
+
+		for (size_t i = 0; i < counts[dimensionIndex]; ++i) {
+			// Recursively populate subValues for next dimensions.
+			populateSubValuesNd<T>(
+				dimensionIndex + 1,
+				totalCounts,
+				starts, counts,
+				valueIndex, values, subValues);
+
+			starts[dimensionIndex]++;
+		}
+
+		// Restore starting index.
+		starts[dimensionIndex] = start;
+	}
+}
+
+int64_t FesapiHdfProxy::getRowMajorIndex(
+	size_t dimensionIndex,
+	std::vector<int64_t>& totalCounts,
+	std::vector<int64_t>& starts) 
+{
+	// [Base Condition] If dimensionIndex is the last dimension.	
+	if (dimensionIndex == (starts.size() - 1)) {
+		return starts[dimensionIndex];
+	}
+	else {
+		return starts[dimensionIndex] * getCountsProduct(dimensionIndex + 1, totalCounts) +
+			getRowMajorIndex((dimensionIndex + 1), totalCounts, starts);
+	}
+}
+
+int64_t FesapiHdfProxy::getCountsProduct(
+	size_t dimensionIndex,
+	std::vector<int64_t>& totalCounts)
+{
+	// [Base Condition] If dimensionIndex exceeds the last dimension.	
+	if (dimensionIndex >= totalCounts.size()) {
+		return 1;
+	}
+	else {
+		return totalCounts[dimensionIndex] *
+			getCountsProduct(dimensionIndex + 1, totalCounts);
+	}
+}
+
+template<typename T>
+void FesapiHdfProxy::createSubArrayNd(
+	size_t dimensionIndex,
+	const std::string& uri,
+	const std::string& pathInResource,
+	std::vector<int64_t>& totalCounts,
+	std::vector<int64_t> starts,
+	std::vector<int64_t> counts,
+	const void* values) 
+{
+	// [Base Condition] If dimensionIndex exceeds the last dimension.
+	if (dimensionIndex >= starts.size()) {
+		// Recursively Write Subarray.
+		writeSubArrayNd<T>(
+			uri, pathInResource, totalCounts,
+			starts,
+			counts,
+			values);
+	}
+	else {
+		int64_t numberOfValues = counts[dimensionIndex];
+
+		int64_t firstHalfValues = numberOfValues / 2;
+		int64_t secondHalfValues = numberOfValues - firstHalfValues;
+
+		std::vector<int64_t> newCounts{ counts };
+		newCounts[dimensionIndex] = firstHalfValues;
+
+		// Recursively divide next dimension.
+		createSubArrayNd<T>(
+			dimensionIndex + 1,
+			uri, pathInResource, totalCounts,
+			starts,
+			newCounts,
+			values);
+
+		std::vector<int64_t> newStarts{ starts };
+		newStarts[dimensionIndex] = newStarts[dimensionIndex] + firstHalfValues;
+		newCounts[dimensionIndex] = secondHalfValues;
+
+		// Recursively divide next dimension.
+		createSubArrayNd<T>(
+			dimensionIndex + 1,
+			uri, pathInResource, totalCounts,
+			newStarts,
+			newCounts,
+			values);
+	}
+}
+
+template<typename T>
 void FesapiHdfProxy::createAnyArray(
 	Energistics::Etp::v12::Datatypes::AnyArray& data,
 	size_t totalCount,
-	T* values) {
+	T* values) 
+{
 	throw logic_error(
 		"Subarrays are implemented for primitive types only: double, float, int64, int32, short, char");
 }
@@ -129,7 +309,8 @@ template<>
 void FesapiHdfProxy::createAnyArray<double>(
 	Energistics::Etp::v12::Datatypes::AnyArray& data,
 	size_t totalCount,
-	double* values) {
+	double* values) 
+{
 	Energistics::Etp::v12::Datatypes::ArrayOfDouble avroArray;
 	avroArray.values = std::vector<double>(values, values + totalCount);
 	data.item.set_ArrayOfDouble(avroArray);
@@ -139,7 +320,8 @@ template<>
 void FesapiHdfProxy::createAnyArray<float>(
 	Energistics::Etp::v12::Datatypes::AnyArray& data,
 	size_t totalCount,
-	float* values) {
+	float* values) 
+{
 	Energistics::Etp::v12::Datatypes::ArrayOfFloat avroArray;
 	avroArray.values = std::vector<float>(values, values + totalCount);
 	data.item.set_ArrayOfFloat(avroArray);
@@ -149,7 +331,8 @@ template<>
 void FesapiHdfProxy::createAnyArray<int64_t>(
 	Energistics::Etp::v12::Datatypes::AnyArray& data,
 	size_t totalCount,
-	int64_t* values) {
+	int64_t* values) 
+{
 	Energistics::Etp::v12::Datatypes::ArrayOfLong avroArray;
 	avroArray.values = std::vector<int64_t>(values, values + totalCount);
 	data.item.set_ArrayOfLong(avroArray);
@@ -159,7 +342,8 @@ template<>
 void FesapiHdfProxy::createAnyArray<int32_t>(
 	Energistics::Etp::v12::Datatypes::AnyArray& data,
 	size_t totalCount,
-	int32_t* values) {
+	int32_t* values) 
+{
 	Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
 	avroArray.values = std::vector<int32_t>(values, values + totalCount);
 	data.item.set_ArrayOfInt(avroArray);
@@ -169,7 +353,8 @@ template<>
 void FesapiHdfProxy::createAnyArray<short>(
 	Energistics::Etp::v12::Datatypes::AnyArray& data,
 	size_t totalCount,
-	short* values) {
+	short* values) 
+{
 	Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
 
 	for (size_t i = 0; i < totalCount; ++i)
@@ -182,7 +367,8 @@ template<>
 void FesapiHdfProxy::createAnyArray<char>(
 	Energistics::Etp::v12::Datatypes::AnyArray& data,
 	size_t totalCount,
-	char* values) {
+	char* values) 
+{
 	std::string avroArray{};
 
 	for (size_t i = 0; i < totalCount; ++i)
@@ -216,7 +402,7 @@ void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
 		totalCount *= numValuesInEachDimension[i];
 	}
 
-	// Determine Value Size and Array Type (bytes)
+	// Determine Value Size (bytes) and Any Array Type
 	int valueSize{ 1 };
 	Energistics::Etp::v12::Datatypes::AnyArrayType anyArrayType{};
 
