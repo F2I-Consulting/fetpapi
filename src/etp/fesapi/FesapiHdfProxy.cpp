@@ -153,7 +153,7 @@ void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
 		valueSize = sizeof(float);
 	}
 	else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64 ||
-		datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64)
+		datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64)
 	{
 		valueSize = sizeof(int64_t);
 	}
