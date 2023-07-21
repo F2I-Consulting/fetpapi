@@ -146,59 +146,7 @@ namespace ETP_NS
 			std::vector<int64_t>& totalCounts,
 			std::vector<int64_t> starts,
 			std::vector<int64_t> counts,
-			const void* values) {
-
-			// Calculate array size
-			size_t totalCount{ 1 };
-
-			for (const auto& count : counts)
-				totalCount *= count;
-
-			// [Base Condition] Array size is OK to be transmitted.
-			if ((totalCount * sizeof(T)) <= maxArraySize_) {
-
-				// PUT DATA SUBARRAYS
-				Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays pdsa{};
-				pdsa.dataSubarrays["0"].uid.uri = uri;
-				pdsa.dataSubarrays["0"].uid.pathInResource = pathInResource;
-				pdsa.dataSubarrays["0"].starts = starts;
-				pdsa.dataSubarrays["0"].counts = counts;
-
-				// Cast values in T values.
-				const T* typeValues{ static_cast<const T*>(values) };
-
-				// Create 1D Array for Sub Values.
-				T* subValues = new T[totalCount];
-				size_t valueIndex{ 0 };
-
-				// Recursively populate subValues starting from first dimension.
-				populateSubValuesNd<T>(
-					0,
-					totalCounts, starts, counts,
-					valueIndex, typeValues, subValues);
-
-				// Create AVRO Array
-				Energistics::Etp::v12::Datatypes::AnyArray data;
-				createAnyArray<T>(data, totalCount, subValues); // Type-specific code is written in specialized template functions for createAnyArray().
-				pdsa.dataSubarrays["0"].data = data;
-
-				std::cout << "Writing subarray..." << std::endl;
-
-				// Send putDataSubarrays Message
-				session_->sendAndBlock(pdsa, 0, 0x02);
-
-				// Delete Array
-				delete[] subValues;
-			}
-			// [Divide and Conquer Approach] If sub array is still large, partition it into more sub arrays.
-			else {
-				// Recursively divide all dimensions starting from first dimension.
-				createSubArrayNd<T>(
-					0,
-					uri, pathInResource, totalCounts,
-					starts, counts, values);
-			}
-		};
+			const void* values);
 
 		/**
 		* Recursively populate subValues array from original values array.
@@ -218,43 +166,15 @@ namespace ETP_NS
 			std::vector<int64_t>& counts,
 			size_t& valueIndex,
 			const T* values,
-			T* subValues) {
-
-			// [Base Condition] If dimensionIndex exceeds last dimension.
-			if (dimensionIndex >= starts.size()) {
-				// Add value in subValues.
-				subValues[valueIndex] =
-					values[getRowMajorIndex(0, totalCounts, starts)]; // Convert nD indices to row major order index.
-
-				++valueIndex;
-			}
-			else {
-				// Save starting index.
-				int64_t start = starts[dimensionIndex];
-
-				for (size_t i = 0; i < counts[dimensionIndex]; ++i) {
-					// Recursively populate subValues for next dimensions.
-					populateSubValuesNd<T>(
-						dimensionIndex + 1,
-						totalCounts,
-						starts, counts,
-						valueIndex, values, subValues);
-
-					starts[dimensionIndex]++;
-				}
-
-				// Restore starting index.
-				starts[dimensionIndex] = start;
-			}
-		}
+			T* subValues);
 
 		/*
-			HOW ROW MAJOR INDEX IN CALCULATED FROM N INDICES	
+			HOW ROW MAJOR INDEX IS CALCULATED FROM N INDICES	
 			index = i0 * (dim1 * dim2 * ... * dimn) + i1 * (dim2 * dim3 * ... * dimn) + i2 * (dim3 * dim4 * ... * dimn) + ... + in-1 * dimn + in
 			Here:
 
 				1.	index is the calculated index value.
-				2.	i0, i1, i2, ..., in-1, in represent the indices of the element in each dimension. 
+				2.	'i0, i1, i2, ..., in-1, in' represent the indices of the element in each dimension. 
 					For example, i0 is the index in the first dimension, i1 is the index in the second dimension, and so on.
 				3.	dim1, dim2, dim3, ..., dimn are the sizes of the array along each dimension. 
 					These represent the number of elements in each dimension.
@@ -269,16 +189,7 @@ namespace ETP_NS
 		int64_t getRowMajorIndex(
 			size_t dimensionIndex,
 			std::vector<int64_t>& totalCounts,
-			std::vector<int64_t>& starts) {
-			// [Base Condition] If dimensionIndex is the last dimension.	
-			if (dimensionIndex == (starts.size() - 1)) {
-				return starts[dimensionIndex];
-			}
-			else {
-				return starts[dimensionIndex] * getCountsProduct(dimensionIndex + 1, totalCounts) + 
-					getRowMajorIndex((dimensionIndex + 1), totalCounts, starts);
-			}
-		}
+			std::vector<int64_t>& starts);
 
 		/**
 		* Recursively calculate product of total counts for calculating row major index.
@@ -287,19 +198,10 @@ namespace ETP_NS
 		*/
 		int64_t getCountsProduct(
 			size_t dimensionIndex,
-			std::vector<int64_t>& totalCounts) {
-			// [Base Condition] If dimensionIndex exceeds the last dimension.	
-			if (dimensionIndex >= totalCounts.size()) {
-				return 1;
-			}
-			else {
-				return totalCounts[dimensionIndex] * 
-					getCountsProduct(dimensionIndex + 1, totalCounts);
-			}
-		}
+			std::vector<int64_t>& totalCounts);
 
 		/**
-		* Recursively divide each dimension into half and create an n-D subbarray.
+		* Recursively divide each dimension into half and create a new nD subarray.
 		* @param dimensionIndex					The index of dimension in nD array.
 		* @param uri							The uri of the original array.
 		* @param pathInResource					The path of the original array.
@@ -316,46 +218,7 @@ namespace ETP_NS
 			std::vector<int64_t>& totalCounts,
 			std::vector<int64_t> starts,
 			std::vector<int64_t> counts,
-			const void* values) {
-			// [Base Condition] If dimensionIndex exceeds the last dimension.
-			if (dimensionIndex >= starts.size()) {
-				// Recursively Write Subarray.
-				writeSubArrayNd<T>(
-					uri, pathInResource, totalCounts,
-					starts,
-					counts,
-					values);
-			}
-			else {
-				int64_t numberOfValues = counts[dimensionIndex];
-
-				int64_t firstHalfValues = numberOfValues / 2;
-				int64_t secondHalfValues = numberOfValues - firstHalfValues;
-
-				std::vector<int64_t> newCounts{ counts };
-				newCounts[dimensionIndex] = firstHalfValues;
-
-				// Recursively divide next dimension.
-				createSubArrayNd<T>(
-					dimensionIndex + 1,
-					uri, pathInResource, totalCounts,
-					starts,
-					newCounts,
-					values);
-
-				std::vector<int64_t> newStarts{ starts };
-				newStarts[dimensionIndex] = newStarts[dimensionIndex] + firstHalfValues;
-				newCounts[dimensionIndex] = secondHalfValues;
-
-				// Recursively divide next dimension.
-				createSubArrayNd<T>(
-					dimensionIndex + 1,
-					uri, pathInResource, totalCounts,
-					newStarts,
-					newCounts,
-					values);
-			}
-		}
+			const void* values);
 
 		/**
 		* Create AnyArray from given data array of type T.
@@ -367,112 +230,7 @@ namespace ETP_NS
 		void createAnyArray(
 			Energistics::Etp::v12::Datatypes::AnyArray& data,
 			size_t totalCount,
-			T* values) {
-			throw logic_error(
-				"Subarrays are implemented for primitive types only: double, float, int64, int32, short, char");
-		}
-
-		/**
-		* Create AnyArray from given data array of type double.
-		* @param data							The reference to AnyArray to be populated.
-		* @param totalCount						Total number of values.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		template<>
-		void createAnyArray<double>(
-			Energistics::Etp::v12::Datatypes::AnyArray& data,
-			size_t totalCount,
-			double* values) {		
-			Energistics::Etp::v12::Datatypes::ArrayOfDouble avroArray;
-			avroArray.values = std::vector<double>(values, values + totalCount);
-			data.item.set_ArrayOfDouble(avroArray);	
-		}
-
-		/**
-		* Create AnyArray from given data array of type float.
-		* @param data							The reference to AnyArray to be populated.
-		* @param totalCount						Total number of values.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		template<>
-		void createAnyArray<float>(
-			Energistics::Etp::v12::Datatypes::AnyArray& data,
-			size_t totalCount,
-			float* values) {
-			Energistics::Etp::v12::Datatypes::ArrayOfFloat avroArray;
-			avroArray.values = std::vector<float>(values, values + totalCount);
-			data.item.set_ArrayOfFloat(avroArray);
-		}
-
-		/**
-		* Create AnyArray from given data array of type int64_t.
-		* @param data							The reference to AnyArray to be populated.
-		* @param totalCount						Total number of values.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		template<>
-		void createAnyArray<int64_t>(
-			Energistics::Etp::v12::Datatypes::AnyArray& data,
-			size_t totalCount,
-			int64_t* values) {
-			Energistics::Etp::v12::Datatypes::ArrayOfLong avroArray;
-			avroArray.values = std::vector<int64_t>(values, values + totalCount);
-			data.item.set_ArrayOfLong(avroArray);
-		}
-
-		/**
-		* Create AnyArray from given data array of type int32_t.
-		* @param data							The reference to AnyArray to be populated.
-		* @param totalCount						Total number of values.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		template<>
-		void createAnyArray<int32_t>(
-			Energistics::Etp::v12::Datatypes::AnyArray& data,
-			size_t totalCount,
-			int32_t* values) {
-			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
-			avroArray.values = std::vector<int32_t>(values, values + totalCount);
-			data.item.set_ArrayOfInt(avroArray);
-		}
-
-		/**
-		* Create AnyArray from given data array of type short.
-		* @param data							The reference to AnyArray to be populated.
-		* @param totalCount						Total number of values.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		template<>
-		void createAnyArray<short>(
-			Energistics::Etp::v12::Datatypes::AnyArray& data,
-			size_t totalCount,
-			short* values) {
-			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
-
-			for (size_t i = 0; i < totalCount; ++i)
-				avroArray.values.push_back(values[i]);
-
-			data.item.set_ArrayOfInt(avroArray);
-		}
-
-		/**
-		* Create AnyArray from given data array of type char.
-		* @param data							The reference to AnyArray to be populated.
-		* @param totalCount						Total number of values.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		template<>
-		void createAnyArray<char>(
-			Energistics::Etp::v12::Datatypes::AnyArray& data,
-			size_t totalCount,
-			char* values) {
-			std::string avroArray{};
-
-			for (size_t i = 0; i < totalCount; ++i)
-				avroArray.push_back(values[i]);
-
-			data.item.set_bytes(avroArray);
-		}
+			T* values);
 
 		/**
 		* Write an array (potentially with multi dimensions) of a specific datatype into the HDF file by means of a single dataset.
