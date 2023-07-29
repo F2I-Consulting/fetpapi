@@ -139,14 +139,14 @@ namespace ETP_NS
 		* @param counts							The number of values in each dimension of the subarray to be written.
 		* @param values							1d array of specific datatype ordered firstly by fastest direction.
 		*/
-		template<typename T>
+		/*template<typename T>
 		void writeSubArrayNd(
 			const std::string& uri,
 			const std::string& pathInResource,
 			std::vector<int64_t>& totalCounts,
 			std::vector<int64_t> starts,
 			std::vector<int64_t> counts,
-			const void* values);
+			const void* values);*/
 
 		/**
 		* Recursively populate subValues array from original values array.
@@ -201,7 +201,7 @@ namespace ETP_NS
 			std::vector<int64_t>& totalCounts);
 
 		/**
-		* Recursively divide each dimension into half and create a new nD subarray.
+		* Recursively write sub arrays (potentially with 2 dimensions) of a specific datatype into the HDF file by means of a single dataset.
 		* @param dimensionIndex					The index of dimension in nD array.
 		* @param uri							The uri of the original array.
 		* @param pathInResource					The path of the original array.
@@ -211,7 +211,7 @@ namespace ETP_NS
 		* @param values							1d array of specific datatype ordered firstly by fastest direction.
 		*/
 		template<typename T>
-		void createSubArrayNd(
+		void writeSubArrayNd(
 			size_t dimensionIndex,
 			const std::string& uri,
 			const std::string& pathInResource,
@@ -575,7 +575,7 @@ namespace ETP_NS
 		AbstractSession* session_;
 		unsigned int compressionLevel;
 		std::string xmlNs_;
-		int maxArraySize_{ 4000000 }; // Bytes
+		int maxArraySize_{ 12000000 }; // Bytes
 
 		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier buildDataArrayIdentifier(const std::string & datasetName) const;
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrays buildGetDataArraysMessage(const std::string & datasetName) const;
