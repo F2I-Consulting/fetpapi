@@ -116,68 +116,6 @@ std::vector<uint32_t> FesapiHdfProxy::getElementCountPerDimension(const std::str
 }
 
 template<typename T>
-void FesapiHdfProxy::writeSubArrayNd(
-	const std::string& uri,
-	const std::string& pathInResource,
-	std::vector<int64_t>& totalCounts,
-	std::vector<int64_t> starts,
-	std::vector<int64_t> counts,
-	const void* values) 
-{
-	// Calculate array size
-	size_t totalCount{ 1 };
-
-	for (const auto& count : counts) {
-		totalCount *= count;
-	}
-
-	// [Base Condition] Array size is OK to be transmitted.
-	if ((totalCount * sizeof(T)) <= maxArraySize_) {
-
-		// PUT DATA SUBARRAYS
-		Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays pdsa{};
-		pdsa.dataSubarrays["0"].uid.uri = uri;
-		pdsa.dataSubarrays["0"].uid.pathInResource = pathInResource;
-		pdsa.dataSubarrays["0"].starts = starts;
-		pdsa.dataSubarrays["0"].counts = counts;
-
-		// Cast values in T values.
-		const T* typeValues{ static_cast<const T*>(values) };
-
-		// Create 1D Array for Sub Values.
-		T* subValues = new T[totalCount];
-		size_t valueIndex{ 0 };
-
-		// Recursively populate subValues starting from first dimension.
-		populateSubValuesNd<T>(
-			0,
-			totalCounts, starts, counts,
-			valueIndex, typeValues, subValues);
-
-		// Create AVRO Array
-		Energistics::Etp::v12::Datatypes::AnyArray data;
-		createAnyArray<T>(data, totalCount, subValues); // Type-specific code is written in explicit specializations for createAnyArray().
-		pdsa.dataSubarrays["0"].data = data;
-
-		std::cout << "Writing subarray..." << std::endl;
-
-		// Send putDataSubarrays Message
-		session_->sendAndBlock(pdsa, 0, 0x02);
-
-		// Delete Array
-		delete[] subValues;
-	}
-	// [Divide and Conquer Approach] If sub array is still large, partition it into more sub arrays.
-	else {
-		// Recursively divide all dimensions starting from first dimension.
-		createSubArrayNd<T>(
-			0,
-			uri, pathInResource, totalCounts,
-			starts, counts, values);
-	}
-}
-
-template<typename T>
 void FesapiHdfProxy::populateSubValuesNd(
 	size_t dimensionIndex,
 	std::vector<int64_t>& totalCounts,
@@ -245,7 +183,7 @@ int64_t FesapiHdfProxy::getCountsProduct(
 }
 
 template<typename T>
-void FesapiHdfProxy::createSubArrayNd(
+void FesapiHdfProxy::writeSubArrayNd(
 	size_t dimensionIndex,
 	const std::string& uri,
 	const std::string& pathInResource,
@@ -254,15 +192,56 @@ void FesapiHdfProxy::createSubArrayNd(
 	std::vector<int64_t> counts,
 	const void* values) 
 {
-	// [Base Condition] If dimensionIndex exceeds the last dimension.
-	if (dimensionIndex >= starts.size()) {
-		// Recursively Write Subarray.
-		writeSubArrayNd<T>(
-			uri, pathInResource, totalCounts,
-			starts,
-			counts,
-			values);
+	// Calculate array size
+	size_t totalCount{ 1 };
+
+	for (const auto& count : counts) {
+		totalCount *= count;
 	}
+
+	// [Base Condition] If subarray can be transmitted.
+	if ((totalCount * sizeof(T)) <= maxArraySize_) {
+		// PUT DATA SUBARRAYS
+		Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays pdsa{};
+		pdsa.dataSubarrays["0"].uid.uri = uri;
+		pdsa.dataSubarrays["0"].uid.pathInResource = pathInResource;
+		pdsa.dataSubarrays["0"].starts = starts;
+		pdsa.dataSubarrays["0"].counts = counts;
+
+		// Cast values in T values.
+		const T* typeValues{ static_cast<const T*>(values) };
+
+		// Create 1D Array for Sub Values.
+		T* subValues = new T[totalCount];
+		size_t valueIndex{ 0 };
+
+		// Recursively populate subValues starting from first dimension.
+		populateSubValuesNd<T>(
+			0,
+			totalCounts, starts, counts,
+			valueIndex, typeValues, subValues);
+
+		// Create AVRO Array
+		Energistics::Etp::v12::Datatypes::AnyArray data;
+		createAnyArray<T>(data, totalCount, subValues); // Type-specific code is written in explicit specializations for createAnyArray().
+		pdsa.dataSubarrays["0"].data = data;
+
+		std::cout << "Writing subarray..." << std::endl;
+
+		// Send putDataSubarrays Message
+		session_->sendAndBlock(pdsa, 0, 0x02);
+
+		// Delete Array
+		delete[] subValues;
+	}
+	// Again divide all dimensions starting from first dimension.
+	else if (dimensionIndex >= starts.size()) {
+		writeSubArrayNd<T>(
+			0,
+			uri, pathInResource, totalCounts,
+			starts, counts, values);
+	}
+	// Divide the values of current dimension in halves.
 	else {
 		int64_t numberOfValues = counts[dimensionIndex];
 
@@ -273,7 +252,7 @@ void FesapiHdfProxy::createSubArrayNd(
 		newCounts[dimensionIndex] = firstHalfValues;
 
 		// Recursively divide next dimension.
-		createSubArrayNd<T>(
+		writeSubArrayNd<T>(
 			dimensionIndex + 1,
 			uri, pathInResource, totalCounts,
 			starts,
@@ -285,7 +264,7 @@ void FesapiHdfProxy::createSubArrayNd(
 		newCounts[dimensionIndex] = secondHalfValues;
 
 		// Recursively divide next dimension.
-		createSubArrayNd<T>(
+		writeSubArrayNd<T>(
 			dimensionIndex + 1,
 			uri, pathInResource, totalCounts,
 			newStarts,
@@ -543,43 +522,41 @@ void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
 
 		// Recursively Write Subarrays
 		if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE) {
-			writeSubArrayNd<double>(uri, pathInResource, counts,
+			writeSubArrayNd<double>(0, uri, pathInResource, counts,
 				starts,
 				counts,
 				values);
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT) {
-			writeSubArrayNd<float>(uri, pathInResource, counts,
+			writeSubArrayNd<float>(0, uri, pathInResource, counts,
 				starts,
 				counts,
 				values);
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64 || 
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64) {
-			writeSubArrayNd<int64_t>(uri, pathInResource, counts,
+			writeSubArrayNd<int64_t>(0, uri, pathInResource, counts,
 				starts,
 				counts,
 				values);
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32 || 
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32) {
-			writeSubArrayNd<int32_t>(uri, pathInResource, counts,
+			writeSubArrayNd<int32_t>(0, uri, pathInResource, counts,
 				starts,
 				counts,
 				values);
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16 || 
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16) {
-			writeSubArrayNd<short>(
-				uri, pathInResource, counts,
+			writeSubArrayNd<short>(0, uri, pathInResource, counts,
 				starts,
 				counts,
 				values);
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8 || 
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8) {
-			writeSubArrayNd<char>(
-				uri, pathInResource, counts,
+			writeSubArrayNd<char>(0, uri, pathInResource, counts,
 				starts,
 				counts,
 				values);
