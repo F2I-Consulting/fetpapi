@@ -93,7 +93,7 @@ void DataArrayHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 				session->send(EtpHelpers::buildSingleMessageProtocolException(5, "The data array dimensions cannot be empty"), mh.messageId, 0x02);
 				valid = false;
 			}
-			for (auto dimIndex = 0; dimIndex < daMetadata.dimensions.size(); ++dimIndex) {
+			for (size_t dimIndex = 0; dimIndex < daMetadata.dimensions.size(); ++dimIndex) {
 				if (daMetadata.dimensions[dimIndex] <= 0) {
 					session->fesapi_log("A data array dimension cannot be <= 0");
 					session->send(EtpHelpers::buildSingleMessageProtocolException(5, "The data array dimension " + std::to_string(dimIndex) + " cannot be <= 0"), mh.messageId, 0x02);
@@ -105,7 +105,7 @@ void DataArrayHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 				session->send(EtpHelpers::buildSingleMessageProtocolException(5, "The data array preferredSubarrayDimensions must be the same count as the data array dimensions"), mh.messageId, 0x02);
 				valid = false;
 			}
-			for (auto dimIndex = 0; dimIndex < daMetadata.preferredSubarrayDimensions.size(); ++dimIndex) {
+			for (size_t dimIndex = 0; dimIndex < daMetadata.preferredSubarrayDimensions.size(); ++dimIndex) {
 				if (daMetadata.preferredSubarrayDimensions[dimIndex] <= 0 || daMetadata.preferredSubarrayDimensions[dimIndex] > daMetadata.dimensions[dimIndex]) {
 					session->fesapi_log("A data array preferredSubarrayDimension is <=0 or > to the corresponding data array dimension");
 					session->send(EtpHelpers::buildSingleMessageProtocolException(5, "The data array preferredSubarrayDimension " + std::to_string(dimIndex) + " is <=0 or > to the corresponding data array dimension"), mh.messageId, 0x02);
@@ -145,54 +145,54 @@ void DataArrayHandlers::on_GetDataArraysResponse(const Energistics::Etp::v12::Pr
 		const Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray& da = element.second;
 		session->fesapi_log("Data Array received :");
 		session->fesapi_log("Dimension count :", da.dimensions.size());
-		for (auto i = 0; i < da.dimensions.size(); ++i) {
+		for (size_t i = 0; i < da.dimensions.size(); ++i) {
 			session->fesapi_log("Dimension", std::to_string(i), "with count :", da.dimensions[i]);
 		}
 		if (da.data.item.idx() == 0) {
 			Energistics::Etp::v12::Datatypes::ArrayOfBoolean avroArray = da.data.item.get_ArrayOfBoolean();
 			auto values = avroArray.values;
-			for (auto i = 0; i < values.size() && i < 20; ++i) {
+			for (size_t i = 0; i < values.size() && i < 20; ++i) {
 				session->fesapi_log("bool value", std::to_string(i), "==", std::to_string(values[i]));
 			}
 		}
 		else if (da.data.item.idx() == 1) {
 			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray = da.data.item.get_ArrayOfInt();
 			auto values = avroArray.values;
-			for (auto i = 0; i < values.size() && i < 20; ++i) {
+			for (size_t i = 0; i < values.size() && i < 20; ++i) {
 				session->fesapi_log("int value", std::to_string(i), "==", std::to_string(values[i]));
 			}
 		}
 		else if (da.data.item.idx() == 2) {
 			Energistics::Etp::v12::Datatypes::ArrayOfLong avroArray = da.data.item.get_ArrayOfLong();
 			auto values = avroArray.values;
-			for (auto i = 0; i < values.size() && i < 20; ++i) {
+			for (size_t i = 0; i < values.size() && i < 20; ++i) {
 				session->fesapi_log("int 64 bits value", std::to_string(i), "==", std::to_string(values[i]));
 			}
 		}
 		else if (da.data.item.idx() == 3) {
 			Energistics::Etp::v12::Datatypes::ArrayOfFloat avroArray = da.data.item.get_ArrayOfFloat();
 			auto values = avroArray.values;
-			for (auto i = 0; i < values.size() && i < 20; ++i) {
+			for (size_t i = 0; i < values.size() && i < 20; ++i) {
 				session->fesapi_log("float value", std::to_string(i), "==", std::to_string(values[i]));
 			}
 		}
 		else if (da.data.item.idx() == 4) {
 			Energistics::Etp::v12::Datatypes::ArrayOfDouble avroArray = da.data.item.get_ArrayOfDouble();
 			auto values = avroArray.values;
-			for (auto i = 0; i < values.size() && i < 20; ++i) {
+			for (size_t i = 0; i < values.size() && i < 20; ++i) {
 				session->fesapi_log("double value", std::to_string(i), "==", std::to_string(values[i]));
 			}
 		}
 		else if (da.data.item.idx() == 5) {
 			Energistics::Etp::v12::Datatypes::ArrayOfString avroArray = da.data.item.get_ArrayOfString();
 			auto values = avroArray.values;
-			for (auto i = 0; i < values.size() && i < 20; ++i) {
+			for (size_t i = 0; i < values.size() && i < 20; ++i) {
 				session->fesapi_log("string value ", std::to_string(i), "==", values[i]);
 			}
 		}
 		else if (da.data.item.idx() == 6) {
 			std::string values = da.data.item.get_bytes();
-			for (auto i = 0; i < values.size() && i < 20; ++i) {
+			for (size_t i = 0; i < values.size() && i < 20; ++i) {
 				session->fesapi_log("char value ", std::to_string(i), "==", std::to_string(values[i]));
 			}
 		}
@@ -275,7 +275,7 @@ void DataArrayHandlers::on_GetDataArrayMetadataResponse(const Energistics::Etp::
 			case Energistics::Etp::v12::Datatypes::AnyLogicalArrayType::arrayOfUInt8: session->fesapi_log("arrayOfUInt8"); break;
 			default: session->fesapi_log("unrecognized logicalArrayType");
 		}
-		for (auto i = 0; i < daMetadata.dimensions.size(); ++i) {
+		for (size_t i = 0; i < daMetadata.dimensions.size(); ++i) {
 			session->fesapi_log("Dimension", std::to_string(i), "with count : ", std::to_string(daMetadata.dimensions[i]));
 		}
 	}

@@ -801,8 +801,6 @@ namespace ETP_NS
 			, public std::enable_shared_from_this<plain_http_session>
 		{
 			tcp::socket socket_;
-			boost::asio::strand<
-				boost::asio::io_context::executor_type> strand_;
 
 		public:
 			// Create the http_session
@@ -826,7 +824,6 @@ namespace ETP_NS
 #else
 				, strand_(static_cast<boost::asio::io_context&>(socket_.get_executor().context()).get_executor())
 #endif
-
 			{
 			}
 
@@ -891,8 +888,6 @@ namespace ETP_NS
 			, public std::enable_shared_from_this<ssl_http_session>
 		{
 			boost::beast::ssl_stream<tcp::socket> stream_;
-			boost::asio::strand<
-				boost::asio::io_context::executor_type> strand_;
 			bool eof_ = false;
 
 		public:

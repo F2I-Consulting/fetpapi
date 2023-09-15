@@ -256,9 +256,9 @@ endif (WITH_FESAPI)
 
 target_sources(${PROJECT_NAME} PRIVATE ${ALL_SOURCES_AND_HEADERS})
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${AVRO_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${AVRO_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
 if (WITH_ETP_SSL)
-	target_include_directories(${PROJECT_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
+	target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${OPENSSL_INCLUDE_DIR})
 endif ()
 
 target_include_directories(${PROJECT_NAME} INTERFACE

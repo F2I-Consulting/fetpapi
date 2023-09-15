@@ -214,37 +214,30 @@ void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
 	}
 
 	// Determine Value Size (bytes) and Any Array Type
-	int valueSize{ 1 };
-	Energistics::Etp::v12::Datatypes::AnyArrayType anyArrayType{};
+	size_t valueSize{ 1 };
 
 	switch (datatype) {
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE:
 		valueSize = sizeof(double);
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble;
 		break;
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT:
 		valueSize = sizeof(float);
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfFloat;
 		break;
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64:
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64:
 		valueSize = sizeof(int64_t);
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong;
 		break;
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32:
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32:
 		valueSize = sizeof(int32_t);
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt;
 		break;
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16:
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16:
 		valueSize = sizeof(short);
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt;
 		break;
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8:
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8:
 		valueSize = sizeof(char);
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::bytes;
 		break;
 	default:
 		throw std::logic_error(
@@ -253,7 +246,7 @@ void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
 
 	if (totalCount * valueSize <= maxArraySize_) {
 		// PUT DATA ARRAYS
-		Energistics::Etp::v12::Protocol::DataArray::PutDataArrays pda{};
+		Energistics::Etp::v12::Protocol::DataArray::PutDataArrays pda;
 		pda.dataArrays["0"].uid.uri = uri;
 		pda.dataArrays["0"].uid.pathInResource = pathInResource;
 		pda.dataArrays["0"].array.dimensions = dimensions;
@@ -294,7 +287,7 @@ void FesapiHdfProxy::createArrayNd(
 	for (size_t i = 0; i < numDimensions; ++i) {
 		dimensions.push_back(numValuesInEachDimension[i]);
 	}
-	Energistics::Etp::v12::Datatypes::AnyArrayType anyArrayType{};
+	Energistics::Etp::v12::Datatypes::AnyArrayType anyArrayType;
 
 	switch (datatype) {
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE:
@@ -360,37 +353,30 @@ void FesapiHdfProxy::writeArrayNdSlab(
 	}
 
 	// Determine Value Size (bytes) and Any Array Type
-	int valueSize{ 1 };
-	Energistics::Etp::v12::Datatypes::AnyArrayType anyArrayType{};
+	size_t valueSize{ 1 };
 
 	switch (datatype) {
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE:
 		valueSize = sizeof(double);
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble;
 		break;
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT:
 		valueSize = sizeof(float);
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfFloat;
 		break;
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64:
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64:
 		valueSize = sizeof(int64_t);
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong;
 		break;
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32:
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32:
 		valueSize = sizeof(int32_t);
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt;
 		break;
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16:
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16:
 		valueSize = sizeof(short);
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt;
 		break;
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8:
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8:
 		valueSize = sizeof(char);
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::bytes;
 		break;
 	default:
 		throw std::logic_error(
@@ -406,7 +392,7 @@ void FesapiHdfProxy::writeArrayNdSlab(
 		}
 
 		// PUT DATA SUBARRAYS
-		Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays pdsa{};
+		Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays pdsa;
 		pdsa.dataSubarrays["0"].uid.uri = uri;
 		pdsa.dataSubarrays["0"].uid.pathInResource = pathInResource;
 		pdsa.dataSubarrays["0"].starts = starts;
@@ -527,9 +513,4 @@ void FesapiHdfProxy::readArrayNdOfIntValues(
 bool FesapiHdfProxy::exist(const std::string & absolutePathInHdfFile) const
 {
 	throw logic_error("exist Not implemented yet");
-}
-
-bool FesapiHdfProxy::isCompressed(const std::string & datasetName)
-{
-	throw logic_error("isCompressed Not implemented yet");
 }

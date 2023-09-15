@@ -112,6 +112,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 				}
 			} // Scope for specificProtocolHandlersLock
 
+			size_t receivedMhProtocol = static_cast<size_t>(receivedMh.protocol);
 			if (specificProtocolHandler) {
 				// Receive a message which has been asked to be processed with a specific protocol handler
 				specificProtocolHandler->decodeMessageBody(receivedMh, d);
@@ -121,13 +122,13 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 					specificProtocolHandlers.erase(specificProtocolHandlerIt);
 				}
 			}
-			else if (receivedMh.protocol < protocolHandlers.size() && protocolHandlers[receivedMh.protocol] != nullptr) {
+			else if (receivedMhProtocol < protocolHandlers.size() && protocolHandlers[receivedMhProtocol] != nullptr) {
 				// Receive a message to be processed with a common protocol handler in case for example an unsollicited notification
-				protocolHandlers[receivedMh.protocol]->decodeMessageBody(receivedMh, d);
+				protocolHandlers[receivedMhProtocol]->decodeMessageBody(receivedMh, d);
 			}
 			else {
-				std::cerr << "Received a message with id " << receivedMh.messageId << " for which non protocol handlers is associated. Protocol " << receivedMh.protocol << std::endl;
-				send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(4, "The agent does not support the protocol " + std::to_string(receivedMh.protocol) + " identified in a message header."), receivedMh.messageId, 0x02);
+				std::cerr << "Received a message with id " << receivedMh.messageId << " for which non protocol handlers is associated. Protocol " << receivedMhProtocol << std::endl;
+				send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(4, "The agent does not support the protocol " + std::to_string(receivedMhProtocol) + " identified in a message header."), receivedMh.messageId, 0x02);
 			}
 		}
 		flushReceivingBuffer();

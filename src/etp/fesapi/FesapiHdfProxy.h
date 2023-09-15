@@ -454,8 +454,9 @@ namespace ETP_NS
 
 		/**
 		* Check wether a dataset is compressed or not.
+		* From an ETP client point of view, the dataset is not compressed even if it may be on server storage or even on the websocket.
 		*/
-		bool isCompressed(const std::string & datasetName) final;
+		bool isCompressed(const std::string &) final { return false; }
 		
 		/**
 		 * Get the number of elements in each chunk dimension of an HDF5 dataset.
@@ -473,7 +474,7 @@ namespace ETP_NS
 		AbstractSession* session_;
 		unsigned int compressionLevel;
 		std::string xmlNs_;
-		int maxArraySize_{ 12000000 }; // Bytes
+		size_t maxArraySize_{ 12000000 }; // Bytes
 
 		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier buildDataArrayIdentifier(const std::string & datasetName) const;
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrays buildGetDataArraysMessage(const std::string & datasetName) const;
