@@ -115,245 +115,77 @@ std::vector<uint32_t> FesapiHdfProxy::getElementCountPerDimension(const std::str
 	return result;
 }
 
-template<typename T>
-void FesapiHdfProxy::populateSubValuesNd(
-	size_t dimensionIndex,
-	std::vector<int64_t>& totalCounts,
-	std::vector<int64_t>& starts,
-	std::vector<int64_t>& counts,
-	size_t& valueIndex,
-	const T* values,
-	T* subValues) 
-{
-	// [Base Condition] If dimensionIndex exceeds last dimension.
-	if (dimensionIndex >= starts.size()) {
-		// Add value in subValues.
-		subValues[valueIndex] =
-			values[getRowMajorIndex(0, totalCounts, starts)]; // Convert nD indices to row major order index.
+namespace {
+	Energistics::Etp::v12::Datatypes::AnyArray convertVoidArrayIntoAvroAnyArray(
+		COMMON_NS::AbstractObject::numericalDatatypeEnum datatype,
+		const void * values, size_t totalCount)
+	{
+		Energistics::Etp::v12::Datatypes::AnyArray data;
+		if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE) {
+			Energistics::Etp::v12::Datatypes::ArrayOfDouble avroArray;
 
-		++valueIndex;
-	}
-	else {
-		// Save starting index.
-		int64_t start = starts[dimensionIndex];
+			avroArray.values = std::vector<double>(
+				static_cast<const double*>(values),
+				static_cast<const double*>(values) + totalCount);
 
-		for (size_t i = 0; i < counts[dimensionIndex]; ++i) {
-			// Recursively populate subValues for next dimensions.
-			populateSubValuesNd<T>(
-				dimensionIndex + 1,
-				totalCounts,
-				starts, counts,
-				valueIndex, values, subValues);
+			data.item.set_ArrayOfDouble(avroArray);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT) {
+			Energistics::Etp::v12::Datatypes::ArrayOfFloat avroArray;
 
-			starts[dimensionIndex]++;
+			avroArray.values = std::vector<float>(
+				static_cast<const float*>(values),
+				static_cast<const float*>(values) + totalCount);
+
+			data.item.set_ArrayOfFloat(avroArray);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64 ||
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64) {
+			Energistics::Etp::v12::Datatypes::ArrayOfLong avroArray;
+
+			avroArray.values = std::vector<int64_t>(
+				static_cast<const int64_t*>(values),
+				static_cast<const int64_t*>(values) + totalCount);
+
+			data.item.set_ArrayOfLong(avroArray);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32 ||
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32) {
+			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
+
+			avroArray.values = std::vector<int32_t>(
+				static_cast<const int32_t*>(values),
+				static_cast<const int32_t*>(values) + totalCount);
+
+			data.item.set_ArrayOfInt(avroArray);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16 ||
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16) {
+			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
+
+			for (size_t i = 0; i < totalCount; ++i) {
+				avroArray.values.push_back(static_cast<const short*>(values)[i]);
+			}
+
+			data.item.set_ArrayOfInt(avroArray);
+		}
+		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8 ||
+			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8) {
+			std::string avroArray;
+
+			for (size_t i = 0; i < totalCount; ++i) {
+				avroArray.push_back(static_cast<const char*>(values)[i]);
+			}
+
+			data.item.set_bytes(avroArray);
+		}
+		else {
+			throw logic_error(
+				"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
 		}
 
-		// Restore starting index.
-		starts[dimensionIndex] = start;
+		return data;
 	}
-}
-
-int64_t FesapiHdfProxy::getRowMajorIndex(
-	size_t dimensionIndex,
-	std::vector<int64_t>& totalCounts,
-	std::vector<int64_t>& starts) 
-{
-	// [Base Condition] If dimensionIndex is the last dimension.	
-	if (dimensionIndex == (starts.size() - 1)) {
-		return starts[dimensionIndex];
-	}
-	else {
-		return starts[dimensionIndex] * getCountsProduct(dimensionIndex + 1, totalCounts) +
-			getRowMajorIndex((dimensionIndex + 1), totalCounts, starts);
-	}
-}
-
-int64_t FesapiHdfProxy::getCountsProduct(
-	size_t dimensionIndex,
-	std::vector<int64_t>& totalCounts)
-{
-	// [Base Condition] If dimensionIndex exceeds the last dimension.	
-	if (dimensionIndex >= totalCounts.size()) {
-		return 1;
-	}
-	else {
-		return totalCounts[dimensionIndex] *
-			getCountsProduct(dimensionIndex + 1, totalCounts);
-	}
-}
-
-template<typename T>
-void FesapiHdfProxy::writeSubArrayNd(
-	size_t dimensionIndex,
-	const std::string& uri,
-	const std::string& pathInResource,
-	std::vector<int64_t>& totalCounts,
-	std::vector<int64_t> starts,
-	std::vector<int64_t> counts,
-	const void* values) 
-{
-	// Calculate array size
-	size_t totalCount{ 1 };
-
-	for (const auto& count : counts) {
-		totalCount *= count;
-	}
-
-	// [Base Condition] If subarray can be transmitted.
-	if ((totalCount * sizeof(T)) <= maxArraySize_) {
-		// PUT DATA SUBARRAYS
-		Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays pdsa{};
-		pdsa.dataSubarrays["0"].uid.uri = uri;
-		pdsa.dataSubarrays["0"].uid.pathInResource = pathInResource;
-		pdsa.dataSubarrays["0"].starts = starts;
-		pdsa.dataSubarrays["0"].counts = counts;
-
-		// Cast values in T values.
-		const T* typeValues{ static_cast<const T*>(values) };
-
-		// Create 1D Array for Sub Values.
-		T* subValues = new T[totalCount];
-		size_t valueIndex{ 0 };
-
-		// Recursively populate subValues starting from first dimension.
-		populateSubValuesNd<T>(
-			0,
-			totalCounts, starts, counts,
-			valueIndex, typeValues, subValues);
-
-		// Create AVRO Array
-		Energistics::Etp::v12::Datatypes::AnyArray data;
-		createAnyArray<T>(data, totalCount, subValues); // Type-specific code is written in explicit specializations for createAnyArray().
-		pdsa.dataSubarrays["0"].data = data;
-
-		std::cout << "Writing subarray..." << std::endl;
-
-		// Send putDataSubarrays Message
-		session_->sendAndBlock(pdsa, 0, 0x02);
-
-		// Delete Array
-		delete[] subValues;
-	}
-	// Again divide all dimensions starting from first dimension.
-	else if (dimensionIndex >= starts.size()) {
-		writeSubArrayNd<T>(
-			0,
-			uri, pathInResource, totalCounts,
-			starts, counts, values);
-	}
-	// Divide the values of current dimension in halves.
-	else {
-		int64_t numberOfValues = counts[dimensionIndex];
-
-		int64_t firstHalfValues = numberOfValues / 2;
-		int64_t secondHalfValues = numberOfValues - firstHalfValues;
-
-		std::vector<int64_t> newCounts{ counts };
-		newCounts[dimensionIndex] = firstHalfValues;
-
-		// Recursively divide next dimension.
-		writeSubArrayNd<T>(
-			dimensionIndex + 1,
-			uri, pathInResource, totalCounts,
-			starts,
-			newCounts,
-			values);
-
-		std::vector<int64_t> newStarts{ starts };
-		newStarts[dimensionIndex] = newStarts[dimensionIndex] + firstHalfValues;
-		newCounts[dimensionIndex] = secondHalfValues;
-
-		// Recursively divide next dimension.
-		writeSubArrayNd<T>(
-			dimensionIndex + 1,
-			uri, pathInResource, totalCounts,
-			newStarts,
-			newCounts,
-			values);
-	}
-}
-
-template<typename T>
-void FesapiHdfProxy::createAnyArray(
-	Energistics::Etp::v12::Datatypes::AnyArray& data,
-	size_t totalCount,
-	T* values) 
-{
-	throw logic_error(
-		"Subarrays are implemented for primitive types only: double, float, int64, int32, short, char");
-}
-
-// Template Specializations for createAnyArray()
-template<>
-void FesapiHdfProxy::createAnyArray<double>(
-	Energistics::Etp::v12::Datatypes::AnyArray& data,
-	size_t totalCount,
-	double* values) 
-{
-	Energistics::Etp::v12::Datatypes::ArrayOfDouble avroArray;
-	avroArray.values = std::vector<double>(values, values + totalCount);
-	data.item.set_ArrayOfDouble(avroArray);
-}
-
-template<>
-void FesapiHdfProxy::createAnyArray<float>(
-	Energistics::Etp::v12::Datatypes::AnyArray& data,
-	size_t totalCount,
-	float* values) 
-{
-	Energistics::Etp::v12::Datatypes::ArrayOfFloat avroArray;
-	avroArray.values = std::vector<float>(values, values + totalCount);
-	data.item.set_ArrayOfFloat(avroArray);
-}
-
-template<>
-void FesapiHdfProxy::createAnyArray<int64_t>(
-	Energistics::Etp::v12::Datatypes::AnyArray& data,
-	size_t totalCount,
-	int64_t* values) 
-{
-	Energistics::Etp::v12::Datatypes::ArrayOfLong avroArray;
-	avroArray.values = std::vector<int64_t>(values, values + totalCount);
-	data.item.set_ArrayOfLong(avroArray);
-}
-
-template<>
-void FesapiHdfProxy::createAnyArray<int32_t>(
-	Energistics::Etp::v12::Datatypes::AnyArray& data,
-	size_t totalCount,
-	int32_t* values) 
-{
-	Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
-	avroArray.values = std::vector<int32_t>(values, values + totalCount);
-	data.item.set_ArrayOfInt(avroArray);
-}
-
-template<>
-void FesapiHdfProxy::createAnyArray<short>(
-	Energistics::Etp::v12::Datatypes::AnyArray& data,
-	size_t totalCount,
-	short* values) 
-{
-	Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
-
-	for (size_t i = 0; i < totalCount; ++i)
-		avroArray.values.push_back(values[i]);
-
-	data.item.set_ArrayOfInt(avroArray);
-}
-
-template<>
-void FesapiHdfProxy::createAnyArray<char>(
-	Energistics::Etp::v12::Datatypes::AnyArray& data,
-	size_t totalCount,
-	char* values) 
-{
-	std::string avroArray{};
-
-	for (size_t i = 0; i < totalCount; ++i)
-		avroArray.push_back(values[i]);
-
-	data.item.set_bytes(avroArray);
 }
 
 void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
@@ -427,144 +259,24 @@ void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
 		pda.dataArrays["0"].array.dimensions = dimensions;
 
 		// Create AVRO Array
-		Energistics::Etp::v12::Datatypes::AnyArray data;
-		if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE) {
-			Energistics::Etp::v12::Datatypes::ArrayOfDouble avroArray;
-
-			avroArray.values = std::vector<double>(
-				static_cast<const double*>(values), 
-				static_cast<const double*>(values) + totalCount);
-
-			data.item.set_ArrayOfDouble(avroArray);
-		}
-		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT) {
-			Energistics::Etp::v12::Datatypes::ArrayOfFloat avroArray;
-
-			avroArray.values = std::vector<float>(
-				static_cast<const float*>(values), 
-				static_cast<const float*>(values) + totalCount);
-
-			data.item.set_ArrayOfFloat(avroArray);
-		}
-		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64 || 
-			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64) {
-			Energistics::Etp::v12::Datatypes::ArrayOfLong avroArray;
-
-			avroArray.values = std::vector<int64_t>(
-				static_cast<const int64_t*>(values), 
-				static_cast<const int64_t*>(values) + totalCount);
-
-			data.item.set_ArrayOfLong(avroArray);
-		}
-		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32 || 
-			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32) {
-			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
-
-			avroArray.values = std::vector<int32_t>(
-				static_cast<const int32_t*>(values), 
-				static_cast<const int32_t*>(values) + totalCount);
-
-			data.item.set_ArrayOfInt(avroArray);
-		}
-		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16 || 
-			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16) {
-			Energistics::Etp::v12::Datatypes::ArrayOfInt avroArray;
-
-			for (size_t i = 0; i < totalCount; ++i) {
-				avroArray.values.push_back(static_cast<const short*>(values)[i]);
-			}
-
-			data.item.set_ArrayOfInt(avroArray);
-		}
-		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8 || 
-			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8) {
-			std::string avroArray;
-
-			for (size_t i = 0; i < totalCount; ++i) {
-				avroArray.push_back(static_cast<const char*>(values)[i]);
-			}
-
-			data.item.set_bytes(avroArray);
-		}
-		else {
-			throw logic_error(
-				"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
-		}
-
-		pda.dataArrays["0"].array.data = data;
+		pda.dataArrays["0"].array.data = convertVoidArrayIntoAvroAnyArray(datatype, values, totalCount);
 
 		// Send Data Arrays
 		session_->send(pda, 0, 0x02);
 	}
 	else {
-		// PUT UNINITIALIZED DATA ARRAYS
-		Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays puda;
-		puda.dataArrays["0"].uid.uri = uri;
-		puda.dataArrays["0"].uid.pathInResource = pathInResource;
-		puda.dataArrays["0"].metadata.dimensions = dimensions;
-		puda.dataArrays["0"].metadata.transportArrayType = anyArrayType;
-
-		// Send Uninitialized Data Arrays
-		session_->sendAndBlock(puda, 0, 0x02);
+		createArrayNd(groupName, name,
+			datatype,
+			numValuesInEachDimension, numDimensions);
 
 		// SEND MULTIPLE PUT DATA SUBARRAYS MESSAGES
-		std::cout << "Writing Subarrays: This may take some time." << std::endl;
-		std::cout << "Please wait..." << std::endl;
+		session_->fesapi_log("Writing Subarrays: This may take some time.");
+		session_->fesapi_log("Please wait...");
 
-		// Initial Starts and Counts
-		std::vector<int64_t> starts{};
-		std::vector<int64_t> counts{};
-
-		for (size_t i = 0; i < numDimensions; ++i) {
-			starts.push_back(0);
-			counts.push_back(numValuesInEachDimension[i]);
-		}
-
-		// Recursively Write Subarrays
-		if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE) {
-			writeSubArrayNd<double>(0, uri, pathInResource, counts,
-				starts,
-				counts,
-				values);
-		}
-		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT) {
-			writeSubArrayNd<float>(0, uri, pathInResource, counts,
-				starts,
-				counts,
-				values);
-		}
-		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64 || 
-			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64) {
-			writeSubArrayNd<int64_t>(0, uri, pathInResource, counts,
-				starts,
-				counts,
-				values);
-		}
-		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32 || 
-			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32) {
-			writeSubArrayNd<int32_t>(0, uri, pathInResource, counts,
-				starts,
-				counts,
-				values);
-		}
-		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16 || 
-			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16) {
-			writeSubArrayNd<short>(0, uri, pathInResource, counts,
-				starts,
-				counts,
-				values);
-		}
-		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8 || 
-			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8) {
-			writeSubArrayNd<char>(0, uri, pathInResource, counts,
-				starts,
-				counts,
-				values);
-		}
-		else {
-			throw logic_error(
-				"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
-		}
+		std::array<uint64_t, 3> offsets = { 0, 0, 0 };
+		writeArrayNdSlab(groupName, name, datatype,
+			values, numValuesInEachDimension,
+			offsets.data(), numDimensions);
 	}
 }
 
@@ -575,7 +287,52 @@ void FesapiHdfProxy::createArrayNd(
 	const uint64_t* numValuesInEachDimension,
 	unsigned int numDimensions)
 {
-	throw logic_error("createArrayNdNot implemented yet");
+	std::string pathInResource{ (groupName.back() == '/' ?
+		groupName : groupName + '/') + datasetName };
+
+	std::vector<int64_t> dimensions{};
+	for (size_t i = 0; i < numDimensions; ++i) {
+		dimensions.push_back(numValuesInEachDimension[i]);
+	}
+	Energistics::Etp::v12::Datatypes::AnyArrayType anyArrayType{};
+
+	switch (datatype) {
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE:
+		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble;
+		break;
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT:
+		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfFloat;
+		break;
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64:
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64:
+		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong;
+		break;
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32:
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32:
+		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt;
+		break;
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16:
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16:
+		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt;
+		break;
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8:
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8:
+		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::bytes;
+		break;
+	default:
+		throw std::logic_error(
+			"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
+	}
+
+	// PUT UNINITIALIZED DATA ARRAYS
+	Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays puda;
+	puda.dataArrays["0"].uid.uri = buildEtp12Uri();
+	puda.dataArrays["0"].uid.pathInResource = pathInResource;
+	puda.dataArrays["0"].metadata.dimensions = dimensions;
+	puda.dataArrays["0"].metadata.transportArrayType = anyArrayType;
+
+	// Send Uninitialized Data Arrays
+	session_->sendAndBlock(puda, 0, 0x02);
 }
 
 void FesapiHdfProxy::writeArrayNdSlab(
@@ -587,7 +344,114 @@ void FesapiHdfProxy::writeArrayNdSlab(
 	const uint64_t* offsetInEachDimension,
 	unsigned int numDimensions)
 {
-	throw logic_error("writeArrayNdSlab Not implemented yet");
+	if (!isOpened())
+		open();
+
+	// URI AND PATH
+	std::string uri{ buildEtp12Uri() };
+
+	std::string pathInResource{ (groupName.back() == '/' ?
+		groupName : groupName + '/') + datasetName };
+
+	// Create Total Count
+	size_t totalCount{ 1 };
+	for (size_t i = 0; i < numDimensions; ++i) {
+		totalCount *= numValuesInEachDimension[i];
+	}
+
+	// Determine Value Size (bytes) and Any Array Type
+	int valueSize{ 1 };
+	Energistics::Etp::v12::Datatypes::AnyArrayType anyArrayType{};
+
+	switch (datatype) {
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE:
+		valueSize = sizeof(double);
+		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble;
+		break;
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT:
+		valueSize = sizeof(float);
+		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfFloat;
+		break;
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64:
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64:
+		valueSize = sizeof(int64_t);
+		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong;
+		break;
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32:
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32:
+		valueSize = sizeof(int32_t);
+		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt;
+		break;
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16:
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16:
+		valueSize = sizeof(short);
+		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt;
+		break;
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8:
+	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8:
+		valueSize = sizeof(char);
+		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::bytes;
+		break;
+	default:
+		throw std::logic_error(
+			"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
+	}
+
+	if (totalCount * valueSize <= maxArraySize_) {
+		std::vector<int64_t> counts;
+		std::vector<int64_t> starts;
+		for (size_t i = 0; i < numDimensions; ++i) {
+			counts.push_back(numValuesInEachDimension[i]);
+			starts.push_back(offsetInEachDimension[i]);
+		}
+
+		// PUT DATA SUBARRAYS
+		Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays pdsa{};
+		pdsa.dataSubarrays["0"].uid.uri = uri;
+		pdsa.dataSubarrays["0"].uid.pathInResource = pathInResource;
+		pdsa.dataSubarrays["0"].starts = starts;
+		pdsa.dataSubarrays["0"].counts = counts;
+
+		// Create AVRO Array
+		pdsa.dataSubarrays["0"].data = convertVoidArrayIntoAvroAnyArray(datatype, values, totalCount);
+
+		// Send putDataSubarrays Message
+		session_->sendAndBlock(pdsa, 0, 0x02);
+	}
+	else {
+		std::unique_ptr<uint64_t[]> counts(new uint64_t[numDimensions]);
+		std::unique_ptr<uint64_t[]> starts(new uint64_t[numDimensions]);
+		for (size_t i = 0; i < numDimensions; ++i) {
+			counts[i] = numValuesInEachDimension[i];
+			starts[i] = offsetInEachDimension[i];
+		}
+
+		size_t dimIdx = 0;
+		for (; dimIdx < numDimensions; ++dimIdx) {
+			if (numValuesInEachDimension[dimIdx] > 1) {
+				auto previousCount = counts[dimIdx];
+				counts[dimIdx] /= 2;
+				
+				writeArrayNdSlab(groupName, datasetName,
+					datatype, values, counts.get(),
+					starts.get(), numDimensions);
+
+				starts[dimIdx] += counts[dimIdx];
+				counts[dimIdx] = previousCount - counts[dimIdx];
+
+				break;
+			}
+		}
+		// Defensive code
+		if (dimIdx >= numDimensions) {
+			throw std::logic_error("The " + std::to_string(valueSize) + " bytes size of a single value is bigger than the allowed server maximum array size which is "
+				+ std::to_string(maxArraySize_) + " bytes.");
+		}
+
+		writeArrayNdSlab(groupName, datasetName, datatype,
+			values, counts.get(),
+			starts.get(), numDimensions);
+	}
 }
 
 void FesapiHdfProxy::readArrayNdOfDoubleValues(
