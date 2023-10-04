@@ -255,7 +255,7 @@ void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
 		pda.dataArrays["0"].array.data = convertVoidArrayIntoAvroAnyArray(datatype, values, totalCount);
 
 		// Send Data Arrays
-		session_->send(pda, 0, 0x02);
+		session_->sendAndBlock(pda, 0, 0x02);
 	}
 	else {
 		createArrayNd(groupName, name,
@@ -347,10 +347,7 @@ void FesapiHdfProxy::writeArrayNdSlab(
 		groupName : groupName + '/') + datasetName };
 
 	// Create Total Count
-	size_t totalCount{ 1 };
-	for (size_t i = 0; i < numDimensions; ++i) {
-		totalCount *= numValuesInEachDimension[i];
-	}
+	size_t totalCount = std::accumulate(numValuesInEachDimension, numValuesInEachDimension + numDimensions, 1, std::multiplies<size_t>());
 
 	// Determine Value Size (bytes) and Any Array Type
 	size_t valueSize{ 1 };
@@ -372,11 +369,11 @@ void FesapiHdfProxy::writeArrayNdSlab(
 		break;
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16:
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16:
-		valueSize = sizeof(short);
+		valueSize = sizeof(int16_t);
 		break;
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8:
 	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8:
-		valueSize = sizeof(char);
+		valueSize = sizeof(int8_t);
 		break;
 	default:
 		throw std::logic_error(
@@ -412,15 +409,18 @@ void FesapiHdfProxy::writeArrayNdSlab(
 			starts[i] = offsetInEachDimension[i];
 		}
 
+		size_t writtenTotalCount = 0;
 		size_t dimIdx = 0;
 		for (; dimIdx < numDimensions; ++dimIdx) {
 			if (numValuesInEachDimension[dimIdx] > 1) {
-				auto previousCount = counts[dimIdx];
+				uint64_t previousCount = counts[dimIdx];
 				counts[dimIdx] /= 2;
 				
 				writeArrayNdSlab(groupName, datasetName,
 					datatype, values, counts.get(),
 					starts.get(), numDimensions);
+
+				writtenTotalCount = std::accumulate(counts.get(), counts.get() + numDimensions, 1, std::multiplies<size_t>());
 
 				starts[dimIdx] += counts[dimIdx];
 				counts[dimIdx] = previousCount - counts[dimIdx];
@@ -435,7 +435,7 @@ void FesapiHdfProxy::writeArrayNdSlab(
 		}
 
 		writeArrayNdSlab(groupName, datasetName, datatype,
-			values, counts.get(),
+			(int8_t*)values + (writtenTotalCount * valueSize), counts.get(),
 			starts.get(), numDimensions);
 	}
 }

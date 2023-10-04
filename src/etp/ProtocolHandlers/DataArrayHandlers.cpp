@@ -139,8 +139,9 @@ void DataArrayHandlers::on_GetDataArrays(const Energistics::Etp::v12::Protocol::
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The DataArrayHandlers::on_GetDataArrays method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void DataArrayHandlers::on_GetDataArraysResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse& msg, int64_t)
+void DataArrayHandlers::on_GetDataArraysResponse(const Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse& msg, int64_t correlationId)
 {
+	session->fesapi_log("Received GetDataArraysResponse to message id", std::to_string(correlationId));
 	for (const auto& element : msg.dataArrays) {
 		const Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray& da = element.second;
 		session->fesapi_log("Data Array received :");
@@ -204,9 +205,12 @@ void DataArrayHandlers::on_PutDataArrays(const Energistics::Etp::v12::Protocol::
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The DataArrayHandlers::on_PutDataArrays method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void DataArrayHandlers::on_PutDataArraysResponse(const Energistics::Etp::v12::Protocol::DataArray::PutDataArraysResponse&, int64_t correlationId)
+void DataArrayHandlers::on_PutDataArraysResponse(const Energistics::Etp::v12::Protocol::DataArray::PutDataArraysResponse& response, int64_t correlationId)
 {
 	session->fesapi_log("Received PutDataArraysResponse to message id", std::to_string(correlationId));
+	for (const auto& element : response.success) {
+		session->fesapi_log(element.first + " -> " + element.second);
+	}
 }
 
 void DataArrayHandlers::on_GetDataSubarrays(const Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays&, int64_t correlationId)
@@ -224,9 +228,12 @@ void DataArrayHandlers::on_PutDataSubarrays(const Energistics::Etp::v12::Protoco
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The DataArrayHandlers::on_PutDataArraySlices method has not been overriden by the agent."), correlationId, 0x02);
 }
 
-void DataArrayHandlers::on_PutDataSubarraysResponse(const Energistics::Etp::v12::Protocol::DataArray::PutDataSubarraysResponse&, int64_t correlationId)
+void DataArrayHandlers::on_PutDataSubarraysResponse(const Energistics::Etp::v12::Protocol::DataArray::PutDataSubarraysResponse& response, int64_t correlationId)
 {
 	session->fesapi_log("Received PutDataSubarraysResponse to message id", std::to_string(correlationId));
+	for (const auto& element : response.success) {
+		session->fesapi_log(element.first + " -> " + element.second);
+	}
 }
 
 void DataArrayHandlers::on_GetDataArrayMetadata(const Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata&, int64_t correlationId)
