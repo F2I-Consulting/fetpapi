@@ -57,6 +57,7 @@ std::shared_ptr<ETP_NS::AbstractSession> connect()
 	session->setStoreProtocolHandlers(std::make_shared<ETP_NS::StoreHandlers>(session.get()));
 	session->setDataArrayProtocolHandlers(std::make_shared<ETP_NS::DataArrayHandlers>(session.get()));
 	session->setDataspaceProtocolHandlers(std::make_shared<ETP_NS::DataspaceHandlers>(session.get()));
+	session->setTransactionProtocolHandlers(std::make_shared<ETP_NS::TransactionHandlers>(session.get()));
 
 #ifdef WITH_ETP_SSL
 	if (std::string(ETP_SERVER_URL).find("wss://") == 0) {
@@ -132,9 +133,9 @@ TEST_CASE("Put a DataArray", "[DataArray]")
 	const size_t xyzPointCount = 333000;
 	std::unique_ptr<double[]> xyzPoints(new double[xyzPointCount * 3]);
 	for (size_t ptIdx = 0; ptIdx < xyzPointCount; ptIdx++) {
-		xyzPoints[ptIdx * 3] = ptIdx;
-		xyzPoints[ptIdx * 3 + 1] = ptIdx;
-		xyzPoints[ptIdx * 3 + 2] = ptIdx;
+		xyzPoints[ptIdx * 3] = (double)ptIdx;
+		xyzPoints[ptIdx * 3 + 1] = (double)ptIdx;
+		xyzPoints[ptIdx * 3 + 2] = (double)ptIdx;
 	}
 	std::cout << "size of the array : " << xyzPointCount * 3 * 8 << " bytes." << std::endl;
 	auto t_start = std::chrono::high_resolution_clock::now();
@@ -168,5 +169,25 @@ TEST_CASE("Put a DataArray", "[DataArray]")
 		REQUIRE(receivedXyzPoints[xyzPointIndex * 3 + 1] == xyzPointIndex);
 		REQUIRE(receivedXyzPoints[xyzPointIndex * 3 + 2] == xyzPointIndex);
 	}
+}
 
+TEST_CASE("Start and Commit a transaction", "[DataArray]")
+{
+	std::shared_ptr<ETP_NS::AbstractSession> session = connect();
+	//session->setVerbose(true);
+	const std::string dataspaceUri = putDataspace(session);
+	REQUIRE(dataspaceUri.size() > 0);
+
+	// Start an ETP transaction to not pollute server if an error occurs during transfer
+	std::vector<std::string> dataspaceUris;
+	dataspaceUris.push_back(dataspaceUri);
+	std::string transactionFailure = session->startTransaction(dataspaceUris, false);
+	REQUIRE(transactionFailure.empty());
+
+	transactionFailure = session->commitTransaction();
+	REQUIRE(transactionFailure.empty());
+
+	// Cleaning
+	deleteDataspace(session, dataspaceUri);
+	session->close();
 }

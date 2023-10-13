@@ -312,7 +312,7 @@ std::string AbstractSession::startTransaction(std::vector<std::string> dataspace
 		throw std::logic_error("You did not register any transaction protocol handlers.");
 	}
 	if (handlers->isInAnActiveTransaction()) {
-		throw std::logic_error("You cannot start a transaction before the current transaction is rolled back or committed. ETP1.2 intentionally supports a single open transaction on a session.");
+		throw std::logic_error("You cannot start a transaction before the current transaction is rolled back or committed. ETP1.2 intentionally supports a single opened transaction on a session.");
 	}
 
 	Energistics::Etp::v12::Protocol::Transaction::StartTransaction startTransactionMsg;
