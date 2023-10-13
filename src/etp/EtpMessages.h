@@ -1946,7 +1946,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				struct Uuid{
-					std::array<uint8_t, 16> array;
+					std::array<uint8_t, 16> array{};
 				};
 			}
 		}

@@ -251,14 +251,14 @@ if (WITH_FESAPI)
 		${FETPAPI_FESAPI_SOURCES}
 		${FETPAPI_FESAPI_HEADERS}
 	)
-	target_include_directories(${PROJECT_NAME} PRIVATE ${HDF5_C_INCLUDE_DIR} ${FESAPI_INCLUDE_DIR})
+	target_include_directories(${PROJECT_NAME} PRIVATE ${FESAPI_INCLUDE_DIR})
 endif (WITH_FESAPI)
 
 target_sources(${PROJECT_NAME} PRIVATE ${ALL_SOURCES_AND_HEADERS})
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${AVRO_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${AVRO_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
 if (WITH_ETP_SSL)
-	target_include_directories(${PROJECT_NAME} PRIVATE ${OPENSSL_INCLUDE_DIR})
+	target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${OPENSSL_INCLUDE_DIR})
 endif ()
 
 target_include_directories(${PROJECT_NAME} INTERFACE
@@ -283,6 +283,14 @@ if (WIN32)
 endif (WIN32)
 
 add_subdirectory(doc)
+
+if (WITH_FESAPI)
+	set (WITH_TEST OFF CACHE BOOL "Also build the unit tests.")
+	if (WITH_TEST)
+		enable_testing()
+		add_subdirectory(test)
+	endif (WITH_TEST)
+endif (WITH_FESAPI)
 
 # ============================================================================
 # Install Fetpapi library

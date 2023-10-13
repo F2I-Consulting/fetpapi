@@ -60,13 +60,18 @@ namespace ETP_NS
 				int version,
 				std::string authorization = "")
 		{
+			size_t hostSizeWithNullTermChar = strlen(host) + 1;
+			char* copyHost = new char[hostSizeWithNullTermChar];
+			std::memcpy(copyHost, host, hostSizeWithNullTermChar); // Copy host because it must be non const in SSL_set_tlsext_host_name
 			// Set SNI Hostname (many hosts need this to handshake successfully)
-			if (!SSL_set_tlsext_host_name(stream_.native_handle(), host))
+			if (!SSL_set_tlsext_host_name(stream_.native_handle(), copyHost))
 			{
 				boost::system::error_code ec{ static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category() };
 				std::cerr << ec.message() << "\n";
+				delete[] copyHost;
 				return;
 			}
+			delete[] copyHost;
 
 			// Set up an HTTP GET request message
 			req_.version(version);

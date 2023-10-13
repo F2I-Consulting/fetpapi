@@ -154,7 +154,7 @@ namespace ETP_NS
 		{
 			if (ec) {
 				std::cerr << "on_handshake : " << ec.message() << std::endl;
-				std::cerr << "Sometimes some ETP server require a trailing slash at the end of their URL" << std::endl;
+				std::cerr << "Sometimes some ETP server require a trailing slash at the end of their URL. Did you also check your optional \"data-partition-id\" additional Header Field?" << std::endl;
 				return;
 			}
 

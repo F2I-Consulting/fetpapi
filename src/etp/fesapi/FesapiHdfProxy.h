@@ -131,108 +131,6 @@ namespace ETP_NS
 		void setCompressionLevel(unsigned int newCompressionLevel) final { if (newCompressionLevel > 9) compressionLevel = 9; else compressionLevel = newCompressionLevel; }
 
 		/**
-		* Recursively write sub arrays (potentially with 2 dimensions) of a specific datatype into the HDF file by means of a single dataset.
-		* @param uri							The uri of the original array.
-		* @param pathInResource					The path of the original array.
-		* @param totalCounts					The total number of values in each dimension of the original array.
-		* @param starts							The starting indices in each dimension of the subarray to be written.
-		* @param counts							The number of values in each dimension of the subarray to be written.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		/*template<typename T>
-		void writeSubArrayNd(
-			const std::string& uri,
-			const std::string& pathInResource,
-			std::vector<int64_t>& totalCounts,
-			std::vector<int64_t> starts,
-			std::vector<int64_t> counts,
-			const void* values);*/
-
-		/**
-		* Recursively populate subValues array from original values array.
-		* @param dimensionIndex					The index of dimension in nD array.
-		* @param totalCounts					The total number of values in each dimension of the original array.				
-		* @param starts							The starting indices in each dimension of the subarray to be written.
-		* @param counts							The number of values in each dimension of the subarray to be written.
-		* @param valueIndex						The index of subValues array.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		* @param subValues						1d subarray to be populated.
-		*/
-		template<typename T>
-		void populateSubValuesNd(
-			size_t dimensionIndex,
-			std::vector<int64_t>& totalCounts,
-			std::vector<int64_t>& starts,
-			std::vector<int64_t>& counts,
-			size_t& valueIndex,
-			const T* values,
-			T* subValues);
-
-		/*
-			HOW ROW MAJOR INDEX IS CALCULATED FROM N INDICES	
-			index = i0 * (dim1 * dim2 * ... * dimn) + i1 * (dim2 * dim3 * ... * dimn) + i2 * (dim3 * dim4 * ... * dimn) + ... + in-1 * dimn + in
-			Here:
-
-				1.	index is the calculated index value.
-				2.	'i0, i1, i2, ..., in-1, in' represent the indices of the element in each dimension. 
-					For example, i0 is the index in the first dimension, i1 is the index in the second dimension, and so on.
-				3.	dim1, dim2, dim3, ..., dimn are the sizes of the array along each dimension. 
-					These represent the number of elements in each dimension.
-		*/
-
-		/**
-		* Recursively calculate row major index from n indices.
-		* @param dimensionIndex					The index of dimension in nD array.
-		* @param totalCounts					The total number of values in each dimension of the original array.
-		* @param starts							The starting indices in each dimension of the subarray to be written.
-		*/
-		int64_t getRowMajorIndex(
-			size_t dimensionIndex,
-			std::vector<int64_t>& totalCounts,
-			std::vector<int64_t>& starts);
-
-		/**
-		* Recursively calculate product of total counts for calculating row major index.
-		* @param dimensionIndex					The index of dimension in nD array.
-		* @param totalCounts					The total number of values in each dimension of the original array.
-		*/
-		int64_t getCountsProduct(
-			size_t dimensionIndex,
-			std::vector<int64_t>& totalCounts);
-
-		/**
-		* Recursively write sub arrays (potentially with 2 dimensions) of a specific datatype into the HDF file by means of a single dataset.
-		* @param dimensionIndex					The index of dimension in nD array.
-		* @param uri							The uri of the original array.
-		* @param pathInResource					The path of the original array.
-		* @param totalCounts					The total number of values in each dimension of the original array.
-		* @param starts							The starting indices in each dimension of the subarray to be written.
-		* @param counts							The number of values in each dimension of the subarray to be written.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		template<typename T>
-		void writeSubArrayNd(
-			size_t dimensionIndex,
-			const std::string& uri,
-			const std::string& pathInResource,
-			std::vector<int64_t>& totalCounts,
-			std::vector<int64_t> starts,
-			std::vector<int64_t> counts,
-			const void* values);
-
-		/**
-		* Create AnyArray from given data array of type T.
-		* @param data							The reference to AnyArray to be populated.
-		* @param totalCount						Total number of values.
-		* @param values							1d array of specific datatype ordered firstly by fastest direction.
-		*/
-		template<typename T>
-		void createAnyArray(
-			Energistics::Etp::v12::Datatypes::AnyArray& data,
-			size_t totalCount,
-			T* values);
-
-		/**
 		* Write an array (potentially with multi dimensions) of a specific datatype into the HDF file by means of a single dataset.
 		* @param groupName						The name of the group where to create the array of values.
 		*										This name must not contain '/' character and must be directly contained in RESQML group.
@@ -556,8 +454,9 @@ namespace ETP_NS
 
 		/**
 		* Check wether a dataset is compressed or not.
+		* From an ETP client point of view, the dataset is not compressed even if it may be on server storage or even on the websocket.
 		*/
-		bool isCompressed(const std::string & datasetName) final;
+		bool isCompressed(const std::string &) final { return false; }
 		
 		/**
 		 * Get the number of elements in each chunk dimension of an HDF5 dataset.
@@ -575,7 +474,7 @@ namespace ETP_NS
 		AbstractSession* session_;
 		unsigned int compressionLevel;
 		std::string xmlNs_;
-		int maxArraySize_{ 12000000 }; // Bytes
+		size_t maxArraySize_{ 12000000 }; // Bytes
 
 		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier buildDataArrayIdentifier(const std::string & datasetName) const;
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrays buildGetDataArraysMessage(const std::string & datasetName) const;

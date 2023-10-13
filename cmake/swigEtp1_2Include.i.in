@@ -142,8 +142,6 @@ typedef long long 				time_t;
 %{
 #include "../src/etp/ClientSessionLaunchers.h"
 #include "../src/etp/EtpHelpers.h"
-#include "../src/etp/PlainServerSession.h"
-#include "../src/etp/Server.h"
 %}
 
 #ifdef WITH_FESAPI
@@ -165,8 +163,6 @@ typedef long long 				time_t;
 	%nspace ETP_NS::AbstractSession;
 	%nspace ETP_NS::PlainClientSession;
 	%nspace ETP_NS::InitializationParameters;
-	%nspace ETP_NS::ServerInitializationParameters;
-	%nspace ETP_NS::Server;
 #ifdef WITH_FESAPI
 	%nspace ETP_NS::FesapiHdfProxyFactory;
 #endif
@@ -1074,26 +1070,10 @@ namespace Energistics {
 %feature("director") ETP_NS::TransactionHandlers;
 %feature("director") ETP_NS::DataspaceHandlers;
 %feature("director") ETP_NS::InitializationParameters;
-%feature("director") ETP_NS::ServerInitializationParameters;
 
 /* Following extensions aims at preventing the Python garbage collector from 
    garbage collecting a protocol handler that may be still used by a session. */
 #ifdef SWIGPYTHON
-	%fragment("server_initialization_parameters_reference_init", "init") {
-		server_initialization_parameters_reference();
-	}
-	%fragment("server_initialization_parameters_reference_function", "header", fragment="server_initialization_parameters_reference_init") {
-		static PyObject *server_initialization_parameters_reference() {
-		  static PyObject *server_initialization_parameters_reference_string = SWIG_Python_str_FromChar("__server_initialization_parameters_reference");
-		  return server_initialization_parameters_reference_string;
-		}
-	}
-	%extend ETP_NS::Server {
-		%typemap(ret, fragment="server_initialization_parameters_reference_function") void listen(ServerInitializationParameters* serverInitializationParams, int threadCount) %{
-		  PyObject_SetAttr($self, server_initialization_parameters_reference(), args);
-		%}
-	}
-	
 	%fragment("core_handler_reference_init", "init") {
 		core_handler_reference();
 	}
@@ -1213,15 +1193,6 @@ namespace Energistics {
 #endif 
 	
 #ifdef SWIGCSHARP
-%typemap(cscode) ETP_NS::Server %{
-  private ServerInitializationParameters serverInitializationParametersReference;
-%}
-
-%typemap(csin, 
-         post="      serverInitializationParametersReference = $csinput;"
-         ) ETP_NS::ServerInitializationParameters* serverInitializationParams "ServerInitializationParameters.getCPtr($csinput)"	 
-
-
 %typemap(cscode) ETP_NS::AbstractSession %{
   private CoreHandlers coreHandlersReference = null;
   private DiscoveryHandlers discoveryHandlersReference = null;
@@ -1262,14 +1233,6 @@ namespace Energistics {
 #endif	  
 	  
 #ifdef SWIGJAVA
-%typemap(javacode) ETP_NS::Server %{
-  private ServerInitializationParameters serverInitializationParametersReference;
-%}
-
-%typemap(javain, 
-         post="      serverInitializationParametersReference = $javainput;"
-         ) ETP_NS::ServerInitializationParameters* serverInitializationParams "ServerInitializationParameters.getCPtr($javainput)"	 
-
 %typemap(javacode) ETP_NS::AbstractSession %{
   private CoreHandlers coreHandlersReference;
   private DiscoveryHandlers discoveryHandlersReference;
@@ -1966,29 +1929,6 @@ namespace ETP_NS
 			const std::map<std::string, std::string>& additionalHandshakeHeaderFields = {}, std::size_t preferredMaxFrameSize = 4096, const std::string & additionalCertificates = "");
 #endif
 	}
-	
-	/******************* SERVER ***************************/
-	
-	class ServerInitializationParameters : public InitializationParameters
-	{
-	public:
-		ServerInitializationParameters(const std::string & serverUuid, const std::string & host, unsigned short port);
-		virtual ~ServerInitializationParameters();
-
-		virtual std::string getContactEmail() const;
-		virtual std::string getContactName() const;
-		virtual std::string getContactPhone() const;
-		virtual std::string getOrganizationName() const;
-
-		virtual std::vector<std::string> makeSupportedEncodings() const;
-	};
-	
-	class Server
-	{
-	public:
-		Server();
-		void listen(ServerInitializationParameters* serverInitializationParams, int threadCount);
-	};
 	
 #ifdef WITH_FESAPI
 %typemap(javaimports) FesapiHdfProxyFactory %{
