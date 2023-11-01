@@ -27,7 +27,7 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.10.2-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.10.2-install/lib/avrocpp_s.lib -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
+          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.10.2-install -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
           cmake --build . --config Release -j2
   windows-2019-with-fesapi:
     runs-on: windows-2019
@@ -66,7 +66,7 @@ jobs:
           cmake --build . --config Release --target INSTALL
       - name: FESAPI install
         run: |
-          git clone --branch v2.6.0.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
+          git clone --branch v2.8.0.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
           cd ${{ runner.temp }}
           mkdir fesapi-build
           cd fesapi-build
@@ -78,7 +78,7 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.10.2-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.10.2-install/lib/avrocpp_s.lib -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=${{ runner.temp }}/fesapi-install/include -DFESAPI_LIBRARY_RELEASE=${{ runner.temp }}/fesapi-install/lib/FesapiCpp.2.6.0.0.lib -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
+          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.10.2-install -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
           cmake --build . --config Release -j2
   ubuntu-20:
     runs-on: ubuntu-20.04
@@ -105,7 +105,7 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.11.0-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.11.0-install/lib/libavrocpp_s.a ${{ github.workspace }}
+          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.0-install ${{ github.workspace }}
           cmake --build . --config Release -j2
   ubuntu-20-java8:
     runs-on: ubuntu-20.04
@@ -136,7 +136,7 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.11.0-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.11.0-install/lib/libavrocpp_s.a -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }}
+          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.0-install -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }}
           cmake --build . --config Release -j2
   ubuntu-20-java8-with-fesapi:
     runs-on: ubuntu-20.04
@@ -167,7 +167,7 @@ jobs:
           sudo apt install -y ${{ matrix.xcc_pkg }} libhdf5-dev libminizip-dev libboost-all-dev
       - name: FESAPI install
         run: |
-          git clone --branch v2.6.0.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
+          git clone --branch v2.8.0.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
           cd ${{ runner.temp }}
           mkdir fesapi-build
           cd fesapi-build
@@ -191,5 +191,5 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -DAVRO_INCLUDE_DIR=${{ runner.temp }}/avro-cpp-1.11.0-install/include -DAVRO_LIBRARY_RELEASE=${{ runner.temp }}/avro-cpp-1.11.0-install/lib/libavrocpp_s.a -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=${{ runner.temp }}/fesapi-install/include -DFESAPI_LIBRARY_RELEASE=${{ runner.temp }}/fesapi-install/lib/libFesapiCpp.so -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.6.0.0.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.0-install -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.8.0.0.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
           cmake --build . --config Release -j2
