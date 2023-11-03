@@ -182,12 +182,17 @@ namespace ETP_NS
 				return;
 			}
 
+			// Force close
+			boost::system::error_code closeEc;
+			stream_.next_layer().close(closeEc);
+			/*
 			// Gracefully close the stream_
 			stream_.async_shutdown(
 				std::bind(
 					&HttpsClientSession::on_shutdown,
 					shared_from_this(),
 					std::placeholders::_1));
+					*/
 		}
 
 		void
