@@ -96,7 +96,11 @@ set (WITH_ETP_SSL ON CACHE BOOL "Build FETPAPI with ETP SSL support.")
 find_package (Threads)
 
 # Boost DEPENDENCY
-find_package(Boost 1.66.0 REQUIRED system)
+find_package(Boost 1.70)
+if (NOT Boost_FOUND)
+	# Boost system is required for Beast untill version 1.70 : https://www.boost.org/doc/libs/1_69_0/libs/beast/doc/html/beast/introduction.html
+	find_package(Boost 1.66 REQUIRED system)
+endif()
 if (WIN32 AND (Boost_VERSION_MAJOR EQUAL 1) AND (Boost_VERSION_MINOR LESS 74) AND (Boost_VERSION_MINOR GREATER 71))
 	message(WARNING "You may experience min/max issue with this boost version : See https://github.com/boostorg/beast/issues/1980")
 endif ()
@@ -115,8 +119,10 @@ if (WITH_FESAPI)
 endif (WITH_FESAPI)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ALL_NO_LIB)
-
-target_link_libraries (${PROJECT_NAME} PRIVATE AVRO::AVRO ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries (${PROJECT_NAME} PRIVATE AVRO::AVRO ${CMAKE_THREAD_LIBS_INIT})
+if (DEFINED Boost_SYSTEM_LIBRARY)
+	target_link_libraries (${PROJECT_NAME} PRIVATE ${Boost_SYSTEM_LIBRARY})
+endif()
 if (WIN32)
 	target_link_libraries (${PROJECT_NAME} PRIVATE bcrypt.lib)
 
