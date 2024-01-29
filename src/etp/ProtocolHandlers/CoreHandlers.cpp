@@ -115,18 +115,18 @@ void CoreHandlers::on_CloseSession(const Energistics::Etp::v12::Protocol::Core::
 
 void CoreHandlers::on_ProtocolException(const Energistics::Etp::v12::Protocol::Core::ProtocolException & pe, int64_t correlationId)
 {
-	session->fesapi_log("EXCEPTION received for message_id", correlationId);
+	std::cerr << "EXCEPTION received for message_id " << correlationId << std::endl;
 	if (pe.error) {
-		session->fesapi_log("Single error code", pe.error.get().code, ":", pe.error.get().message);
+		std::cerr << "Single error code " << pe.error.get().code << " : " << pe.error.get().message << std::endl;
 	}
 	else {
-		session->fesapi_log("One or more error code :");
+		std::cerr << "One or more error code : " << std::endl;
 		for (const auto& error : pe.errors) {
-			session->fesapi_log("*************************************************");
-			session->fesapi_log("Resource non received :");
-			session->fesapi_log("key :", error.first);
-			session->fesapi_log("message :", error.second.message);
-			session->fesapi_log("code :", error.second.code);
+			std::cerr << "*************************************************" << std::endl;
+			std::cerr << "Resource non received : " << std::endl;
+			std::cerr << "key : " << error.first << std::endl;
+			std::cerr << "message : " << error.second.message << std::endl;
+			std::cerr << "code : " << error.second.code << std::endl;
 		}
 	}
 }

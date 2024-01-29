@@ -64,7 +64,7 @@ Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata FesapiHdfPro
 	auto timeOut = session_->getTimeOut();
 	while (session_->isMessageStillProcessing(msgId)) {
 		if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > timeOut) {
-			throw std::runtime_error("Time out waiting for a response of message id " + std::to_string(msgId));
+			throw std::runtime_error("Time out waiting for a response of GetDataArrayMetadata message id " + std::to_string(msgId));
 		}
 	}
 
