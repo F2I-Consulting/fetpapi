@@ -18,12 +18,13 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
+#include <iostream>
+
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <iostream>
 
 using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 namespace http = boost::beast::http;    // from <boost/beast/http.hpp>
@@ -51,26 +52,32 @@ namespace ETP_NS
 		// Start the asynchronous operation
 		void
 			run(
-				char const* host,
-				unsigned short port,
-				char const* target,
-				int version,
-				std::string authorization = "")
+				const std::string& etpServerHost,
+				uint16_t etpServerPort,
+				const std::string& etpServerTarget,
+				uint32_t version,
+				const std::string& etpServerAuthorization = "",
+				const std::string& proxyHost = "",
+				uint16_t proxyPort = 80,
+				const std::string& proxyAuthorization = "")
 		{
 			// Set up an HTTP GET request message
 			req_.version(version);
 			req_.method(http::verb::get);
-			req_.target(target);
-			req_.set(http::field::host, host);
+			req_.target(etpServerTarget);
+			req_.set(http::field::host, etpServerHost + ':' + std::to_string(etpServerPort));
 			req_.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-			if (!authorization.empty()) {
-				req_.set(http::field::authorization, authorization);
+			if (!etpServerAuthorization.empty()) {
+				req_.set(http::field::authorization, etpServerAuthorization);
+			}
+			if (!proxyAuthorization.empty()) {
+				req_.set(http::field::proxy_authorization, proxyAuthorization);
 			}
 
 			// Look up the domain name
 			resolver_.async_resolve(
-				host,
-				std::to_string(port).c_str(),
+				proxyHost.empty() ? etpServerHost : proxyHost,
+				std::to_string(proxyHost.empty() ? etpServerPort : proxyPort),
 				std::bind(
 					&HttpClientSession::on_resolve,
 					shared_from_this(),

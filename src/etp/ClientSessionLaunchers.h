@@ -18,10 +18,7 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
-#include "PlainClientSession.h"
-#ifdef WITH_ETP_SSL
-#include "ssl/SslClientSession.h"
-#endif
+#include "ClientSession.h"
 
 #include "InitializationParameters.h"
 
@@ -29,18 +26,7 @@ namespace ETP_NS
 {
 	namespace ClientSessionLaunchers
 	{
-		/**
-		* @param preferredFrameSize The preferred websocket frame payload to use by this client.
-		*							If the ETP websocket server on the other end has a lower related MaxWebSocketFramePayloadSize capability, then the used websocket frame payload will be the server one.
-		*							Default value corresponds to the default Boost.Beast value : https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/write_buffer_bytes/overload1.html.
-		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::PlainClientSession> createWsClientSession(InitializationParameters* initializationParams, const std::string & authorization,
-			const std::map<std::string, std::string>& additionalHandshakeHeaderFields = {}, std::size_t preferredMaxFrameSize = 4096);
-
-#ifdef WITH_ETP_SSL
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::SslClientSession> createWssClientSession(InitializationParameters* initializationParams, const std::string & authorization,
-			const std::map<std::string, std::string>& additionalHandshakeHeaderFields = {}, std::size_t preferredMaxFrameSize = 4096, const std::string & additionalCertificates = "");
-#endif
-
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ClientSession> createClientSession(InitializationParameters* initializationParams,
+			const std::string & etpServerAuthorization, const std::string& proxyAuthorization = "");
 	}
 }

@@ -21,6 +21,12 @@ under the License.
 #include <sstream>
 
 #include "HttpClientSession.h"
+#include "PlainClientSession.h"
+
+#ifdef WITH_ETP_SSL
+#include "ssl/HttpsClientSession.h"
+#include "ssl/SslClientSession.h"
+#endif
 
 namespace
 {
@@ -114,7 +120,7 @@ namespace
 		return result;
 	}
 
-	std::size_t getNegotiatedMaxWebSocketFramePayloadSize(const std::string & responseBody, std::size_t preferredMaxFrameSize) {
+	std::size_t getNegotiatedMaxWebSocketFramePayloadSize(const std::string& responseBody, std::size_t preferredMaxFrameSize) {
 		const auto maxWebSocketFramePayloadSizePos = responseBody.find("MaxWebSocketFramePayloadSize");
 		if (maxWebSocketFramePayloadSizePos != std::string::npos) {
 			std::istringstream iss(responseBody);
@@ -137,71 +143,71 @@ namespace
 	}
 }
 
-std::shared_ptr<ETP_NS::PlainClientSession> ETP_NS::ClientSessionLaunchers::createWsClientSession(InitializationParameters* initializationParams, const std::string & authorization,
-	const std::map<std::string, std::string>& additionalHandshakeHeaderFields, std::size_t preferredMaxFrameSize)
+std::shared_ptr<ETP_NS::ClientSession> ETP_NS::ClientSessionLaunchers::createClientSession(InitializationParameters* initializationParams,
+	const std::string& authorization, const std::string& proxyAuthorization)
 {
 	boost::asio::io_context ioc;
-	auto httpClientSession = std::make_shared<HttpClientSession>(ioc);
-	std::string etpServerCapTarget = "/" + initializationParams->getUrlPath();
-	if (etpServerCapTarget[etpServerCapTarget.size() - 1] != '/') {
+
+	std::string etpServerCapTarget = "/" + initializationParams->getEtpServerUrlPath();
+	if (etpServerCapTarget.back() != '/') {
 		etpServerCapTarget += '/';
 	}
 	etpServerCapTarget += ".well-known/etp-server-capabilities?GetVersion=etp12.energistics.org";
-	httpClientSession->run(initializationParams->getHost().c_str(), initializationParams->getPort(), etpServerCapTarget.c_str(), 11, authorization);
-	// Run the I/O service. The call will return when the get operation is complete.
-	ioc.run();
-
-	preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(httpClientSession->getResponse().body(), preferredMaxFrameSize);
-
-	auto result = std::make_shared<PlainClientSession>(initializationParams, "/" + initializationParams->getUrlPath(), authorization, additionalHandshakeHeaderFields, preferredMaxFrameSize);
-	initializationParams->postSessionCreationOperation(result.get());
-	return result;
-}
 
 #ifdef WITH_ETP_SSL
+	if (initializationParams->getEtpServerPort() == 443 || initializationParams->isTlsForced()) {
+		// The SSL context is required, and holds certificates
+		boost::asio::ssl::context ctx{ boost::asio::ssl::context::sslv23_client };
+		ctx.set_default_verify_paths();
+		ctx.set_options(
+			boost::asio::ssl::context::default_workarounds
+			| boost::asio::ssl::context::no_sslv2
+			| boost::asio::ssl::context::no_sslv3
+			| boost::asio::ssl::context::single_dh_use
+		);
 
-#include "ssl/HttpsClientSession.h"
-
-namespace ssl = boost::asio::ssl;               // from <boost/asio/ssl.hpp>
-
-std::shared_ptr<ETP_NS::SslClientSession> ETP_NS::ClientSessionLaunchers::createWssClientSession(InitializationParameters* initializationParams, const std::string & authorization,
-	const std::map<std::string, std::string>& additionalHandshakeHeaderFields, std::size_t preferredMaxFrameSize, const std::string & additionalCertificates)
-{
-	// The SSL context is required, and holds certificates
-	ssl::context ctx{ ssl::context::sslv23_client };
-	ctx.set_default_verify_paths();
-	ctx.set_options(
-		ssl::context::default_workarounds
-		| ssl::context::no_sslv2
-		| ssl::context::no_sslv3
-		| ssl::context::single_dh_use
-	);
-
-	if (!additionalCertificates.empty()) {
-		boost::system::error_code ec;
-		ctx.add_certificate_authority(
-			boost::asio::buffer(additionalCertificates.data(), additionalCertificates.size()), ec);
-		if (ec) {
-			std::cerr << "Cannot add certificates : " << additionalCertificates << std::endl;
-			return nullptr;
+		const std::string& additionalCertificates = initializationParams->getAdditionalCertificates();
+		if (!additionalCertificates.empty()) {
+			boost::system::error_code ec;
+			ctx.add_certificate_authority(
+				boost::asio::buffer(additionalCertificates.data(), additionalCertificates.size()), ec);
+			if (ec) {
+				std::cerr << "Cannot add certificates : " << additionalCertificates << std::endl;
+				return nullptr;
+			}
 		}
+		auto restClientSession = std::make_shared<HttpsClientSession>(ioc, ctx);
+		restClientSession->run(
+			initializationParams->getEtpServerHost(), initializationParams->getEtpServerPort(), etpServerCapTarget, 11, authorization,
+			initializationParams->getProxyHost(), initializationParams->getProxyPort(), proxyAuthorization);
+		// Run the I/O service. The call will return when the get operation is complete.
+		ioc.run();
+
+		std::size_t preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(restClientSession->getResponse().body(), initializationParams->getPreferredMaxFrameSize());
+
+		auto result = std::make_shared<SslClientSession>(ctx, initializationParams, "/" + initializationParams->getEtpServerUrlPath(),
+			authorization, proxyAuthorization,
+			initializationParams->getAdditionalHandshakeHeaderFields(), preferredMaxFrameSize);
+		initializationParams->postSessionCreationOperation(result.get());
+		return result;
 	}
-
-	boost::asio::io_context ioc;
-	auto httpsClientSession = std::make_shared<HttpsClientSession>(ioc, ctx);
-	std::string etpServerCapTarget = "/" + initializationParams->getUrlPath();
-	if (etpServerCapTarget[etpServerCapTarget.size() - 1] != '/') {
-		etpServerCapTarget += '/';
-	}
-	etpServerCapTarget += ".well-known/etp-server-capabilities?GetVersion=etp12.energistics.org";
-	httpsClientSession->run(initializationParams->getHost().c_str(), initializationParams->getPort(), etpServerCapTarget.c_str(), 11, authorization);
-	// Run the I/O service. The call will return when the get operation is complete.
-	ioc.run();
-
-	preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(httpsClientSession->getResponse().body(), preferredMaxFrameSize);
-
-	auto result = std::make_shared<SslClientSession>(ctx, initializationParams, "/" + initializationParams->getUrlPath(), authorization, additionalHandshakeHeaderFields, preferredMaxFrameSize);
-	initializationParams->postSessionCreationOperation(result.get());
-	return result;
-}
+	else {
 #endif
+		auto restClientSession = std::make_shared<HttpClientSession>(ioc);
+		restClientSession->run(
+			initializationParams->getEtpServerHost(), initializationParams->getEtpServerPort(), etpServerCapTarget, 11, authorization,
+			initializationParams->getProxyHost(), initializationParams->getProxyPort(), proxyAuthorization);
+		// Run the I/O service. The call will return when the get operation is complete.
+		ioc.run();
+
+		std::size_t preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(restClientSession->getResponse().body(), initializationParams->getPreferredMaxFrameSize());
+
+		auto result = std::make_shared<PlainClientSession>(initializationParams, "/" + initializationParams->getEtpServerUrlPath(),
+			authorization, proxyAuthorization,
+			initializationParams->getAdditionalHandshakeHeaderFields(), preferredMaxFrameSize);
+		initializationParams->postSessionCreationOperation(result.get());
+		return result;
+#ifdef WITH_ETP_SSL
+	}
+#endif
+}

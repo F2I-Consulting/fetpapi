@@ -7,7 +7,7 @@
 	 - dependencies 
   - The following compilers are known to work (used in CI)
     - gcc from version 4.8
-	- visual studio from version 2017
+	- visual studio from version 2019
 # Prepare the dependencies
 Download (build and install if necessary) third party libraries:
 - BOOST : All versions from version 1.66 should be ok but you may experience some [min/max build issues](https://github.com/boostorg/beast/issues/1980) using version 1.72 or 1.73.

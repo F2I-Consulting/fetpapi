@@ -16,15 +16,14 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 -----------------------------------------------------------------------*/
-
 #include "SslClientSession.h"
 
 using namespace ETP_NS;
 
 SslClientSession::SslClientSession(boost::asio::ssl::context& ctx,
-	InitializationParameters* initializationParams, const std::string& target, const std::string& authorization,
+	InitializationParameters* initializationParams, const std::string& target, const std::string& authorization, const std::string& proxyAuthorization,
 	const std::map<std::string, std::string>& additionalHandshakeHeaderFields, std::size_t frameSize)
-	: AbstractClientSession<SslClientSession>(initializationParams, target, authorization),
+	: AbstractClientSessionCRTP<SslClientSession>(initializationParams, target, authorization, proxyAuthorization),
 		ws_(ioc, ctx)
 {
 	ws_.binary(true);

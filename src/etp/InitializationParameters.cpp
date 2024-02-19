@@ -19,43 +19,60 @@ under the License.
 #include "InitializationParameters.h"
 
 #include <stdexcept>
+#include <tuple>
 
 #include "AbstractSession.h"
 
 using namespace ETP_NS;
 
-InitializationParameters::InitializationParameters(const std::string & etpUrl)
-{
-	const size_t schemeSeparatorPos = etpUrl.find("://");
+namespace {
+	std::tuple<std::string, uint16_t, std::string> extractHostPortPathFromUrl(const std::string& url) {
+		std::tuple<std::string, uint16_t, std::string> result;
+		const size_t schemeSeparatorPos = url.find("://");
 
-	const size_t hostStart = schemeSeparatorPos == std::string::npos ? 0 : schemeSeparatorPos + 3;
-	size_t hostEnd;
-	size_t portStart = etpUrl.find(":", hostStart);
-	size_t portEnd;
+		const size_t hostStart = schemeSeparatorPos == std::string::npos ? 0 : schemeSeparatorPos + 3;
+		size_t hostEnd;
+		size_t portStart = url.find(":", hostStart);
+		size_t portEnd;
 
-	if (portStart == std::string::npos) {
-		hostEnd = etpUrl.find("/", hostStart + 3);
-		portEnd = hostEnd;
-		port_ = etpUrl.find("wss://") == 0 ? 443 : 80;
-	}
-	else {
-		hostEnd = portStart++;
-		portEnd = etpUrl.find("/", portStart);
-		int readPort = stoi(etpUrl.substr(portStart, portEnd - portStart));
-		if (readPort < 1 || readPort >(std::numeric_limits<int16_t>::max)()) {
-			throw std::out_of_range("The port " + std::to_string(readPort) + " is out of the allowed range for TCP ports ]0..2^16]");
+		if (portStart == std::string::npos) {
+			hostEnd = url.find("/", hostStart + 3);
+			portEnd = hostEnd;
+			std::get<1>(result) = url.find("wss://") == 0 || url.find("https://") == 0 ? 443 : 80;
 		}
-		port_ = static_cast<uint16_t>(readPort);
-	}
+		else {
+			hostEnd = portStart++;
+			portEnd = url.find("/", portStart);
+			int readPort = stoi(url.substr(portStart, portEnd - portStart));
+			if (readPort < 1 || readPort >(std::numeric_limits<int16_t>::max)()) {
+				throw std::out_of_range("The port " + std::to_string(readPort) + " is out of the allowed range for TCP ports ]0..2^16]");
+			}
+			std::get<1>(result) = static_cast<uint16_t>(readPort);
+		}
 
-	if (hostEnd == std::string::npos) {
-		urlPath_ = "";
-		host_ = etpUrl.substr(hostStart);
+		if (hostEnd == std::string::npos) {
+			std::get<2>(result) = "";
+			std::get<0>(result) = url.substr(hostStart);
+		}
+		else {
+			std::get<2>(result) = portEnd < url.size() - 1 ? url.substr(portEnd + 1) : "";
+			std::get<0>(result) = url.substr(hostStart, hostEnd - hostStart);
+		}
+
+		return result;
 	}
-	else {
-		urlPath_ = portEnd < etpUrl.size() - 1 ? etpUrl.substr(portEnd + 1) : "";
-		host_ = etpUrl.substr(hostStart, hostEnd - hostStart);
-	}
+}
+
+void InitializationParameters::initFromUrl(const std::string& etpUrl, const std::string& proxyUrl)
+{
+	std::tuple<std::string, uint16_t, std::string> serverInfo = extractHostPortPathFromUrl(etpUrl);
+	etpServerHost = std::get<0>(serverInfo);
+	etpServerPort = std::get<1>(serverInfo);
+	etpServerUrlPath = std::get<2>(serverInfo);
+
+	serverInfo = extractHostPortPathFromUrl(proxyUrl);
+	proxyHost = std::get<0>(serverInfo);
+	proxyPort = std::get<1>(serverInfo);
 }
 
 std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> InitializationParameters::makeEndpointCapabilities() const
@@ -64,8 +81,8 @@ std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> Initializatio
 
 	Energistics::Etp::v12::Datatypes::DataValue value;
 
-	if (maxWebSocketMessagePayloadSize_ > 0) {
-		value.item.set_long(maxWebSocketMessagePayloadSize_);
+	if (maxWebSocketMessagePayloadSize > 0) {
+		value.item.set_long(maxWebSocketMessagePayloadSize);
 		result["MaxWebSocketFramePayloadSize"] = value;
 		result["MaxWebSocketMessagePayloadSize"] = value;
 	}
@@ -97,8 +114,6 @@ std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> Initializatio
 
 	supportedDataObject.qualifiedType = "eml20.obj_EpcExternalPartReference";
 	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "eml21.PropertyKind";
-	result.push_back(supportedDataObject);
 	supportedDataObject.qualifiedType = "eml23.Activity";
 	result.push_back(supportedDataObject);
 	supportedDataObject.qualifiedType = "eml23.ActivityTemplate";
@@ -109,29 +124,27 @@ std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> Initializatio
 	result.push_back(supportedDataObject);
 	supportedDataObject.qualifiedType = "eml23.TimeSeries";
 	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "eml23.EpcExternalPartReference";
+
+	supportedDataObject.qualifiedType = "witsml21.Channel";
+	result.push_back(supportedDataObject);
+	supportedDataObject.qualifiedType = "witsml21.Trajectory";
+	result.push_back(supportedDataObject);
+	supportedDataObject.qualifiedType = "witsml21.Well";
+	result.push_back(supportedDataObject);
+	supportedDataObject.qualifiedType = "witsml21.Wellbore";
+	result.push_back(supportedDataObject);
+	supportedDataObject.qualifiedType = "witsml21.WellboreCompletion";
+	result.push_back(supportedDataObject);
+	supportedDataObject.qualifiedType = "witsml21.WellboreGeometry";
+	result.push_back(supportedDataObject);
+	supportedDataObject.qualifiedType = "witsml21.WellCompletion";
 	result.push_back(supportedDataObject);
 
-	supportedDataObject.qualifiedType = "witsml20.Channel";
+	supportedDataObject.qualifiedType = "prodml22.FluidCharacterization";
 	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml20.Trajectory";
+	supportedDataObject.qualifiedType = "prodml22.FluidSystem";
 	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml20.Well";
-	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml20.Wellbore";
-	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml20.WellboreCompletion";
-	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml20.WellboreGeometry";
-	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "witsml20.WellCompletion";
-	result.push_back(supportedDataObject);
-
-	supportedDataObject.qualifiedType = "prodml21.FluidCharacterization";
-	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "prodml21.FluidSystem";
-	result.push_back(supportedDataObject);
-	supportedDataObject.qualifiedType = "prodml21.TimeSeriesData";
+	supportedDataObject.qualifiedType = "prodml22.TimeSeriesData";
 	result.push_back(supportedDataObject);
 
 	return result;
