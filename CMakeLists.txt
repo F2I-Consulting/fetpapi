@@ -258,6 +258,16 @@ if (WITH_FESAPI)
 	endif (WITH_TEST)
 endif (WITH_FESAPI)
 
+set (WITH_EXAMPLE OFF CACHE BOOL "Also builds and installs an ETP1.2 client example.")
+if (WITH_EXAMPLE)
+	if (WITH_FESAPI)
+		add_subdirectory(example/withFesapi)
+	else ()
+		add_subdirectory(example/withoutFesapi)
+	endif (WITH_FESAPI)
+endif (WITH_EXAMPLE)
+
+
 # ============================================================================
 # Install Fetpapi library
 # ============================================================================
