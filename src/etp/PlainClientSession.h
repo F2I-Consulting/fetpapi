@@ -37,6 +37,8 @@ namespace ETP_NS
 		// Called by the base class
 		FETPAPI_DLL_IMPORT_OR_EXPORT websocket::stream<tcp::socket>& ws() { return ws_; }
 
+		bool isTls() const final{ return false; }
+
 		void on_resolve(boost::system::error_code ec, tcp::resolver::results_type results)
 		{
 			if (ec) {

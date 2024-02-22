@@ -92,9 +92,6 @@ namespace ETP_NS
 			if (!authorization.empty()) {
 				req_.set(http::field::authorization, authorization);
 			}
-			if (!proxyAuthorization.empty()) {
-				req_.set(http::field::proxy_authorization, proxyAuthorization);
-			}
 
 			if (!proxyHost.empty()) {
 				proxyHandshake.version(version);

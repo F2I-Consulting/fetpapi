@@ -44,7 +44,9 @@ namespace ETP_NS
 				{
 					m.insert(boost::beast::http::field::sec_websocket_protocol, "etp12.energistics.org");
 					m.insert(boost::beast::http::field::authorization, etpServerAuthorization);
-					m.insert(boost::beast::http::field::proxy_authorization, proxyAuthorization);
+					if (!proxyHost.empty() && !isTls()) {
+						m.insert(boost::beast::http::field::proxy_authorization, proxyAuthorization);
+					}
 					m.insert("etp-encoding", "binary");
 					for (const auto& mapEntry : additionalHandshakeHeaderFields_) {
 						m.insert(mapEntry.first, mapEntry.second);
@@ -60,7 +62,9 @@ namespace ETP_NS
 				{
 					m.insert(boost::beast::http::field::sec_websocket_protocol, "etp12.energistics.org");
 					m.insert(boost::beast::http::field::authorization, etpServerAuthorization);
-					m.insert(boost::beast::http::field::proxy_authorization, proxyAuthorization);
+					if (!proxyHost.empty() && !isTls()) {
+						m.insert(boost::beast::http::field::proxy_authorization, proxyAuthorization);
+					}
 					m.insert("etp-encoding", "binary");
 					for (const auto& mapEntry : additionalHandshakeHeaderFields_) {
 						m.insert(mapEntry.first, mapEntry.second);

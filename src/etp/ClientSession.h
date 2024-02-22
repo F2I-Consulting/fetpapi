@@ -70,6 +70,7 @@ namespace ETP_NS
 		}
 		
 		virtual void on_resolve(boost::system::error_code ec, tcp::resolver::results_type results) = 0;
+		virtual bool isTls() const = 0;
 
 		void on_handshake(boost::system::error_code ec)
 		{
