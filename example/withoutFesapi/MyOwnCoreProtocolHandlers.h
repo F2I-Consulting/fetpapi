@@ -18,15 +18,13 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
-#include "ClientSession.h"
+#include "etp/ProtocolHandlers/CoreHandlers.h"
 
-#include "InitializationParameters.h"
-
-namespace ETP_NS
+class MyOwnCoreProtocolHandlers : public ETP_NS::CoreHandlers
 {
-	namespace ClientSessionLaunchers
-	{
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ClientSession> createClientSession(InitializationParameters* initializationParams,
-			const std::string & etpServerAuthorization, const std::string& proxyAuthorization = "");
-	}
-}
+public:
+	MyOwnCoreProtocolHandlers(ETP_NS::AbstractSession* mySession): ETP_NS::CoreHandlers(mySession) {}
+	~MyOwnCoreProtocolHandlers() = default;
+
+	void on_OpenSession(const Energistics::Etp::v12::Protocol::Core::OpenSession & os, int64_t correlationId);
+};

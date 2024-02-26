@@ -18,15 +18,11 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
-#include "ClientSession.h"
+#include "etp/ProtocolHandlers/StoreNotificationHandlers.h"
 
-#include "InitializationParameters.h"
-
-namespace ETP_NS
+class MyOwnStoreNotificationProtocolHandlers : public ETP_NS::StoreNotificationHandlers
 {
-	namespace ClientSessionLaunchers
-	{
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ClientSession> createClientSession(InitializationParameters* initializationParams,
-			const std::string & etpServerAuthorization, const std::string& proxyAuthorization = "");
-	}
-}
+public:
+	MyOwnStoreNotificationProtocolHandlers(ETP_NS::AbstractSession* mySession) : ETP_NS::StoreNotificationHandlers(mySession) {}
+	~MyOwnStoreNotificationProtocolHandlers() {}
+};

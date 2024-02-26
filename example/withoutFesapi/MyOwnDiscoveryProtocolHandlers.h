@@ -18,15 +18,15 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
-#include "ClientSession.h"
+#include "etp/ProtocolHandlers/DiscoveryHandlers.h"
 
-#include "InitializationParameters.h"
-
-namespace ETP_NS
+class MyOwnDiscoveryProtocolHandlers : public ETP_NS::DiscoveryHandlers
 {
-	namespace ClientSessionLaunchers
-	{
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ClientSession> createClientSession(InitializationParameters* initializationParams,
-			const std::string & etpServerAuthorization, const std::string& proxyAuthorization = "");
-	}
-}
+public:
+	MyOwnDiscoveryProtocolHandlers(ETP_NS::AbstractSession* mySession): ETP_NS::DiscoveryHandlers(mySession) {}
+	~MyOwnDiscoveryProtocolHandlers() {}
+
+	std::vector<int64_t> getObjectWhenDiscovered; // all message id in this vector will result in response where the objects are going to be get in addition to be discovered
+
+	void on_GetResourcesResponse(const Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse & msg, int64_t correlationId);
+};

@@ -18,62 +18,18 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
-#include "AbstractSession.h"
-
-#include <thread>
-
-#include <boost/asio/connect.hpp>
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid_io.hpp>
-
-#include "InitializationParameters.h"
+#include "ClientSession.h"
 
 namespace ETP_NS
 {
 	// Echoes back all received WebSocket messages.
 	// This uses the Curiously Recurring Template Pattern so that the same code works with both SSL streams and regular sockets.
 	template<class Derived>
-	class AbstractClientSession : public ETP_NS::AbstractSession
+	class AbstractClientSessionCRTP : public ETP_NS::ClientSession
 	{
 	public:
 
-		virtual ~AbstractClientSession() = default;
-
-		boost::asio::io_context& getIoContext() {
-			return ioc;
-		}
-
-		const std::string& getHost() const { return host; }
-		const std::string& getPort() const { return port; }
-		const std::string& getTarget() const { return target; }
-		const std::string& getAuthorization() const { return authorization; }
-
-		/**
-		* Run the websocket and then the ETP session in a processing loop.
-		* Everything related to this session (including the completion handlers) will operate on the current thread in a single event loop.
-		* Since this is a loop, you may want to operate this method on a dedicated thread not to block your program.
-		* This method returns only when the session is closed.
-		*/
-		bool run() {
-			successfulConnection = false;
-
-			// Look up the domain name before to run the session
-			// It is important to do this before to run the io context. Otherwise running the io context would return immediately if nothing has to be done.
-			resolver.async_resolve(
-				host,
-				port,
-				std::bind(
-					&AbstractClientSession::on_resolve,
-					std::static_pointer_cast<AbstractClientSession>(shared_from_this()),
-					std::placeholders::_1,
-					std::placeholders::_2));
-
-			// Run the io_context to perform the resolver and all other binding functions
-			// Run will return only when there will no more be any uncomplete operations (such as a reading operation for example)
-			getIoContext().run();
-
-			return successfulConnection;
-		}
+		virtual ~AbstractClientSessionCRTP() = default;
 
 		void on_connect(boost::system::error_code ec) {
 			if (ec) {
@@ -83,26 +39,32 @@ namespace ETP_NS
 #if BOOST_VERSION < 107000
 			// Perform the websocket handshake
 			derived().ws().async_handshake_ex(responseType,
-				host + ":" + port, target,
+				etpServerHost + ":" + etpServerPort, etpServerTarget,
 				[&](websocket::request_type& m)
 				{
 					m.insert(boost::beast::http::field::sec_websocket_protocol, "etp12.energistics.org");
-					m.insert(boost::beast::http::field::authorization, authorization);
+					m.insert(boost::beast::http::field::authorization, etpServerAuthorization);
+					if (!proxyHost.empty() && !isTls()) {
+						m.insert(boost::beast::http::field::proxy_authorization, proxyAuthorization);
+					}
 					m.insert("etp-encoding", "binary");
 					for (const auto& mapEntry : additionalHandshakeHeaderFields_) {
 						m.insert(mapEntry.first, mapEntry.second);
 					}
 				},
 				std::bind(
-					&AbstractClientSession::on_handshake,
-					std::static_pointer_cast<AbstractClientSession>(shared_from_this()),
+					&AbstractClientSessionCRTP::on_handshake,
+					std::static_pointer_cast<AbstractClientSessionCRTP>(shared_from_this()),
 					std::placeholders::_1));
 #else
 			derived().ws().set_option(websocket::stream_base::decorator(
 				[&](websocket::request_type& m)
 				{
 					m.insert(boost::beast::http::field::sec_websocket_protocol, "etp12.energistics.org");
-					m.insert(boost::beast::http::field::authorization, authorization);
+					m.insert(boost::beast::http::field::authorization, etpServerAuthorization);
+					if (!proxyHost.empty() && !isTls()) {
+						m.insert(boost::beast::http::field::proxy_authorization, proxyAuthorization);
+					}
 					m.insert("etp-encoding", "binary");
 					for (const auto& mapEntry : additionalHandshakeHeaderFields_) {
 						m.insert(mapEntry.first, mapEntry.second);
@@ -111,10 +73,10 @@ namespace ETP_NS
 			);
 			// Perform the websocket handshake
 			derived().ws().async_handshake(responseType,
-				host + ":" + port, target,
+				etpServerHost + ":" + etpServerPort, etpServerTarget,
 				std::bind(
-					&AbstractClientSession::on_handshake,
-					std::static_pointer_cast<AbstractClientSession>(shared_from_this()),
+					&AbstractClientSessionCRTP::on_handshake,
+					std::static_pointer_cast<AbstractClientSessionCRTP>(shared_from_this()),
 					std::placeholders::_1));
 #endif
 		}
@@ -147,8 +109,6 @@ namespace ETP_NS
 					std::placeholders::_1,
 					std::placeholders::_2));
 		}
-		
-		virtual void on_resolve(boost::system::error_code ec, tcp::resolver::results_type results) = 0;
 
 		void on_handshake(boost::system::error_code ec)
 		{
@@ -175,62 +135,10 @@ namespace ETP_NS
 		}
 
 	protected:
-		boost::asio::io_context ioc;
-		tcp::resolver resolver;
-		std::string host;
-		std::string port;
-		std::string target;
-		std::string authorization;
-		std::map<std::string, std::string> additionalHandshakeHeaderFields_;
-		websocket::response_type responseType; // In order to check handshake sec_websocket_protocol
-		Energistics::Etp::v12::Protocol::Core::RequestSession requestSession;
-		bool successfulConnection = false;
+		using ClientSession::ClientSession;
 
 		// Access the derived class, this is part of the Curiously Recurring Template Pattern idiom.
 		Derived& derived() { return static_cast<Derived&>(*this); }
-
-		AbstractClientSession() :
-			ioc(4),
-			resolver(ioc) {
-			messageId = 2; // The client side of the connection MUST use ONLY non-zero even-numbered messageIds. 
-		}
-
-		/**
-		 * @param initializationParams  The initialization parameters of the session including IP host, port, requestedProtocols, supportedDataObjects
-		 * @param target				usually "/" but a server can decide to serve etp on a particular target
-		 * @param authorization			The HTTP authorization attribute to send to the server. It may be empty if not needed.
-		 */
-		AbstractClientSession(
-			InitializationParameters* initializationParams, const std::string & target, const std::string & authorization) :
-			ioc(4),
-			resolver(ioc),
-			host(initializationParams->getHost()),
-			port(std::to_string(initializationParams->getPort())),
-			target(target),
-			authorization(authorization)
-		{
-			messageId = 2; // The client side of the connection MUST use ONLY non-zero even-numbered messageIds. 
-
-			initializationParams->postSessionCreationOperation(this);
-
-			// Build the request session
-			requestSession.applicationName = initializationParams->getApplicationName();
-			requestSession.applicationVersion = initializationParams->getApplicationVersion();
-
-			std::copy(std::begin(initializationParams->getInstanceId().data), std::end(initializationParams->getInstanceId().data), requestSession.clientInstanceId.array.begin());
-
-			requestSession.requestedProtocols = initializationParams->makeSupportedProtocols();
-			requestSession.supportedDataObjects = initializationParams->makeSupportedDataObjects();
-			requestSession.supportedFormats.push_back("xml");
-			requestSession.currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-
-			auto caps = initializationParams->makeEndpointCapabilities();
-			if (!caps.empty()) {
-				requestSession.endpointCapabilities = caps;
-			}
-
-			maxWebSocketMessagePayloadSize = initializationParams->getMaxWebSocketMessagePayloadSize();
-		}
 
 		void do_write() {
 			const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);

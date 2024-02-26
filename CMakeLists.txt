@@ -1,6 +1,8 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12)
 
 project(Fetpapi)
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/modules)
 
 set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "DEBUG_POSTFIX property is initialized when the target is created to the value of this variable except for executable targets")
 
@@ -9,19 +11,20 @@ set (FETPAPI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # version mechanism
 set (Fetpapi_VERSION_MAJOR 0)
-set (Fetpapi_VERSION_MINOR 1)
+set (Fetpapi_VERSION_MINOR 2)
 set (Fetpapi_VERSION_PATCH 0)
 set (Fetpapi_VERSION_TWEAK 0)
+
 set (Fetpapi_VERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR}.${Fetpapi_VERSION_PATCH}.${Fetpapi_VERSION_TWEAK})
+
+if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
+	set (CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/install CACHE PATH "${PROJECT_NAME} install prefix" FORCE)
+endif (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
-
-IF (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	set (CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/install CACHE PATH "${PROJECT_NAME} install prefix" FORCE)
-ENDIF (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
 # required to define CMAKE_INSTALL_BINDIR, CMAKE_INSTALL_LIBDIR and CMAKE_INSTALL_INCLUDEDIR
 include(GNUInstallDirs)
@@ -83,8 +86,8 @@ endif (WIN32)
 # some useful variables
 # ============================================================================
 
-set (WITH_FESAPI OFF CACHE BOOL "Build Fetpapi with Fesapi support.")
-set (WITH_ETP_SSL ON CACHE BOOL "Build Fesapi with ETP SSL support.")
+set (WITH_FESAPI OFF CACHE BOOL "Build FETPAPI with FESAPI support.")
+set (WITH_ETP_SSL ON CACHE BOOL "Build FETPAPI with ETP SSL support.")
 
 # ============================================================================
 # checking for required dependencies
@@ -92,33 +95,21 @@ set (WITH_ETP_SSL ON CACHE BOOL "Build Fesapi with ETP SSL support.")
 
 find_package (Threads)
 
-# avro DEPENDENCY
-set (AVRO_INCLUDE_DIR AVRO_INCLUDE_DIR-NOTFOUND CACHE PATH "Path to the directory which contains the avro header files")
-if (NOT IS_DIRECTORY ${AVRO_INCLUDE_DIR})
-	message(SEND_ERROR "The Avro include dir (AVRO_INCLUDE_DIR variable) does not look to be a valid directory. Please modify it.")
-endif ()
-set (AVRO_LIBRARY_RELEASE AVRO_LIBRARY_RELEASE-NOTFOUND CACHE FILEPATH "Path to the file which contains the avro library release")
-if (NOT EXISTS ${AVRO_LIBRARY_RELEASE})
-	message(WARNING "The avro library (AVRO_LIBRARY_RELEASE variable) does not look to be a valid file. Please modify it.")
-endif ()
-set (AVRO_LIBRARY_DEBUG AVRO_LIBRARY_DEBUG-NOTFOUND CACHE FILEPATH "Path to the file which contains the AVRO library DEBUG")
-if (NOT EXISTS ${AVRO_LIBRARY_DEBUG})
-	message(WARNING "The AVRO library (AVRO_LIBRARY_DEBUG variable) does not look to be a valid file. Please modify it.")
+# Boost DEPENDENCY
+find_package(Boost 1.70)
+if (NOT Boost_FOUND)
+	# Boost system is required for Beast untill version 1.70 : https://www.boost.org/doc/libs/1_69_0/libs/beast/doc/html/beast/introduction.html
+	find_package(Boost 1.66 REQUIRED system)
+endif()
+if (WIN32 AND (Boost_VERSION_MAJOR EQUAL 1) AND (Boost_VERSION_MINOR LESS 74) AND (Boost_VERSION_MINOR GREATER 71))
+	message(WARNING "You may experience min/max issue with this boost version : See https://github.com/boostorg/beast/issues/1980")
 endif ()
 
+# avro DEPENDENCY
+find_package(AVRO REQUIRED)
+
 if (WITH_FESAPI)
-	set (FESAPI_INCLUDE_DIR FESAPI_INCLUDE_DIR-NOTFOUND CACHE PATH "Path to the directory which contains the FESAPI header files")
-	if (NOT IS_DIRECTORY ${FESAPI_INCLUDE_DIR})
-		message(SEND_ERROR "The FESAPI include dir (FESAPI_INCLUDE_DIR variable) does not look to be a valid directory. Please modify it.")
-	endif ()
-	set (FESAPI_LIBRARY_RELEASE FESAPI_LIBRARY_RELEASE-NOTFOUND CACHE FILEPATH "Path to the file which contains the FESAPI library release")
-	if (NOT EXISTS ${FESAPI_LIBRARY_RELEASE})
-		message(WARNING "The FESAPI library (FESAPI_LIBRARY_RELEASE variable) does not look to be a valid file. Please modify it.")
-	endif ()
-	set (FESAPI_LIBRARY_DEBUG FESAPI_LIBRARY_DEBUG-NOTFOUND CACHE FILEPATH "Path to the file which contains the FESAPI library DEBUG")
-	if (NOT EXISTS ${FESAPI_LIBRARY_DEBUG})
-		message(WARNING "The FESAPI library (FESAPI_LIBRARY_DEBUG variable) does not look to be a valid file. Please modify it.")
-	endif ()
+	find_package(FESAPI REQUIRED)
 	if (WITH_JAVA_WRAPPING)
 		set (FESAPI_JAR FESAPI_JAR-NOTFOUND CACHE FILEPATH "Path to the jar of FESAPI")
 		if (NOT EXISTS ${FESAPI_JAR})
@@ -127,26 +118,13 @@ if (WITH_FESAPI)
 	endif (WITH_JAVA_WRAPPING)
 endif (WITH_FESAPI)
 
-
-# Boost DEPENDENCY
-find_package(Boost 1.66.0 REQUIRED system)
-if (WIN32 AND (Boost_VERSION_MAJOR EQUAL 1) AND (Boost_VERSION_MINOR LESS 74) AND (Boost_VERSION_MINOR GREATER 71))
-		message(WARNING "You may experience min/max issue with this boost version : See https://github.com/boostorg/beast/issues/1980")
-endif ()
-
 target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ALL_NO_LIB)
-
-target_link_libraries (${PROJECT_NAME} PRIVATE ${Boost_SYSTEM_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries (${PROJECT_NAME} PRIVATE AVRO::AVRO ${CMAKE_THREAD_LIBS_INIT})
+if (DEFINED Boost_SYSTEM_LIBRARY)
+	target_link_libraries (${PROJECT_NAME} PRIVATE ${Boost_SYSTEM_LIBRARY})
+endif()
 if (WIN32)
 	target_link_libraries (${PROJECT_NAME} PRIVATE bcrypt.lib)
-
-	if (EXISTS ${AVRO_LIBRARY_RELEASE} AND EXISTS ${AVRO_LIBRARY_DEBUG})
-		target_link_libraries (${PROJECT_NAME} PRIVATE optimized ${AVRO_LIBRARY_RELEASE} debug ${AVRO_LIBRARY_DEBUG})
-	elseif (EXISTS ${AVRO_LIBRARY_RELEASE})
-		target_link_libraries (${PROJECT_NAME} PRIVATE ${AVRO_LIBRARY_RELEASE})
-	elseif (EXISTS ${AVRO_LIBRARY_DEBUG})
-		target_link_libraries (${PROJECT_NAME} PRIVATE ${AVRO_LIBRARY_DEBUG})
-	endif ()
 
 	set_target_properties(${PROJECT_NAME} PROPERTIES
 		PDB_NAME ${PROJECT_NAME}.${Fetpapi_VERSION}
@@ -158,8 +136,6 @@ if (WIN32)
 		VERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR}
 	)
 else (WIN32)
-	target_link_libraries (${PROJECT_NAME} PRIVATE ${AVRO_LIBRARY_RELEASE})
-
 	set_target_properties(${PROJECT_NAME} PROPERTIES
 		VERSION ${Fetpapi_VERSION}
 		SOVERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR})
@@ -174,17 +150,7 @@ if (WITH_ETP_SSL)
 endif ()
 
 if (WITH_FESAPI)
-	if (WIN32)
-		if (EXISTS ${FESAPI_LIBRARY_RELEASE} AND EXISTS ${FESAPI_LIBRARY_DEBUG})
-			target_link_libraries (${PROJECT_NAME} PRIVATE optimized ${FESAPI_LIBRARY_RELEASE} debug ${FESAPI_LIBRARY_DEBUG})
-		elseif (EXISTS ${FESAPI_LIBRARY_RELEASE})
-			target_link_libraries (${PROJECT_NAME} PRIVATE ${FESAPI_LIBRARY_RELEASE})
-		elseif (EXISTS ${FESAPI_LIBRARY_DEBUG})
-			target_link_libraries (${PROJECT_NAME} PRIVATE ${FESAPI_LIBRARY_DEBUG})
-		endif ()
-	else (WIN32)
-		target_link_libraries (${PROJECT_NAME} PRIVATE ${FESAPI_LIBRARY_RELEASE})
-	endif (WIN32)
+	target_link_libraries(${PROJECT_NAME} PRIVATE FESAPI::FESAPI)
 endif (WITH_FESAPI)
 
 # Namespaces definitions
@@ -291,6 +257,16 @@ if (WITH_FESAPI)
 		add_subdirectory(test)
 	endif (WITH_TEST)
 endif (WITH_FESAPI)
+
+set (WITH_EXAMPLE OFF CACHE BOOL "Also builds and installs an ETP1.2 client example.")
+if (WITH_EXAMPLE)
+	if (WITH_FESAPI)
+		add_subdirectory(example/withFesapi)
+	else ()
+		add_subdirectory(example/withoutFesapi)
+	endif (WITH_FESAPI)
+endif (WITH_EXAMPLE)
+
 
 # ============================================================================
 # Install Fetpapi library

@@ -161,15 +161,12 @@ typedef long long 				time_t;
 	%nspace ETP_NS::TransactionHandlers;
 	%nspace ETP_NS::DataspaceHandlers;
 	%nspace ETP_NS::AbstractSession;
-	%nspace ETP_NS::PlainClientSession;
+	%nspace ETP_NS::ClientSession;
 	%nspace ETP_NS::InitializationParameters;
 #ifdef WITH_FESAPI
 	%nspace ETP_NS::FesapiHdfProxyFactory;
 #endif
-#ifdef WITH_ETP_SSL
-	%nspace ETP_NS::SslClientSession;
-#endif
-	
+
 	%nspace Energistics::Etp::v12::Datatypes::SupportedDataObject;
 	%nspace Energistics::Etp::v12::Datatypes::Uuid;
 	%nspace Energistics::Etp::v12::Datatypes::Version;
@@ -1057,10 +1054,7 @@ namespace Energistics {
 %shared_ptr(ETP_NS::TransactionHandlers)
 %shared_ptr(ETP_NS::DataspaceHandlers)
 %shared_ptr(ETP_NS::AbstractSession)
-%shared_ptr(ETP_NS::PlainClientSession)
-#ifdef WITH_ETP_SSL
-%shared_ptr(ETP_NS::SslClientSession)
-#endif
+%shared_ptr(ETP_NS::ClientSession)
 
 %feature("director") ETP_NS::CoreHandlers;
 %feature("director") ETP_NS::DiscoveryHandlers;
@@ -1874,8 +1868,8 @@ namespace ETP_NS
 
 	/******************* CLIENT ***************************/
 
-	%nodefaultctor PlainClientSession;
-	class PlainClientSession : public AbstractSession
+	%nodefaultctor ClientSession;
+	class ClientSession : public AbstractSession
 	{
 	public:
 		/**
@@ -1884,28 +1878,44 @@ namespace ETP_NS
 		*/
 		bool run();
 	};
-
-#ifdef WITH_ETP_SSL
-	%nodefaultctor SslClientSession;
-	class SslClientSession : public AbstractSession
-	{
-	public:
-		/**
-		* Run the websocket and then the ETP session.
-		* Everything related to this session (including the completion handlers) will operate on the same unique thread in a single event loop.
-		*/
-		bool run();
-	};
-#endif
 
 	class InitializationParameters
 	{
 	public:
-		InitializationParameters(const std::string& instanceUuid, const std::string & etpUrl);
+		/**
+		* @param instanceUuid	The UUID of the client instance.
+		* @param etpServerUrl	Must follow the syntax ws://<host>:<port>/<path> or wss://<host>:<port>/<path> or simply <host>:<port>/<path>
+		*						where port is optional and is defaulted to 80 if scheme is "ws" or if no scheme is provided.
+		*						In "wss" schema cases, port is defaulted to 443.
+		* @param proxyUrl		The proxy URL. It must follow the syntax http://<host>:<port> or simply <host>:<port>.
+		*						Leave it empty if your connection to eptServerUrl is direct and does not pass throughr any proxy.
+		*/
+		InitializationParameters(const std::string& instanceUuid,
+			const std::string& etpServerUrl, const std::string& proxyUrl = "");
 		InitializationParameters(const std::string& instanceUuid, const std::string & host, unsigned short port, const std::string & urlPath = "");
 		virtual ~InitializationParameters();
 
 		void setMaxWebSocketMessagePayloadSize(int64_t value);
+		uint64_t getMaxWebSocketMessagePayloadSize() const;
+
+		void setPreferredMaxFrameSize(uint64_t value);
+		uint64_t getPreferredMaxFrameSize() const;
+
+		void setAdditionalHandshakeHeaderFields(const std::map<std::string, std::string>& extraHandshakeHeaderFields);
+		const std::map<std::string, std::string>& getAdditionalHandshakeHeaderFields() const;
+
+		void setAdditionalCertificates(const std::string& extraCertificates);
+		const std::string& getAdditionalCertificates() const;
+
+		const std::string& getEtpServerHost() const;
+		uint16_t getEtpServerPort() const;
+		const std::string& getEtpServerUrlPath() const;
+
+		const std::string& getProxyHost() const;
+		uint16_t getProxyPort() const;
+
+		void setForceTls(bool force);
+		bool isTlsForced();
 
 		virtual std::string getApplicationName() const;
 		virtual std::string getApplicationVersion() const;
@@ -1921,13 +1931,8 @@ namespace ETP_NS
 
 	namespace ClientSessionLaunchers
 	{
-		std::shared_ptr<ETP_NS::PlainClientSession> createWsClientSession(InitializationParameters* initializationParams, const std::string & authorization,
-			const std::map<std::string, std::string>& additionalHandshakeHeaderFields = {}, std::size_t preferredMaxFrameSize = 4096);
-
-#ifdef WITH_ETP_SSL
-		std::shared_ptr<ETP_NS::SslClientSession> createWssClientSession(InitializationParameters* initializationParams, const std::string & authorization,
-			const std::map<std::string, std::string>& additionalHandshakeHeaderFields = {}, std::size_t preferredMaxFrameSize = 4096, const std::string & additionalCertificates = "");
-#endif
+		std::shared_ptr<ETP_NS::ClientSession> createClientSession(InitializationParameters* initializationParams,
+			const std::string & etpServerAuthorization, const std::string& proxyAuthorization = "");
 	}
 	
 #ifdef WITH_FESAPI

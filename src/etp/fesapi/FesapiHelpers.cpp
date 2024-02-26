@@ -52,8 +52,14 @@ Energistics::Etp::v12::Datatypes::Object::DataObject ETP_NS::FesapiHelpers::buil
 {
 	Energistics::Etp::v12::Datatypes::Object::DataObject result;
 	if (includeSerialization) {
+		if (obj == nullptr) {
+			throw std::invalid_argument("Cannot build an ETP dataobject from a null object.");
+		}
 		if (obj->isPartial()) {
 			obj = obj->getRepository()->resolvePartial(obj);
+			if (obj == nullptr) {
+				throw std::invalid_argument("Cannot build an ETP dataobject from a partial object which is not resolvable");
+			}
 		}
 		result.format = "xml";
 		result.data = obj->serializeIntoString();

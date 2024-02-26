@@ -7,7 +7,7 @@
 	 - dependencies 
   - The following compilers are known to work (used in CI)
     - gcc from version 4.8
-	- visual studio from version 2017
+	- visual studio from version 2019
 # Prepare the dependencies
 Download (build and install if necessary) third party libraries:
 - BOOST : All versions from version 1.66 should be ok but you may experience some [min/max build issues](https://github.com/boostorg/beast/issues/1980) using version 1.72 or 1.73.
@@ -27,10 +27,8 @@ FETPAPI uses cmake as its build tool. A 3.12 version or later of cmake is requir
 - give real path and files to the following cmake variables:
 	- BOOST
 		- Boost_INCLUDE_DIR : the directory where you can find the directory named "boost" which contain all BOOST headers
-	- AVRO
-		- AVRO_INCLUDE_DIR : where the "avro" directory containing all AVRO headers is located
-		- (ONLY FOR WINDOWS) AVRO_LIBRARY_DEBUG : Optional, only used by Visual studio Debug configuration, the Avro debug library you want to link to.
-		- AVRO_LIBRARY_RELEASE : the AVRO system library you want to link to.
+	- AVRO (using [our own cmake find module](./cmake/modules/FindAVRO.cmake))
+		- (ONLY IF NOT AUTOMATICALLY FOUND) AVRO_ROOT : The path to the folder containing include and lib folders of AVRO
 - Click again on "Configure" button. You should no more have errors so you can now click on "Generate" button.
 - You can now build your solution with your favorite compiler (and linker) using the generated solution in yourPath/fesapiEnv/build/theNameYouWant
 - OPTIONALLY, you can also set the variables WITH_DOTNET_WRAPPING, WITH_PYTHON_WRAPPING to true if you want to also generate wrappers on top of FETPAPI for these two other programming languages. Don't forget to click again on "Configure" button once you changed the value of these two variables.
@@ -40,10 +38,8 @@ FETPAPI uses cmake as its build tool. A 3.12 version or later of cmake is requir
 	- OPENSSL_INCLUDE_DIR : the OpenSSL include directory
 	- LIB_EAY_RELEASE : the OpenSSL crypto library you want to link with.
 	- SSL_EAY_RELEASE : the OpenSSL ssl library you want to link with. 
-- OPTIONALLY, for FESAPI (v2.7.0.0 as a minimal version) support (see [here](https://github.com/F2I-Consulting/fesapi) for documentation on how to build fesapi), please enable the WITH_FESAPI variable and set the following variables :
-	- FESAPI_INCLUDE_DIR : the directory where the FESAPI headers are located (generally the include subdirectory of the fesapi installation directory). 
-	- (ONLY FOR WINDOWS) FESAPI_LIBRARY_DEBUG : Optional, only used by Visual studio Debug configuration, the FESAPI debug library you want to link to.
-	- FESAPI_LIBRARY_RELEASE : the FESAPI library you want to link to.
+- OPTIONALLY, for FESAPI (v2.7.0.0 as a minimal version) support (see [here](https://github.com/F2I-Consulting/fesapi) for documentation on how to build fesapi), please enable the WITH_FESAPI variable and usually set the following variable :
+	- FESAPI_ROOT : The path to the folder containing include and lib folders of FESAPI (using [our own cmake find module](./cmake/modules/FindFESAPI.cmake))
 
 Remark : you can choose where FETPAPI will be installed (using "make install" on Linux or by generating the "INSTALL" project on Visual Studio) by setting the cmake variable called CMAKE_INSTALL_PREFIX
 # How to start

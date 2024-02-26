@@ -18,26 +18,26 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
-#include "AbstractClientSession.h"
+#include "AbstractClientSessionCRTP.h"
 
 namespace ETP_NS
 {
-	class PlainClientSession : public AbstractClientSession<PlainClientSession>
+	class PlainClientSession : public AbstractClientSessionCRTP<PlainClientSession>
 	{
 	public:
-		FETPAPI_DLL_IMPORT_OR_EXPORT PlainClientSession(): ws_(ioc) {}
-
 		/*
 		* @param frameSize				Sets the size of the write buffer used by the implementation to send frames : https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/write_buffer_bytes/overload1.html.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT PlainClientSession(
-			InitializationParameters* initializationParams, const std::string & target, const std::string & authorization,
+			InitializationParameters* initializationParams, const std::string & target, const std::string & authorization, const std::string& proxyAuthorization = "",
 			const std::map<std::string, std::string>& additionalHandshakeHeaderFields = {}, std::size_t frameSize = 4096);
 
 		virtual ~PlainClientSession() = default;
 
 		// Called by the base class
 		FETPAPI_DLL_IMPORT_OR_EXPORT websocket::stream<tcp::socket>& ws() { return ws_; }
+
+		bool isTls() const final{ return false; }
 
 		void on_resolve(boost::system::error_code ec, tcp::resolver::results_type results)
 		{
@@ -51,8 +51,8 @@ namespace ETP_NS
 				results.begin(),
 				results.end(),
 				std::bind(
-					&AbstractClientSession::on_connect,
-					std::static_pointer_cast<AbstractClientSession>(shared_from_this()),
+					&AbstractClientSessionCRTP::on_connect,
+					std::static_pointer_cast<AbstractClientSessionCRTP>(shared_from_this()),
 					std::placeholders::_1));
 		}
 

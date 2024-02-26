@@ -18,15 +18,13 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
-#include "ClientSession.h"
+#include "etp/ProtocolHandlers/StoreHandlers.h"
 
-#include "InitializationParameters.h"
-
-namespace ETP_NS
+class MyOwnStoreProtocolHandlers : public ETP_NS::StoreHandlers
 {
-	namespace ClientSessionLaunchers
-	{
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ClientSession> createClientSession(InitializationParameters* initializationParams,
-			const std::string & etpServerAuthorization, const std::string& proxyAuthorization = "");
-	}
-}
+public:
+	MyOwnStoreProtocolHandlers(ETP_NS::AbstractSession* mySession) : ETP_NS::StoreHandlers(mySession) {}
+	~MyOwnStoreProtocolHandlers() = default;
+
+	void on_GetDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse & obj, int64_t correlationId);
+};
