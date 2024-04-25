@@ -466,7 +466,7 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	std::cout << "Give your authorization to pass to the server " << argv[1] << " (or hit enter if no authorization)" << std::endl;
+	std::cout << "Give your authorization to pass to the server (including Bearer or Basic) " << argv[1] << " (or hit enter if no authorization)" << std::endl;
 	std::string authorization;
 	std::getline(std::cin, authorization);
 

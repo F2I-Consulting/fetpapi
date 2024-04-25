@@ -45,7 +45,7 @@ namespace {
 			portEnd = url.find("/", portStart);
 			int readPort = stoi(url.substr(portStart, portEnd - portStart));
 			if (readPort < 1 || readPort >(std::numeric_limits<int16_t>::max)()) {
-				throw std::out_of_range("The port " + std::to_string(readPort) + " is out of the allowed range for TCP ports ]0..2^16]");
+				throw std::out_of_range("The port " + std::to_string(readPort) + " is out of the allowed range for TCP ports (0,2^16)");
 			}
 			std::get<1>(result) = static_cast<uint16_t>(readPort);
 		}
@@ -89,7 +89,7 @@ std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> Initializatio
 
 	value.item.set_boolean(false);
 	result["SupportsAlternateRequestUris"] = value;
-	result["SupportsMessageHeaderExtension"] = value;
+	result["SupportsMessageHeaderExtensions"] = value;
 
 	return result;
 }
