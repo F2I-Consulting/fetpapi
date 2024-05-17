@@ -487,9 +487,9 @@ namespace ETP_NS
 			// First get metadata about the data array
 			std::vector<uint64_t> dimensions;
 
-			const auto daMetadata = getDataArrayMetadata(datasetName);
+			const Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata daMetadata = getDataArrayMetadata(datasetName);
 			size_t valueCount = 1;
-			for (auto dim : daMetadata.dimensions) {
+			for (int64_t dim : daMetadata.dimensions) {
 				valueCount *= dim;
 			}
 
