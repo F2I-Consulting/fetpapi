@@ -401,7 +401,7 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				// Internally it uses the ETP Hdf proxy set as the default HDF proxy of the repository in main.cpp.
 				// pushBackGeometryPatch is a blocking method. If you want non blocking method, you need to use PutDataArray directly.
 				double pointCoords[18] = { 10, 70, 301, 11, 21, 299, 150, 30, 301, 400, 0, 351, 450, 75, 340, 475, 100, 350 };
-				h1i1PointSetRep->pushBackGeometryPatch(6, pointCoords, nullptr, crs);
+				h1i1PointSetRep->pushBackXyzGeometryPatch(6, pointCoords, nullptr, crs);
 
 				// Now send the XML part
 				Energistics::Etp::v12::Protocol::Store::PutDataObjects putDataObjects;
