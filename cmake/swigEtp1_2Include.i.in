@@ -16,7 +16,9 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 -----------------------------------------------------------------------*/
-%module(directors="1") fetpapi
+%module(directors="1", "threads"=1) fetpapi
+%feature("autodoc", "1");
+%feature("python:annotations", "c");
 %catches(Swig::DirectorException);
 
 %{
@@ -28,9 +30,10 @@ under the License.
 %}
 
 #ifdef WITH_FESAPI
-%import "${FESAPI_INCLUDE_DIR}/fesapi/common/DataObjectReference.h"
-%import "${FESAPI_INCLUDE_DIR}/fesapi/common/HdfProxyFactory.h"
-%import "${FESAPI_INCLUDE_DIR}/fesapi/common/AbstractObject.h"
+%include "${FESAPI_INCLUDE_DIR}/fesapi/nsDefinitions.h"
+%import(module="fesapi") "${FESAPI_INCLUDE_DIR}/fesapi/common/DataObjectReference.h"
+%import(module="fesapi") "${FESAPI_INCLUDE_DIR}/fesapi/common/HdfProxyFactory.h"
+%import(module="fesapi") "${FESAPI_INCLUDE_DIR}/fesapi/common/AbstractObject.h"
 #endif
 
 %include "stdint.i"
@@ -353,42 +356,42 @@ namespace Energistics {
 					double get_double();				
 					void set_double(const double& v);
 					
-					std::string get_string();				
+					std::string get_string();
 					void set_string(const std::string& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfBoolean get_ArrayOfBoolean();		
+					Energistics::Etp::v12::Datatypes::ArrayOfBoolean get_ArrayOfBoolean();
 					void set_ArrayOfBoolean(const Energistics::Etp::v12::Datatypes::ArrayOfBoolean& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfInt get_ArrayOfInt();			
+					Energistics::Etp::v12::Datatypes::ArrayOfInt get_ArrayOfInt();
 					void set_ArrayOfInt(const Energistics::Etp::v12::Datatypes::ArrayOfInt& v);
 					
 					Energistics::Etp::v12::Datatypes::ArrayOfLong get_ArrayOfLong();
-					void set_ArrayOfLong(const Energistics::Etp::v12::Datatypes::ArrayOfLong& v);	
+					void set_ArrayOfLong(const Energistics::Etp::v12::Datatypes::ArrayOfLong& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfFloat get_ArrayOfFloat();				
+					Energistics::Etp::v12::Datatypes::ArrayOfFloat get_ArrayOfFloat();
 					void set_ArrayOfFloat(const Energistics::Etp::v12::Datatypes::ArrayOfFloat& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfDouble get_ArrayOfDouble();	
+					Energistics::Etp::v12::Datatypes::ArrayOfDouble get_ArrayOfDouble();
 					void set_ArrayOfDouble(const Energistics::Etp::v12::Datatypes::ArrayOfDouble& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfString get_ArrayOfString();			
-					void set_ArrayOfString(const Energistics::Etp::v12::Datatypes::ArrayOfString& v);	
+					Energistics::Etp::v12::Datatypes::ArrayOfString get_ArrayOfString();
+					void set_ArrayOfString(const Energistics::Etp::v12::Datatypes::ArrayOfString& v);
 					
-					std::string get_bytes();				
-					void set_bytes(const std::string& v);		
+					std::string get_bytes();
+					void set_bytes(const std::string& v);
 				};
 				
-				struct DataValue{				
+				struct DataValue{
 					Energistics::Etp::v12::Datatypes::DataValueitem_t item;
 				};
 				
-				struct ErrorInfo{				
+				struct ErrorInfo{
 					std::string message;
 					int32_t code;
 				};
 				
 				struct AnyArrayitem_t {
-				public:				
+				public:
 					size_t idx() const;
 					
 					Energistics::Etp::v12::Datatypes::ArrayOfBoolean get_ArrayOfBoolean();
@@ -417,7 +420,7 @@ namespace Energistics {
 					Energistics::Etp::v12::Datatypes::AnyArrayitem_t item;
 				};	
 				
-				enum AnyArrayType {
+				enum class AnyArrayType {
 					arrayOfBoolean=0,
 					arrayOfInt=1,
 					arrayOfLong=2,
@@ -425,7 +428,7 @@ namespace Energistics {
 					arrayOfDouble=4,
 					arrayOfString=5,
 					bytes=6
-				};	
+				};
 				
 				enum class AnyLogicalArrayType {
 					arrayOfBoolean=0,
@@ -449,7 +452,7 @@ namespace Energistics {
 					arrayOfDouble64BE=18,
 					arrayOfString=19,
 					arrayOfCustom=20
-				};				
+				};
 			}
 		}
 	}
@@ -477,7 +480,7 @@ namespace Energistics {
 						std::vector<std::string> dataObjectTypes;
 					};
 					
-					enum ContextScopeKind {
+					enum class ContextScopeKind {
 						self=0,
 						sources=1,
 						targets=2,
@@ -528,7 +531,7 @@ namespace Energistics {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
 					
-					enum RelationshipKind {
+					enum class RelationshipKind {
 						Primary=0,
 						Secondary=1,
 						Both=2
@@ -793,6 +796,9 @@ namespace Energistics {
 						static const int messageTypeId=4;
 					};
 					
+#if defined(SWIGPYTHON)
+					%rename(Store_Chunk) Chunk;
+#endif
 					struct Chunk{					
 						Energistics::Etp::v12::Datatypes::Uuid blobId;
 						std::string data;
@@ -991,6 +997,10 @@ namespace Energistics {
 						std::map<std::string, std::string> success;
 						static const int messageTypeId=10;
 					};
+					
+#if defined(SWIGPYTHON)
+					%rename(StoreNotification_Chunk) Chunk;
+#endif
 					struct Chunk{
 						Energistics::Etp::v12::Datatypes::Uuid blobId;
 						std::string data;

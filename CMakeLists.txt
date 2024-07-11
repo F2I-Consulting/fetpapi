@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.21)
 
 project(Fetpapi)
 
@@ -146,7 +146,7 @@ if (WITH_ETP_SSL)
 	if (NOT TARGET OpenSSL::SSL OR NOT TARGET OpenSSL::Crypto)
 		find_package(OpenSSL REQUIRED)
 	endif()
-	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto OpenSSL::applink)
 endif ()
 
 if (WITH_FESAPI)
@@ -340,3 +340,29 @@ endif (WITH_FESAPI)
 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FetpapiConfig.cmake
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/Fetpapi")
+
+if (WITH_PYTHON_WRAPPING)
+	IF (WIN32)
+		install(
+			TARGETS ${PROJECT_NAME}
+			RUNTIME_DEPENDENCY_SET dep-set
+		)
+		cmake_path(GET SSL_EAY_RELEASE PARENT_PATH openSslLibPath)
+		cmake_path(GET openSslLibPath PARENT_PATH openSslPath)
+		cmake_path(APPEND openSslPath "bin" OUTPUT_VARIABLE openSslBinPath)
+		install(
+			RUNTIME_DEPENDENCY_SET dep-set
+			PRE_EXCLUDE_REGEXES "api-ms-.*" "ext-ms-.*" "[Ff]esapi[Cc]pp.*\\.dll"
+			POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
+			DIRECTORIES ${openSslBinPath}
+			RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/python/fetpapi/
+		)
+	ELSE ()
+		install(
+			TARGETS ${PROJECT_NAME}
+			LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/python/fetpapi/
+		)
+	ENDIF (WIN32)
+	install(CODE "execute_process(COMMAND	${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/python/setup.py bdist_wheel
+											WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/python)")
+endif (WITH_PYTHON_WRAPPING)

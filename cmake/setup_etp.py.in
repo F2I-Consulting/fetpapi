@@ -1,27 +1,43 @@
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 
 fetpapi_module = Extension('_fetpapi',
-	sources=['swigGeneratedPythonWrapper.cpp'],
-	include_dirs=[
-		'${Boost_INCLUDE_DIR}',
-		'${AVRO_INCLUDE_DIR}'
-	],
-	library_dirs=[
-		'${CMAKE_INSTALL_PREFIX}/lib',
-		'${Boost_LIBRARY_DIR_RELEASE}',
-		'${AVRO_LIBRARY_DIR_RELEASE}'
-	],
-	libraries=[
-		'${ASSEMBLY_NAME}',
-		'${AVRO_LIBRARY_RELEASE_WLE}'
-	],
-	extra_compile_args=['-std=c++11'],
+    sources=['swigGeneratedPythonWrapper.cpp'],
+    include_dirs=['${Boost_INCLUDE_DIR}','${AVRO_INCLUDE_DIR}'${FESAPI_INCLUDE_DIR_FOR_SETUP_PY}],
+    library_dirs=['${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}'${AVRO_LIBRARY_DIR_RELEASE}${Boost_LIBRARY_DIR_RELEASE}${FESAPI_LIBRARY_DIR_RELEASE}],
+    libraries=['${ASSEMBLY_NAME}'${AVRO_LIBRARY_RELEASE_WLE}${Boost_LIBRARY_RELEASE_WLE}${FESAPI_LIBRARY_RELEASE_WLE}],
+    ${EXTRA_COMPILE_ARGS},
 )
 
 setup (name = 'fetpapi',
-	version = '1.0',
-	author      = "F2I-CONSULTING",
-	description = """An API for the Energistics Transfert Protocol""",
-	ext_modules = [fetpapi_module],
-	py_modules = ["fetpapi"],
+    version     = '${Fetpapi_PYTHON_VERSION}',
+    author      = 'F2I-CONSULTING',
+    maintainer  = 'F2I-CONSULTING',
+    url         = 'https://github.com/F2I-Consulting/fetpapi',
+    description = 'An API for the Energistics Transfer Protocol',
+    license     = 'Apache 2.0',
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+
+        'Intended Audience :: Developers',
+        'Topic :: Software Development :: Build Tools',
+
+        'License :: OSI Approved :: Apache Software License',
+        
+        'Natural Language :: English',
+
+        'Programming Language :: Python :: 3',
+    ],
+    keywords='energistics resqml witsml prodml etp rddms osdu development',
+    project_urls={
+        'Discourse': 'https://discourse.f2i-consulting.com/',
+        'Tracker': 'https://github.com/F2I-Consulting/fetpapi/issues',
+    },
+    python_requires='>=3',
+    include_package_data=True,
+    packages=['fetpapi'],
+    package_dir={'fetpapi': 'fetpapi'},
+    package_data={'fetpapi': ['*.dll', '*.so', '*.so.*']},
+    ext_package='fetpapi',
+    ext_modules = [fetpapi_module],
+    install_requires=['fesapi==2.10.0',],
 )

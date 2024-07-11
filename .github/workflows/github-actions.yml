@@ -27,7 +27,7 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
+          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
           cmake --build . --config Release -j2
   windows-2019-with-fesapi:
     runs-on: windows-2019
@@ -78,7 +78,7 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
+          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
           cmake --build . --config Release -j2
   ubuntu-20:
     runs-on: ubuntu-20.04
@@ -105,7 +105,7 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install ${{ github.workspace }}
+          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE ${{ github.workspace }}
           cmake --build . --config Release -j2
   ubuntu-20-java8:
     runs-on: ubuntu-20.04
@@ -136,7 +136,7 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }}
+          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }}
           cmake --build . --config Release -j2
   ubuntu-20-java8-with-fesapi:
     runs-on: ubuntu-20.04
@@ -191,5 +191,5 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.9.0.1.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.9.0.1.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
           cmake --build . --config Release -j2

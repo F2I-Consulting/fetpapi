@@ -28,6 +28,19 @@ under the License.
 #include "etp/fesapi/FesapiHdfProxy.h"
 #include "etp/fesapi/FesapiHelpers.h"
 
+namespace {
+	std::vector<std::string> tokenize(const std::string& str, char delimiter) {
+		std::vector<std::string> tokens;
+		std::stringstream ss(str);
+		std::string token;
+		while (getline(ss, token, delimiter)) {
+			tokens.push_back(token);
+		}
+
+		return tokens;
+	}
+}
+
 void printHelp()
 {
 	std::cout << "List of available commands :" << std::endl;

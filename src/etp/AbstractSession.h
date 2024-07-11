@@ -44,19 +44,6 @@ under the License.
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
 
-namespace {
-	std::vector<std::string> tokenize(const std::string & str, char delimiter) {
-		std::vector<std::string> tokens;
-		std::stringstream ss(str);
-		std::string token;
-		while(getline(ss, token, delimiter)) {
-			tokens.push_back(token);
-		}
-
-		return tokens;
-	}
-}
-
 namespace ETP_NS
 {
 	class AbstractSession : public std::enable_shared_from_this<AbstractSession>
