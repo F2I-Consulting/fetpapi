@@ -50,29 +50,10 @@ jobs:
           cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-1.11.3-install ${{ runner.temp }}/avro-cpp-1.11.3
           cmake --build . --config Release --target avrocpp_s -j2
           cmake --install .
-      - name: HDF5 install
-        run: |
-          Invoke-WebRequest https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.0/bin/hdf5-1.12.0-Std-win10_64-vs16.zip -OutFile ${{ runner.temp }}\hdf5-1.12.0-Std-win10_64-vs16.zip
-          Expand-Archive ${{ runner.temp }}\hdf5-1.12.0-Std-win10_64-vs16.zip -DestinationPath ${{ runner.temp }}
-          msiexec.exe /i "${{ runner.temp }}\hdf\HDF5-1.12.0-win64.msi" /qn INSTALL_ROOT=${{ runner.temp }}\hdf5-1.12.0-Std-win10_64-vs16
-      - name: Minizip install
-        run: |
-          git clone https://github.com/F2I-Consulting/Minizip.git ${{ runner.temp }}/Minizip
-          cd ${{ runner.temp }}
-          mkdir minizip-build
-          cd minizip-build
-          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DZLIB_INCLUDE_DIR=${{ runner.temp }}/hdf5-1.12.0-Std-win10_64-vs16/include -DZLIB_LIBRARY_RELEASE=${{ runner.temp }}/hdf5-1.12.0-Std-win10_64-vs16/lib/hdf5.lib -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/minizip-install ${{ runner.temp }}/Minizip
-          cmake --build . --config Release -j2
-          cmake --build . --config Release --target INSTALL
       - name: FESAPI install
         run: |
-          git clone --branch v2.9.0.1 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
-          cd ${{ runner.temp }}
-          mkdir fesapi-build
-          cd fesapi-build
-          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DHDF5_ROOT=${{ runner.temp }}\hdf5-1.12.0-Std-win10_64-vs16 -DMINIZIP_INCLUDE_DIR=${{ runner.temp }}/minizip-install/include -DMINIZIP_LIBRARY_RELEASE=${{ runner.temp }}/minizip-install/lib/minizip.lib -DZLIB_INCLUDE_DIR=${{ runner.temp }}\hdf5-1.12.0-Std-win10_64-vs16/include -DZLIB_LIBRARY_RELEASE=${{ runner.temp }}\hdf5-1.12.0-Std-win10_64-vs16/lib/zlib.lib -DSZIP_LIBRARY_RELEASE=${{ runner.temp }}\hdf5-1.12.0-Std-win10_64-vs16/lib/szip.lib -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DWITH_EXAMPLE=TRUE -DWITH_RESQML2_2=TRUE -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fesapi-install ${{ runner.temp }}/fesapi-src
-          cmake --build . --config Release -j2
-          cmake --build . --config Release --target INSTALL
+          (New-Object System.Net.WebClient).DownloadFile("https://github.com/F2I-Consulting/fesapi/releases/download/v2.9.0.1/fesapi2_9_0_1-cpp-java-vs2019-x64-staticfHdf1143-staticZlib13.zip", "${{ runner.temp }}\fesapi.zip")
+          7z x ${{ runner.temp }}\fesapi.zip -o${{ runner.temp }}/fesapi-install
       - name: CMake build and install
         run: |
           cd ${{ github.workspace }}/..
