@@ -199,7 +199,7 @@ jobs:
             yum install -y epel-release &&
             yum --enablerepo=epel install -y cmake3 &&
             cd / &&
-            wget https://archives.boost.io/release/1.85.0/source/boost_1_73_0.tar.gz &&
+            wget https://archives.boost.io/release/1.73.0/source/boost_1_73_0.tar.gz &&
             tar xf boost_1_73_0.tar.gz &&
             wget https://archive.apache.org/dist/avro/avro-1.11.3/cpp/avro-cpp-1.11.3.tar.gz &&
             tar xf avro-cpp-1.11.3.tar.gz &&
