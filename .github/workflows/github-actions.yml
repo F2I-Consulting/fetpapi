@@ -205,8 +205,8 @@ jobs:
             sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.11.3/CMakeLists.txt &&
             mkdir avro-build &&
             cd avro-build &&
-            cmake3 -Wno-dev -Wno-deprecated -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=/avro-install /avro-cpp-1.11.3
-            cmake3 --build . -j2 --target avrocpp_s --config Release
+            cmake3 -Wno-dev -Wno-deprecated -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=/avro-install /avro-cpp-1.11.3 &&
+            cmake3 --build . -j2 --target avrocpp_s --config Release &&
             cmake3 --install . &&
             cd / &&
             mkdir build &&
