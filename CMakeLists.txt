@@ -102,7 +102,7 @@ find_package (Threads)
 # Boost DEPENDENCY
 find_package(Boost 1.70)
 if (NOT Boost_FOUND)
-	# Boost system is required for Beast untill version 1.70 : https://www.boost.org/doc/libs/1_69_0/libs/beast/doc/html/beast/introduction.html
+	# Boost system is required for Beast until version 1.70 : https://www.boost.org/doc/libs/1_69_0/libs/beast/doc/html/beast/introduction.html
 	find_package(Boost 1.66 REQUIRED system)
 endif()
 if (WIN32 AND (Boost_VERSION_MAJOR EQUAL 1) AND (Boost_VERSION_MINOR LESS 74) AND (Boost_VERSION_MINOR GREATER 71))
