@@ -207,13 +207,13 @@ jobs:
             sed -i 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.11.3/CMakeLists.txt &&
             mkdir avro-build &&
             cd avro-build &&
-            cmake3 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=/boost_1_85_0/boost -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=/avro-install /avro-cpp-1.11.3 &&
+            cmake3 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=/boost_1_85_0 -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=/avro-install /avro-cpp-1.11.3 &&
             cmake3 --build . -j2 --target avrocpp_s --config Release &&
             cmake3 --install . &&
             cd / &&
             mkdir build &&
             cd build &&
-            cmake3 -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIR=/boost_1_85_0/boost -DAVRO_ROOT=/avro-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fetpapi-install {project} &&
+            cmake3 -DCMAKE_BUILD_TYPE=Release -DBoost_INCLUDE_DIR=/boost_1_85_0 -DAVRO_ROOT=/avro-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fetpapi-install {project} &&
             cmake3 --build . -j2 --config Release &&
             cmake3 --install .
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
