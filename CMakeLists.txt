@@ -151,6 +151,7 @@ if (WITH_ETP_SSL)
 		find_package(OpenSSL REQUIRED)
 	endif()
 	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+	# OpenSSL::applink is recommended under MSVC : https://cmake.org/cmake/help/latest/module/FindOpenSSL.html
 	if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 		target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::applink)
 	endif ()
