@@ -204,7 +204,7 @@ jobs:
             cd boost_1_73_0 &&
             ./bootstrap.sh --prefix=/boost-install --with-libraries=filesystem iostreams program_options regex system &&
             ./b2 install &&
-            cd / &
+            cd / &&
             wget https://archive.apache.org/dist/avro/avro-1.11.3/cpp/avro-cpp-1.11.3.tar.gz &&
             tar xf avro-cpp-1.11.3.tar.gz &&
             sed -i 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' avro-cpp-1.11.3/CMakeLists.txt &&
