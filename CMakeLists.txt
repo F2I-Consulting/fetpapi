@@ -365,11 +365,6 @@ if (WITH_PYTHON_WRAPPING)
 			DIRECTORIES ${openSslBinPath}
 			RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/python/fetpapi/
 		)
-	ELSE ()
-		install(
-			TARGETS ${PROJECT_NAME}
-			LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/python/fetpapi/
-		)
 	ENDIF (WIN32)
 	install(CODE "execute_process(COMMAND	${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/python/setup.py bdist_wheel
 											WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/python)")
