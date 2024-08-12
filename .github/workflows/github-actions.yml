@@ -227,7 +227,7 @@ jobs:
             unzip manylinux.zip &&
             mkdir fesapi-build &&
             cd fesapi-build &&
-            cmake3 -DCMAKE_BUILD_TYPE=Release -DHDF5_ROOT=/hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fesapi-install /fesapi-manylinux &&
+            cmake3 -DCMAKE_BUILD_TYPE=Release -DBoost_ROOT=/boost-install -DHDF5_ROOT=/hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fesapi-install /fesapi-manylinux &&
             cmake3 --build . -j2 --config Release &&
             cmake3 --install . &&
             cd / &&
