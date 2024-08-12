@@ -193,7 +193,7 @@ jobs:
           CIBW_BUILD: cp38-manylinux_* cp39-manylinux_* cp310-manylinux_* cp311-manylinux_* cp312-manylinux_* cp313-manylinux_*
           CIBW_ARCHS: auto64
           CIBW_BEFORE_ALL: >
-            yum install -y wget gcc-c++ openssl-devel &&
+            yum install -y wget gcc-c++ openssl-devel minizip-devel &&
             yum search epel-release &&
             yum info epel-release &&
             yum install -y epel-release &&
@@ -215,9 +215,25 @@ jobs:
             cmake3 --build . -j2 --target avrocpp_s --config Release &&
             cmake3 --install . &&
             cd / &&
+            wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.3/src/hdf5-1.12.3.tar.gz &&
+            tar xf hdf5-1.12.3.tar.gz &&
+            mkdir hdf5-build &&
+            cd hdf5-build &&
+            cmake3 -G "Unix Makefiles" -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS:BOOL=OFF -DBUILD_TESTING:BOOL=OFF -DHDF5_BUILD_TOOLS:BOOL=OFF -DHDF5_BUILD_EXAMPLES:BOOL=OFF -DHDF5_BUILD_CPP_LIB:BOOL=OFF -DHDF5_BUILD_HL_LIB:BOOL=OFF -DCMAKE_INSTALL_PREFIX:STRING=/hdf5-install ../hdf5-1.12.3 &&
+            cmake3 --build . -j2 --config Release &&
+            cmake3 --install . &&
+            cd / &&
+            wget https://github.com/F2I-Consulting/fesapi/archive/refs/heads/manylinux.zip &&
+            unzip manylinux.zip &&
+            mkdir fesapi-build &&
+            cd fesapi-build &&
+            cmake3 -DCMAKE_BUILD_TYPE=Release -DHDF5_ROOT=/hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fesapi-install /fesapi-manylinux &&
+            cmake3 --build . -j2 --config Release &&
+            cmake3 --install . &&
+            cd / &&
             mkdir build &&
             cd build &&
-            cmake3 -DCMAKE_BUILD_TYPE=Release -DBoost_ROOT=/boost-install -DAVRO_ROOT=/avro-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fetpapi-install {project} &&
+            cmake3 -DCMAKE_BUILD_TYPE=Release -DBoost_ROOT=/boost-install -DAVRO_ROOT=/avro-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=/fesapi-install -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fetpapi-install {project} &&
             cmake3 --build . -j2 --config Release &&
             cmake3 --install .
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
