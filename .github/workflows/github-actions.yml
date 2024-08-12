@@ -237,7 +237,7 @@ jobs:
             cmake3 --build . -j2 --config Release &&
             cmake3 --install .
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
-            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/fetpapi-install/lib64 &&
+            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/fesapi-install/lib64:/fetpapi-install/lib64 &&
             auditwheel repair -w {dest_dir} {wheel}
         with:
           package-dir: ./python
