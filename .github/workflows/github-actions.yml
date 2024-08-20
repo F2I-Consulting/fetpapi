@@ -224,10 +224,10 @@ jobs:
             cmake3 --install . &&
             cd / &&
             wget https://github.com/F2I-Consulting/fesapi/archive/refs/heads/dev.zip &&
-            unzip manylinux.zip &&
+            unzip dev.zip &&
             mkdir fesapi-build &&
             cd fesapi-build &&
-            cmake3 -DCMAKE_BUILD_TYPE=Release -DBoost_ROOT=/boost-install -DHDF5_ROOT=/hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fesapi-install /fesapi-manylinux &&
+            cmake3 -DCMAKE_BUILD_TYPE=Release -DBoost_ROOT=/boost-install -DHDF5_ROOT=/hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fesapi-install /fesapi-dev &&
             cmake3 --build . -j2 --config Release &&
             cmake3 --install . &&
             cd / &&
