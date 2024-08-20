@@ -132,7 +132,7 @@ namespace ETP_NS
 			requestSession.applicationName = initializationParams->getApplicationName();
 			requestSession.applicationVersion = initializationParams->getApplicationVersion();
 
-			std::copy(std::begin(initializationParams->getInstanceId().data), std::end(initializationParams->getInstanceId().data), requestSession.clientInstanceId.array.begin());
+			std::copy(initializationParams->getInstanceId().begin(), initializationParams->getInstanceId().end(), requestSession.clientInstanceId.array.begin());
 
 			requestSession.requestedProtocols = initializationParams->makeSupportedProtocols();
 			requestSession.supportedDataObjects = initializationParams->makeSupportedDataObjects();
