@@ -223,7 +223,7 @@ jobs:
             cmake3 --build . -j2 --config Release &&
             cmake3 --install . &&
             cd / &&
-            wget https://github.com/F2I-Consulting/fesapi/archive/refs/heads/manylinux.zip &&
+            wget https://github.com/F2I-Consulting/fesapi/archive/refs/heads/dev.zip &&
             unzip manylinux.zip &&
             mkdir fesapi-build &&
             cd fesapi-build &&
