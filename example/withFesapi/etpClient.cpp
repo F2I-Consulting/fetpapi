@@ -508,7 +508,7 @@ int main(int argc, char **argv)
 	std::map< std::string, std::string > additionalHeaderField = { {"data-partition-id", "osdu"} }; // Example for OSDU RDDMS
 	initializationParams.setAdditionalHandshakeHeaderFields(additionalHeaderField);
 
-	std::cerr << "Creating a client session..." << std::endl;
+	std::cout << "Creating a client session..." << std::endl;
 	auto clientSession = ETP_NS::ClientSessionLaunchers::createClientSession(&initializationParams, authorization);
 
 	setFetpapiHandlers(clientSession);
