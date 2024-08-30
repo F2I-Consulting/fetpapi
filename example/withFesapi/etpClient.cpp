@@ -53,7 +53,8 @@ void printHelp()
 	std::cout << "\tGetResources URI scope(default self) depth(default 1) countObjects(true or false, default is true) includeSecondaryTargets(true or false, default is false) includeSecondarySources(true or false, default is false) dataTypeFilter,dataTypeFilter,...(default noFilter)" << std::endl << std::endl;
 	std::cout << "\tGetDataObjects dataObjectURI,dataObjectURI,..." << std::endl << "\t\tGet the objects from an ETP store and store them into the in memory Dataobject repository (only create partial TARGET relationships, not any SOURCE relationships)" << std::endl << std::endl;
 	std::cout << "\tGetXYZPoints URI" << std::endl << "\t\tGet the XYZ points of a rep from store and print some of them." << std::endl << std::endl;
-	std::cout << "\tPutDataObject UUID" << std::endl << "\t\tPut the XML part of a dataobject which is on the client side (use \"Load\" command to laod some dataobjects on client side) to the store" << std::endl << std::endl;
+	std::cout << "\tPutDataObject UUID" << std::endl << "\t\tPut the XML part of a dataobject which is on the client side (use \"Load\" command to load some dataobjects on client side) to the store" << std::endl << std::endl;
+	std::cout << "\tPutAllDataObjects" << std::endl << "\t\tPut the XML part of all dataobjects which is on the client side (use \"Load\" command to load some dataobjects on client side) to the store" << std::endl << std::endl;
 	std::cout << "\tGetDataArrayMetadata epcExternalPartURI datasetPathInEpcExternalPart" << std::endl << "\t\tGet the metadata of a dataset included in an EpcExternalPart over ETP." << std::endl << std::endl;
 	std::cout << "\tGetDataArray epcExternalPartURI datasetPathInEpcExternalPart" << std::endl << "\t\tGet the numerical values from a dataset included in an EpcExternalPart over ETP." << std::endl << std::endl;
 	std::cout << "\tPutDataArray epcExternalPartURI datasetPathInEpcExternalPart" << std::endl << "\t\tPut a dummy {0,1,2,3,4,5,6,7,8,9} integer array in a particular store epcExternalPartURI at a particular dataset path" << std::endl << std::endl;
@@ -264,7 +265,7 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 			subscriptionInfo.context.depth = 1;
 			boost::uuids::random_generator gen;
 			boost::uuids::uuid uuid = gen();
-			std::move(std::begin(uuid.data), std::end(uuid.data), subscriptionInfo.requestUuid.array.begin());
+			std::move(uuid.begin(), uuid.end(), subscriptionInfo.requestUuid.array.begin());
 
 			if (commandTokens.size() > 2) {
 				if (commandTokens[2] == "self")
@@ -422,6 +423,17 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				putDataObjects.dataObjects["0"] = dataObject;
 
 				session->send(putDataObjects, 0, 0x02 | 0x10); // 0x10 requires Acknowledge from the store
+			}
+			else if (commandTokens[0] == "PutAllDataObjects") {
+				std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> putDataObjectsMap;
+				auto allUuids = repo.getUuids();
+				for (size_t i = 0; i < allUuids.size(); ++i) {
+					auto* dataObj = repo.getDataObjectByUuid(allUuids[i]);
+					dataObj->setUriSource("eml:///dataspace('pwls/3.0')");
+					putDataObjectsMap[std::to_string(i)] = ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(dataObj);
+				}
+				auto results = session->putDataObjects(putDataObjectsMap);
+				std::cout << "Has put " << results.size() << " on " << putDataObjectsMap.size() << " sent dataobjects into eml:///dataspace('pwls/3.0')";
 			}
 		}
 		else if (commandTokens.size() == 3) {

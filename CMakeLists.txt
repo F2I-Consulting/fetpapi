@@ -1,4 +1,8 @@
-cmake_minimum_required(VERSION 3.21)
+if (WIN32)
+	cmake_minimum_required(VERSION 3.21)
+else ()
+	cmake_minimum_required(VERSION 3.12)
+endif (WIN32)
 
 project(Fetpapi)
 
@@ -98,7 +102,7 @@ find_package (Threads)
 # Boost DEPENDENCY
 find_package(Boost 1.70)
 if (NOT Boost_FOUND)
-	# Boost system is required for Beast untill version 1.70 : https://www.boost.org/doc/libs/1_69_0/libs/beast/doc/html/beast/introduction.html
+	# Boost system is required for Beast until version 1.70 : https://www.boost.org/doc/libs/1_69_0/libs/beast/doc/html/beast/introduction.html
 	find_package(Boost 1.66 REQUIRED system)
 endif()
 if (WIN32 AND (Boost_VERSION_MAJOR EQUAL 1) AND (Boost_VERSION_MINOR LESS 74) AND (Boost_VERSION_MINOR GREATER 71))
@@ -146,7 +150,11 @@ if (WITH_ETP_SSL)
 	if (NOT TARGET OpenSSL::SSL OR NOT TARGET OpenSSL::Crypto)
 		find_package(OpenSSL REQUIRED)
 	endif()
-	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto OpenSSL::applink)
+	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+	# OpenSSL::applink is recommended under MSVC : https://cmake.org/cmake/help/latest/module/FindOpenSSL.html
+	if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+		target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::applink)
+	endif ()
 endif ()
 
 if (WITH_FESAPI)
@@ -356,11 +364,6 @@ if (WITH_PYTHON_WRAPPING)
 			POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
 			DIRECTORIES ${openSslBinPath}
 			RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/python/fetpapi/
-		)
-	ELSE ()
-		install(
-			TARGETS ${PROJECT_NAME}
-			LIBRARY DESTINATION ${CMAKE_SOURCE_DIR}/python/fetpapi/
 		)
 	ENDIF (WIN32)
 	install(CODE "execute_process(COMMAND	${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/python/setup.py bdist_wheel

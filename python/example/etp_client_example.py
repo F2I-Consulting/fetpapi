@@ -100,8 +100,8 @@ if repo.getHorizonGrid2dRepresentationCount() > 0:
     z_points = fesapi.DoubleArray(nb_z_points)
     grid2d.getZValues(z_points)
 
-    print("Z value at index 0 : ", xyz_points.getitem(0))
-    print("Z value at index 1 : ", xyz_points.getitem(1))
+    print("Z value at index 0 : ", z_points.getitem(0))
+    print("Z value at index 1 : ", z_points.getitem(1))
 else:
     print("This dataspace has no 2d Grid")
 
