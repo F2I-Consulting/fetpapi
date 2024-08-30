@@ -53,13 +53,13 @@ jobs:
       - name: FESAPI install
         run: |
           (New-Object System.Net.WebClient).DownloadFile("https://github.com/F2I-Consulting/fesapi/releases/download/v2.10.0.0/fesapi2_10_0_0-cpp-vs2019-x64-staticfHdf1143-staticZlib13.zip", "${{ runner.temp }}\fesapi.zip")
-          7z x ${{ runner.temp }}\fesapi2_10_0_0-cpp-vs2019-x64-staticfHdf1143-staticZlib13.zip -o${{ runner.temp }}/fesapi-install
+          7z x ${{ runner.temp }}\fesapi.zip -o${{ runner.temp }}
       - name: CMake build and install
         run: |
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
+          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi2_10_0_0-cpp-vs2019-x64-staticfHdf1143-staticZlib13 -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
           cmake --build . --config Release -j2
   ubuntu-20:
     runs-on: ubuntu-20.04
@@ -120,7 +120,6 @@ jobs:
           cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }}
           cmake --build . --config Release -j2
   ubuntu-20-java11-with-fesapi:
-    if: false
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false  # 'false' means Don't stop matrix workflows even if some matrix failed.
