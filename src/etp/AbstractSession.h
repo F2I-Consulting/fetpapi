@@ -621,49 +621,49 @@ namespace ETP_NS
 		}
 
 		std::shared_ptr<ETP_NS::CoreHandlers> getCoreProtocolHandlers() {
-			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Core);
+			const auto protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
 			return protocolHandlers.size() > protocolId
 				? std::dynamic_pointer_cast<CoreHandlers>(protocolHandlers[protocolId])
 				: nullptr;
 		}
 
 		std::shared_ptr<ETP_NS::DiscoveryHandlers> getDiscoveryProtocolHandlers() {
-			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
+			const auto protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
 			return protocolHandlers.size() > protocolId
 				? std::dynamic_pointer_cast<DiscoveryHandlers>(protocolHandlers[protocolId])
 				: nullptr;
 		}
 
 		std::shared_ptr<ETP_NS::StoreHandlers> getStoreProtocolHandlers() {
-			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Store);
+			const auto protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
 			return protocolHandlers.size() > protocolId
 				? std::dynamic_pointer_cast<StoreHandlers>(protocolHandlers[protocolId])
 				: nullptr;
 		}
 
 		std::shared_ptr<ETP_NS::StoreNotificationHandlers> getStoreNotificationProtocolHandlers() {
-			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
+			const auto protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
 			return protocolHandlers.size() > protocolId
 				? std::dynamic_pointer_cast<StoreNotificationHandlers>(protocolHandlers[protocolId])
 				: nullptr;
 		}
 
 		std::shared_ptr<ETP_NS::DataArrayHandlers> getDataArrayProtocolHandlers() {
-			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
+			const auto protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
 			return protocolHandlers.size() > protocolId
 				? std::dynamic_pointer_cast<DataArrayHandlers>(protocolHandlers[protocolId])
 				: nullptr;
 		}
 
 		std::shared_ptr<ETP_NS::TransactionHandlers> getTransactionProtocolHandlers() {
-			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
+			const auto protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
 			return protocolHandlers.size() > protocolId
 				? std::dynamic_pointer_cast<TransactionHandlers>(protocolHandlers[protocolId])
 				: nullptr;
 		}
 
 		std::shared_ptr<ETP_NS::DataspaceHandlers> getDataspaceProtocolHandlers() {
-			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
+			const auto protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
 			return protocolHandlers.size() > protocolId
 				? std::dynamic_pointer_cast<DataspaceHandlers>(protocolHandlers[protocolId])
 				: nullptr;
