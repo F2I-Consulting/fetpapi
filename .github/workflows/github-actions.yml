@@ -7,7 +7,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Boost install
         run: |
-          (New-Object System.Net.WebClient).DownloadFile("https://sourceforge.net/projects/boost/files/boost-binaries/1.78.0//boost_1_78_0-msvc-14.2-64.exe", "${{ runner.temp }}\boost.exe")
+          (New-Object System.Net.WebClient).DownloadFile("https://sourceforge.net/projects/boost/files/boost-binaries/1.86.0//boost_1_86_0-msvc-14.2-64.exe", "${{ runner.temp }}\boost.exe")
           Start-Process -Wait -FilePath "${{ runner.temp }}\boost.exe" "/SILENT","/SP-","/SUPPRESSMSGBOXES","/DIR=${{ runner.temp }}\boost-install"
       - name: AVRO install
         run: |
@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Boost install
         run: |
-          (New-Object System.Net.WebClient).DownloadFile("https://sourceforge.net/projects/boost/files/boost-binaries/1.78.0//boost_1_78_0-msvc-14.2-64.exe", "${{ runner.temp }}\boost.exe")
+          (New-Object System.Net.WebClient).DownloadFile("https://sourceforge.net/projects/boost/files/boost-binaries/1.86.0//boost_1_86_0-msvc-14.2-64.exe", "${{ runner.temp }}\boost.exe")
           Start-Process -Wait -FilePath "${{ runner.temp }}\boost.exe" "/SILENT","/SP-","/SUPPRESSMSGBOXES","/DIR=${{ runner.temp }}\boost-install"
       - name: AVRO install
         run: |
@@ -52,7 +52,7 @@ jobs:
           cmake --install .
       - name: FESAPI install
         run: |
-          (New-Object System.Net.WebClient).DownloadFile("https://github.com/F2I-Consulting/fesapi/releases/download/v2.9.0.1/fesapi2_9_0_1-cpp-java-vs2019-x64-staticfHdf1143-staticZlib13.zip", "${{ runner.temp }}\fesapi.zip")
+          (New-Object System.Net.WebClient).DownloadFile("https://github.com/F2I-Consulting/fesapi/releases/download/v2.10.0.0/fesapi2_10_0_0-cpp-vs2019-x64-staticfHdf1143-staticZlib13.zip", "${{ runner.temp }}\fesapi.zip")
           7z x ${{ runner.temp }}\fesapi.zip -o${{ runner.temp }}/fesapi-install
       - name: CMake build and install
         run: |
@@ -149,7 +149,7 @@ jobs:
           sudo apt install -y ${{ matrix.xcc_pkg }} libhdf5-dev libminizip-dev libboost-all-dev
       - name: FESAPI install
         run: |
-          git clone --branch v2.9.0.1 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
+          git clone --branch v2.10.0.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
           cd ${{ runner.temp }}
           mkdir fesapi-build
           cd fesapi-build
@@ -173,7 +173,7 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.9.0.1.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.10.0.0.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
           cmake --build . --config Release -j2
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -223,11 +223,11 @@ jobs:
             cmake3 --build . -j2 --config Release &&
             cmake3 --install . &&
             cd / &&
-            wget https://github.com/F2I-Consulting/fesapi/archive/refs/heads/dev.zip &&
-            unzip dev.zip &&
+            wget https://github.com/F2I-Consulting/fesapi/archive/refs/tags/v2.10.0.0.zip &&
+            unzip v2.10.0.0.zip &&
             mkdir fesapi-build &&
             cd fesapi-build &&
-            cmake3 -DCMAKE_BUILD_TYPE=Release -DBoost_ROOT=/boost-install -DHDF5_ROOT=/hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fesapi-install /fesapi-dev &&
+            cmake3 -DCMAKE_BUILD_TYPE=Release -DBoost_ROOT=/boost-install -DHDF5_ROOT=/hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fesapi-install /fesapi-2.10.0.0 &&
             cmake3 --build . -j2 --config Release &&
             cmake3 --install . &&
             cd / &&

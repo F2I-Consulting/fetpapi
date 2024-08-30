@@ -14,25 +14,45 @@ setup (name = 'fetpapi',
     maintainer  = 'F2I-CONSULTING',
     url         = 'https://github.com/F2I-Consulting/fetpapi',
     description = 'An API for the Energistics Transfer Protocol',
+    long_description = '''**FETPAPI** is an API for Energistics Transfer Protocol (aka ETP™)
+ETP is the default standard to access the OSDU RDDMS.
+
+### Examples
+
+A Python script and a Jupyter Notebook are available [here](https://github.com/F2I-Consulting/fetpapi/tree/dev/python/example).
+
+### Credits
+FESAPI Product incorporates ETP™ technology/standards provided by the Energistics Consortium, Inc.
+
+ETP is trademark or registered trademark of Energistics Consortium, Inc.''',
+    long_description_content_type = 'text/markdown',
     license     = 'Apache 2.0',
     classifiers=[
         'Development Status :: 5 - Production/Stable',
-
         'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',
-
         'License :: OSI Approved :: Apache Software License',
-        
+        'Operating System :: Microsoft :: Windows',
+        'Operating System :: POSIX :: Linux',
         'Natural Language :: English',
-
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Topic :: Software Development',
+        'Topic :: Software Development :: Libraries',
+        'Topic :: Software Development :: Libraries :: Application Frameworks ',
+        'Topic :: File Formats',
     ],
-    keywords='energistics resqml witsml prodml etp rddms osdu development',
+    keywords='energistics,resqml,eml,witsml,prodml,osdu,rddms',
     project_urls={
-        'Discourse': 'https://discourse.f2i-consulting.com/',
+        'Discourse': 'https://discourse.f2i-consulting.com/c/etp/7',
         'Tracker': 'https://github.com/F2I-Consulting/fetpapi/issues',
     },
-    python_requires='>=3',
+    python_requires='>=3.6',
     include_package_data=True,
     packages=['fetpapi'],
     package_dir={'fetpapi': 'fetpapi'},
