@@ -185,4 +185,11 @@ std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> InitializationP
 
 void InitializationParameters::postSessionCreationOperation(AbstractSession* session) const {
 	session->setCoreProtocolHandlers(std::make_shared<CoreHandlers>(session));
+	session->setDiscoveryProtocolHandlers(std::make_shared<DiscoveryHandlers>(session));
+	session->setStoreProtocolHandlers(std::make_shared<StoreHandlers>(session));
+	session->setStoreNotificationProtocolHandlers(std::make_shared<StoreNotificationHandlers>(session));
+	session->setDataArrayProtocolHandlers(std::make_shared<DataArrayHandlers>(session));
+	session->setTransactionProtocolHandlers(std::make_shared<TransactionHandlers>(session));
+	session->setDataspaceProtocolHandlers(std::make_shared<DataspaceHandlers>(session));
+	session->setDataspaceOSDUProtocolHandlers(std::make_shared<DataspaceOSDUHandlers>(session));
 }

@@ -67,15 +67,6 @@ void printHelp()
 	std::cout << "\tquit" << std::endl << "\t\tQuit the session." << std::endl << std::endl;
 }
 
-void setFetpapiHandlers(std::shared_ptr<ETP_NS::AbstractSession> session) {
-	session->setDiscoveryProtocolHandlers(std::make_shared<ETP_NS::DiscoveryHandlers>(session.get()));
-	session->setStoreProtocolHandlers(std::make_shared<ETP_NS::StoreHandlers>(session.get()));
-	session->setDataArrayProtocolHandlers(std::make_shared<ETP_NS::DataArrayHandlers>(session.get()));
-	session->setStoreNotificationProtocolHandlers(std::make_shared<ETP_NS::StoreNotificationHandlers>(session.get()));
-	session->setDataspaceProtocolHandlers(std::make_shared<ETP_NS::DataspaceHandlers>(session.get()));
-	session->setTransactionProtocolHandlers(std::make_shared<ETP_NS::TransactionHandlers>(session.get()));
-}
-
 void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataObjectRepository& repo)
 {
 	std::string buffer;
@@ -511,7 +502,6 @@ int main(int argc, char **argv)
 	std::cout << "Creating a client session..." << std::endl;
 	auto clientSession = ETP_NS::ClientSessionLaunchers::createClientSession(&initializationParams, authorization);
 
-	setFetpapiHandlers(clientSession);
 	repo.setHdfProxyFactory(new ETP_NS::FesapiHdfProxyFactory(clientSession.get()));
 
 	std::thread sessionThread(&ETP_NS::ClientSession::run, clientSession);

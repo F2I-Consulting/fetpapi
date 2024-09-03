@@ -1,8 +1,4 @@
-﻿"""
-Please first install the built wheel located in fetpapi/python/dist
-"""
-
-import sys
+﻿import sys
 from threading import Thread
 from time import sleep, perf_counter
 import uuid
@@ -23,11 +19,6 @@ additionalHeaderField["data-partition-id"] = "osdu"
 initialization_params.setAdditionalHandshakeHeaderFields(additionalHeaderField)
 
 client_session = fetpapi.createClientSession(initialization_params, authorization)
-client_session.setCoreProtocolHandlers(fetpapi.CoreHandlers(client_session));
-client_session.setDataspaceProtocolHandlers(fetpapi.DataspaceHandlers(client_session));
-client_session.setDiscoveryProtocolHandlers(fetpapi.DiscoveryHandlers(client_session));
-client_session.setStoreProtocolHandlers(fetpapi.StoreHandlers(client_session));
-client_session.setDataArrayProtocolHandlers(fetpapi.DataArrayHandlers(client_session));
 t = Thread(target=start_etp_server, args=(client_session,), daemon=True)
 t.start()
 start_time = perf_counter()
