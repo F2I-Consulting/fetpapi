@@ -32,38 +32,37 @@ namespace
 {
 	std::size_t getNegotiatedMaxWebSocketFramePayloadSize(const std::string& responseBody, std::size_t preferredMaxFrameSize) {
 		const auto maxWebSocketFramePayloadSizePos = responseBody.find("MaxWebSocketFramePayloadSize");
-		if (maxWebSocketFramePayloadSizePos != std::string::npos) {
-			std::istringstream iss(responseBody);
-			iss.seekg(maxWebSocketFramePayloadSizePos);
+		if (maxWebSocketFramePayloadSizePos == std::string::npos) return preferredMaxFrameSize;
 
-			std::string temp;
-			std::size_t serverMaxWebSocketFramePayloadSize;
-			while (!iss.eof()) {
-				/* extracting word by word from stream */
-				iss >> temp;
+		std::istringstream iss(responseBody);
+		iss.seekg(maxWebSocketFramePayloadSizePos);
 
-				/* Checking the given word is integer or not */
-				if (std::istringstream(temp) >> serverMaxWebSocketFramePayloadSize) {
-					return std::min(serverMaxWebSocketFramePayloadSize, preferredMaxFrameSize);
-				}
+		std::string temp;
+		std::size_t serverMaxWebSocketFramePayloadSize;
+		while (!iss.eof()) {
+			/* extracting word by word from stream */
+			iss >> temp;
+
+			/* Checking the given word is integer or not */
+			if (std::istringstream(temp) >> serverMaxWebSocketFramePayloadSize) {
+				return std::min(serverMaxWebSocketFramePayloadSize, preferredMaxFrameSize);
 			}
 		}
-
 		return preferredMaxFrameSize;
 	}
 }
 
-std::shared_ptr<ETP_NS::ClientSession> ETP_NS::ClientSessionLaunchers::createClientSession(InitializationParameters* initializationParams,
+std::shared_ptr<ETP_NS::ClientSession> ETP_NS::ClientSessionLaunchers::createClientSession(InitializationParameters const* initializationParams,
 	const std::string& authorization, const std::string& proxyAuthorization)
 {
 	boost::asio::io_context ioc;
 
-	std::string etpServerCapTarget = "/" + initializationParams->getEtpServerUrlPath();
-	if (etpServerCapTarget.back() != '/') {
-		etpServerCapTarget += '/';
-	}
-	etpServerCapTarget += ".well-known/etp-server-capabilities?GetVersion=etp12.energistics.org";
+	const std::string etpServerCapTarget = "/" + initializationParams->getEtpServerUrlPath() +
+		(etpServerCapTarget.back() != '/'
+			? "/.well-known/etp-server-capabilities?GetVersion=etp12.energistics.org"
+			: ".well-known/etp-server-capabilities?GetVersion=etp12.energistics.org");
 
+	std::shared_ptr<ETP_NS::ClientSession> result;
 #ifdef WITH_ETP_SSL
 	if (initializationParams->getEtpServerPort() == 443 || initializationParams->isTlsForced()) {
 		// The SSL context is required, and holds certificates
@@ -95,11 +94,9 @@ std::shared_ptr<ETP_NS::ClientSession> ETP_NS::ClientSessionLaunchers::createCli
 
 		std::size_t preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(restClientSession->getResponse().body(), initializationParams->getPreferredMaxFrameSize());
 
-		auto result = std::make_shared<SslClientSession>(ctx, initializationParams, "/" + initializationParams->getEtpServerUrlPath(),
+		result = std::make_shared<SslClientSession>(ctx, initializationParams, "/" + initializationParams->getEtpServerUrlPath(),
 			authorization, proxyAuthorization,
 			initializationParams->getAdditionalHandshakeHeaderFields(), preferredMaxFrameSize);
-		initializationParams->postSessionCreationOperation(result.get());
-		return result;
 	}
 	else {
 #endif
@@ -112,12 +109,13 @@ std::shared_ptr<ETP_NS::ClientSession> ETP_NS::ClientSessionLaunchers::createCli
 
 		std::size_t preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(restClientSession->getResponse().body(), initializationParams->getPreferredMaxFrameSize());
 
-		auto result = std::make_shared<PlainClientSession>(initializationParams, "/" + initializationParams->getEtpServerUrlPath(),
+		result = std::make_shared<PlainClientSession>(initializationParams, "/" + initializationParams->getEtpServerUrlPath(),
 			authorization, proxyAuthorization,
 			initializationParams->getAdditionalHandshakeHeaderFields(), preferredMaxFrameSize);
-		initializationParams->postSessionCreationOperation(result.get());
-		return result;
 #ifdef WITH_ETP_SSL
 	}
 #endif
+
+	initializationParams->postSessionCreationOperation(result.get());
+	return result;
 }

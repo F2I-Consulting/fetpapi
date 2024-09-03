@@ -1925,7 +1925,7 @@ namespace ETP_NS
 		uint16_t getProxyPort() const;
 
 		void setForceTls(bool force);
-		bool isTlsForced();
+		bool isTlsForced() const;
 
 		virtual std::string getApplicationName() const;
 		virtual std::string getApplicationVersion() const;
@@ -1941,8 +1941,15 @@ namespace ETP_NS
 
 	namespace ClientSessionLaunchers
 	{
-		std::shared_ptr<ETP_NS::ClientSession> createClientSession(InitializationParameters* initializationParams,
-			const std::string & etpServerAuthorization, const std::string& proxyAuthorization = "");
+		/**
+		* Create a client session based on some initialization parameters and authorization information.
+		* It does not run the created client session.
+		* @param initializationParams	The initialization parameters
+		* @param etpServerAuthorization The etp server authorization. It generally starts by "Bearer" followed by a token i.e. "Bearer myToken"
+		* @param proxyAuthorization		The proxy authorization. Necessary if the session connects to the ETP server through a protected proxy.
+		*/
+		std::shared_ptr<ETP_NS::ClientSession> createClientSession(InitializationParameters const* initializationParams,
+			const std::string& etpServerAuthorization, const std::string& proxyAuthorization = "");
 	}
 	
 #ifdef WITH_FESAPI

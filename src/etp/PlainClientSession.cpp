@@ -22,7 +22,7 @@ under the License.
 using namespace ETP_NS;
 
 PlainClientSession::PlainClientSession(
-	InitializationParameters* initializationParams, const std::string & target, const std::string & authorization, const std::string& proxyAuthorization,
+	InitializationParameters const* initializationParams, const std::string & target, const std::string & authorization, const std::string& proxyAuthorization,
 	const std::map<std::string, std::string>& additionalHandshakeHeaderFields, std::size_t frameSize) :
 		AbstractClientSessionCRTP<PlainClientSession>(initializationParams, target, authorization, proxyAuthorization),
 		ws_(ioc)
