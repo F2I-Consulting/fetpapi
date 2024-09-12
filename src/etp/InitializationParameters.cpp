@@ -180,6 +180,9 @@ std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> InitializationP
 	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
 	result.push_back(protocol);
 
+	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+	result.push_back(protocol);
+
 	return result;
 }
 

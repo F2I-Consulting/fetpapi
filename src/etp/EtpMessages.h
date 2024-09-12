@@ -44,6 +44,7 @@ namespace Energistics {
 					ChannelDataLoad = 22,
 					RESERVED_23 = 23,
 					Dataspace = 24,
+					DataspaceOSDU = 2424,
 					SupportedTypes = 25
 				};
 			}
@@ -3645,6 +3646,215 @@ namespace avro {
 		}
 		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces& v) {
 			avro::decode(e, v.dataspaces);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct GetDataspaceInfo {
+						std::map<std::string, std::string> uris;
+						static constexpr int messageTypeId = 1;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo& v) {
+			avro::encode(e, v.uris);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo& v) {
+			avro::decode(e, v.uris);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct GetDataspaceInfoResponse {
+						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace> dataspaces;
+						static constexpr int messageTypeId = 2;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse& v) {
+			avro::encode(e, v.dataspaces);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse& v) {
+			avro::decode(e, v.dataspaces);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct CopyDataspacesContent {
+						std::map<std::string, std::string> dataspaces;
+						std::string targetDataspace;
+						static constexpr int messageTypeId = 3;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent& v) {
+			avro::encode(e, v.dataspaces);
+			avro::encode(e, v.targetDataspace);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent& v) {
+			avro::decode(e, v.dataspaces);
+			avro::decode(e, v.targetDataspace);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct CopyDataspacesContentResponse {
+						std::map<std::string, std::string> success;
+						static constexpr int messageTypeId = 4;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse& v) {
+			avro::encode(e, v.success);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse& v) {
+			avro::decode(e, v.success);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct LockDataspaces {
+						std::map<std::string, std::string> uris;
+						bool lock;
+						static constexpr int messageTypeId = 5;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces& v) {
+			avro::encode(e, v.uris);
+			avro::encode(e, v.lock);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces& v) {
+			avro::decode(e, v.uris);
+			avro::decode(e, v.lock);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct LockDataspacesResponse {
+						std::map<std::string, std::string> success;
+						static constexpr int messageTypeId = 6;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse& v) {
+			avro::encode(e, v.success);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse& v) {
+			avro::decode(e, v.success);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct CopyToDataspace {
+						std::map<std::string, std::string> uris;
+						std::string dataspaceUri;
+						static constexpr int messageTypeId = 7;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace& v) {
+			avro::encode(e, v.uris);
+			avro::encode(e, v.dataspaceUri);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace& v) {
+			avro::decode(e, v.uris);
+			avro::decode(e, v.dataspaceUri);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct CopyToDataspaceResponse {
+						std::map<std::string, std::string> success;
+						static constexpr int messageTypeId = 8;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse > {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse& v) {
+			avro::encode(e, v.success);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse& v) {
+			avro::decode(e, v.success);
 		}
 	};
 }

@@ -22,7 +22,6 @@ under the License.
 
 namespace ETP_NS
 {
-	// Echoes back all received WebSocket messages.
 	// This uses the Curiously Recurring Template Pattern so that the same code works with both SSL streams and regular sockets.
 	template<class Derived>
 	class AbstractClientSessionCRTP : public ETP_NS::ClientSession

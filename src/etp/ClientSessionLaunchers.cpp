@@ -57,8 +57,9 @@ std::shared_ptr<ETP_NS::ClientSession> ETP_NS::ClientSessionLaunchers::createCli
 {
 	boost::asio::io_context ioc;
 
-	const std::string etpServerCapTarget = "/" + initializationParams->getEtpServerUrlPath() +
-		(etpServerCapTarget.back() != '/'
+	const std::string etpServerUrlPath = initializationParams->getEtpServerUrlPath();
+	const std::string etpServerCapTarget = "/" + etpServerUrlPath +
+		(etpServerUrlPath.back() != '/'
 			? "/.well-known/etp-server-capabilities?GetVersion=etp12.energistics.org"
 			: ".well-known/etp-server-capabilities?GetVersion=etp12.energistics.org");
 

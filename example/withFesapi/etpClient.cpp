@@ -50,6 +50,9 @@ void printHelp()
 	std::cout << "\tList" << std::endl << "\t\tList the objects which have been got from ETP to the in-memory Dataobject repository" << std::endl << std::endl;
 	std::cout << "\tPutXmlAndHdfAtOnce" << std::endl << "\t\tPut a dummy point set representation to the store sending XML and HDF5 points at once." << std::endl << std::endl;
 	std::cout << "\tGetDataspaces" << std::endl << "\t\tGet all store dataspaces" << std::endl << std::endl;
+	std::cout << "\tPutDataspace dataspaceUri" << std::endl << "\t\tPut a dataspace" << std::endl << std::endl;
+	std::cout << "\tGetDataspaceInfo dataspace" << std::endl << "\t\tGet info on a particular dataspace" << std::endl << std::endl;
+	std::cout << "\tCopyDataspace sourceDataspace targetDataspace" << std::endl << "\t\tCopy by reference a dataspace into another one" << std::endl << std::endl;
 	std::cout << "\tGetResources URI scope(default self) depth(default 1) countObjects(true or false, default is true) includeSecondaryTargets(true or false, default is false) includeSecondarySources(true or false, default is false) dataTypeFilter,dataTypeFilter,...(default noFilter)" << std::endl << std::endl;
 	std::cout << "\tGetDataObjects dataObjectURI,dataObjectURI,..." << std::endl << "\t\tGet the objects from an ETP store and store them into the in memory Dataobject repository (only create partial TARGET relationships, not any SOURCE relationships)" << std::endl << std::endl;
 	std::cout << "\tGetXYZPoints URI" << std::endl << "\t\tGet the XYZ points of a rep from store and print some of them." << std::endl << std::endl;
@@ -238,6 +241,60 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				std::cout << "XYZ Point Index " << xyzPointIndex << " : " << xyzPoints[xyzPointIndex * 3] << "," << xyzPoints[xyzPointIndex * 3 + 1] << "," << xyzPoints[xyzPointIndex * 3 + 2] << std::endl;
 			}
 		}
+		else if (commandTokens[0] == "GetXYZPoints") {
+			if (commandTokens.size() == 1) {
+				std::cerr << "Please provide some ETP URIs of a RESQML representation" << std::endl;
+				continue;
+			}
+			/* This works in a blocking way i.e. getXyzPointCountOfPatch will return only when the store would have answered back.
+			HDF proxy factory and custom HDF proxy are used for that. See main.cpp for setting the custom HDF proxy factory.
+			You should also look at MyOwnStoreProtocolHandlers::on_GetDataObjectsResponse which allows to set the session information to the HDF proxy.
+			We could have hard set those information thanks to HDF proxy factory.
+
+			If you would want non blocking approach, please see GetDataArrays which require more work to fill in the arguments.
+			*/
+			std::string uuid = commandTokens[1].substr(commandTokens[1].rfind("(") + 1, 36);
+			auto* rep = repo.getDataObjectByUuid<RESQML2_NS::AbstractRepresentation>(uuid);
+			if (rep == nullptr) {
+				std::cerr << " The UUID " << uuid << " from URI " << commandTokens[1] << " does not correspond to a representation which is on client side. Please get first this dataobject from the store before to call GetXYZPoints on it." << std::endl;
+				continue;
+			}
+			auto xyzPointCount = rep->getXyzPointCountOfPatch(0);
+			std::unique_ptr<double[]> xyzPoints(new double[xyzPointCount * 3]);
+			rep->getXyzPointsOfPatch(0, xyzPoints.get());
+			for (auto xyzPointIndex = 0; xyzPointIndex < xyzPointCount && xyzPointIndex < 20; ++xyzPointIndex) {
+				std::cout << "XYZ Point Index " << xyzPointIndex << " : " << xyzPoints[xyzPointIndex * 3] << "," << xyzPoints[xyzPointIndex * 3 + 1] << "," << xyzPoints[xyzPointIndex * 3 + 2] << std::endl;
+			}
+		}
+		else if (commandTokens[0] == "GetDataspaceInfo") {
+			if (commandTokens.size() == 1) {
+				std::cerr << "Please provide some ETP URIs of a dataspace" << std::endl;
+				continue;
+			}
+			std::map<std::string, std::string> dataspaceUris;
+			std::cout << "Getting dataspace info on " << commandTokens[1] << std::endl;
+			dataspaceUris["0"] = commandTokens[1];
+			auto dataspaces = session->getDataspaceInfo(dataspaceUris);
+			for (auto& dataspace : dataspaces) {
+				std::cout << dataspace.uri << std::endl;
+			}
+		}
+		else if (commandTokens[0] == "PutDataspace") {
+			if (commandTokens.size() == 1) {
+				std::cerr << "Please provide some ETP URI of a dataspace" << std::endl;
+				continue;
+			}
+			Energistics::Etp::v12::Datatypes::Object::Dataspace dsToPut;
+			dsToPut.uri = commandTokens[1];
+			size_t pos1 = commandTokens[1].find('\'');
+			size_t pos2 = commandTokens[1].rfind('\'');
+			dsToPut.path = commandTokens[1].substr(pos1+1, pos2 - pos1 -1);
+			std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace> dssToPut;
+			dssToPut["0"] = dsToPut;
+			auto result = session->putDataspaces(dssToPut);
+			if (result.size() == 1) std::cout << "SUCCESS!" << std::endl;
+			else std::cout << "FAILURE!" << std::endl;
+		}
 		else if (commandTokens[0] == "PutDataObject") {
 			auto* dataObj = repo.getDataObjectByUuid(commandTokens[1]);
 			if (dataObj != nullptr) {
@@ -309,15 +366,21 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				ctxInfo.includeSecondaryTargets = false;
 				ctxInfo.includeSecondarySources = false;
 				const auto resources = session->getResources(ctxInfo, Energistics::Etp::v12::Datatypes::Object::ContextScopeKind::targets);
-				for (auto& resource : resources) {
-					std::cout << resource.uri << std::endl;
-				}
-				std::cout << "************ GET FIRST DATAOBJECT ************" << std::endl;
+				std::cout << "************ GET ALL DATAOBJECTS ************" << std::endl;
 				if (!resources.empty()) {
-					std::map< std::string, std::string > query = { { "0", resources[0].uri } };
+					std::map< std::string, std::string > query;
+					size_t index = 0;
+					for (auto& resource : resources) {
+						std::cout << resource.uri << std::endl;
+						query[std::to_string(index++)] = resource.uri;
+					}
 					const auto dataobject = session->getDataObjects(query);
-					if (dataobject.size() == 1) {
+					std::cout << "************ ONLY SHOW FIRST ONE ************" << std::endl;
+					if (dataobject.size() >= 1) {
 						std::cout << dataobject.at("0").data << std::endl;
+					}
+					else {
+						std::cout << "No dataobject returned..." << std::endl;
 					}
 				}
 				else {
@@ -436,7 +499,7 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				session->send(gda, 0, 0x02);
 				std::cout << "Please Set Verbosity to 1 if you don't see anything" << std::endl;
 			}
-			if (commandTokens[0] == "GetDataArrayMetadata") {
+			else if (commandTokens[0] == "GetDataArrayMetadata") {
 				Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata msg;
 				msg.dataArrays["0"].uri = commandTokens[1];
 				msg.dataArrays["0"].pathInResource = commandTokens[2];
@@ -459,6 +522,18 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				pda.dataArrays["0"].array.data = data;
 
 				session->send(pda, 0, 0x02);
+			}
+			else if (commandTokens[0] == "CopyDataspace") {
+				std::map<std::string, std::string> sourceDataspaceUris;
+				sourceDataspaceUris["0"] = commandTokens[1];
+
+				auto result = session->lockDataspaces(sourceDataspaceUris, true);
+				if (result.size() == 1) std::cout << "SUCCESS ON LOCK!" << std::endl;
+				else std::cout << "FAILURE ON LOCK!" << std::endl;
+
+				result = session->copyDataspacesContent(sourceDataspaceUris, commandTokens[2]);
+				if (result.size() == 1) std::cout << "SUCCESS ON COPY!" << std::endl;
+				else std::cout << "FAILURE ON COPY!" << std::endl;
 			}
 		}
 	}

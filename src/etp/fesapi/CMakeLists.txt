@@ -1,0 +1,4 @@
+set(FETPAPI_FESAPI_SOURCES	${CMAKE_CURRENT_LIST_DIR}/FesapiHdfProxy.cpp
+							${CMAKE_CURRENT_LIST_DIR}/FesapiHelpers.cpp )
+set(FETPAPI_FESAPI_HEADERS	${CMAKE_CURRENT_LIST_DIR}/FesapiHdfProxy.h
+							${CMAKE_CURRENT_LIST_DIR}/FesapiHelpers.h )
