@@ -40,22 +40,10 @@ under the License.
 #include "ProtocolHandlers/DataArrayHandlers.h"
 #include "ProtocolHandlers/TransactionHandlers.h"
 #include "ProtocolHandlers/DataspaceHandlers.h"
+#include "ProtocolHandlers/DataspaceOSDUHandlers.h"
 
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
-
-namespace {
-	std::vector<std::string> tokenize(const std::string & str, char delimiter) {
-		std::vector<std::string> tokens;
-		std::stringstream ss(str);
-		std::string token;
-		while(getline(ss, token, delimiter)) {
-			tokens.push_back(token);
-		}
-
-		return tokens;
-	}
-}
 
 namespace ETP_NS
 {
@@ -100,107 +88,56 @@ namespace ETP_NS
 		 * Set the Core protocol handlers
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setCoreProtocolHandlers(std::shared_ptr<CoreHandlers> coreHandlers) {
-			// Verify that we don't modify handlers which could be in use on the io context thread
-			if (!isWebSocketSessionClosed()) {
-				throw std::logic_error("You cannot set some protocol handlers once the session is running.");
-			}
-
-	    	if (protocolHandlers.empty()) {
-	    		protocolHandlers.push_back(coreHandlers);
-	    	}
-	    	else {
-	    		protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Core)] = coreHandlers;
-	    	}
+			setProtocolHandlers(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core), coreHandlers);
 	    }
 
 	    /**
 		 * Set the Discovery protocol handlers
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setDiscoveryProtocolHandlers(std::shared_ptr<DiscoveryHandlers> discoveryHandlers) {
-			// Verify that we don't modify handlers which could be in use on the io context thread
-			if (!isWebSocketSessionClosed()) {
-				throw std::logic_error("You cannot set some protocol handlers once the session is running.");
-			}
-
-			while (protocolHandlers.size() < static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery) + 1) {
-				protocolHandlers.push_back(nullptr);
-			}
-			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery)] = discoveryHandlers;
+			setProtocolHandlers(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery), discoveryHandlers);
 		}
 
 		/**
 		 * Set the Store protocol handlers
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setStoreProtocolHandlers(std::shared_ptr<StoreHandlers> storeHandlers) {
-			// Verify that we don't modify handlers which could be in use on the io context thread
-			if (!isWebSocketSessionClosed()) {
-				throw std::logic_error("You cannot set some protocol handlers once the session is running.");
-			}
-
-			while (protocolHandlers.size() < static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Store) + 1) {
-				protocolHandlers.push_back(nullptr);
-			}
-			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Store)] = storeHandlers;
+			setProtocolHandlers(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store), storeHandlers);
 		}
 
 		/**
 		* Set the StoreNotification protocol handlers
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setStoreNotificationProtocolHandlers(std::shared_ptr<ETP_NS::StoreNotificationHandlers> storeNotificationHandlers) {
-			// Verify that we don't modify handlers which could be in use on the io context thread
-			if (!isWebSocketSessionClosed()) {
-				throw std::logic_error("You cannot set some protocol handlers once the session is running.");
-			}
-
-			while (protocolHandlers.size() < static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification) + 1) {
-				protocolHandlers.push_back(nullptr);
-			}
-			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification)] = storeNotificationHandlers;
+			setProtocolHandlers(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification), storeNotificationHandlers);
 		}
 
 		/**
 		 * Set the Data Array protocol handlers
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setDataArrayProtocolHandlers(std::shared_ptr<DataArrayHandlers> dataArrayHandlers) {
-			// Verify that we don't modify handlers which could be in use on the io context thread
-			if (!isWebSocketSessionClosed()) {
-				throw std::logic_error("You cannot set some protocol handlers once the session is running.");
-			}
-
-			while (protocolHandlers.size() < static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::DataArray) + 1) {
-				protocolHandlers.push_back(nullptr);
-			}
-			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::DataArray)] = dataArrayHandlers;
+			setProtocolHandlers(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray), dataArrayHandlers);
 		}
 
 		/**
 		 * Set the Transaction protocol handlers
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setTransactionProtocolHandlers(std::shared_ptr<TransactionHandlers> transactionHandlers) {
-			// Verify that we don't modify handlers which could be in use on the io context thread
-			if (!isWebSocketSessionClosed()) {
-				throw std::logic_error("You cannot set some protocol handlers once the session is running.");
-			}
-
-			while (protocolHandlers.size() < static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction) + 1) {
-				protocolHandlers.push_back(nullptr);
-			}
-			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction)] = transactionHandlers;
+			setProtocolHandlers(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction), transactionHandlers);
 		}
 
 		/**
 		 * Set the Dataspace protocol handlers
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setDataspaceProtocolHandlers(std::shared_ptr<DataspaceHandlers> dataspaceHandlers) {
-			// Verify that we don't modify handlers which could be in use on the io context thread
-			if (!isWebSocketSessionClosed()) {
-				throw std::logic_error("You cannot set some protocol handlers once the session is running.");
-			}
+			setProtocolHandlers(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace), dataspaceHandlers);
+		}
 
-			while (protocolHandlers.size() < static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace) + 1) {
-				protocolHandlers.push_back(nullptr);
-			}
-			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace)] = dataspaceHandlers;
+		/**
+		 * Set the Dataspace protocol handlers
+		 */
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setDataspaceOSDUProtocolHandlers(std::shared_ptr<DataspaceOSDUHandlers> dataspaceOsduHandlers) {
+			setProtocolHandlers(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU), dataspaceOsduHandlers);
 		}
 
 		/**
@@ -214,12 +151,7 @@ namespace ETP_NS
 		 */
 		template<typename T> int64_t send(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
-			if (protocolHandlers.size() > mb.protocolId) {
-				return sendWithSpecificHandler(mb, protocolHandlers[mb.protocolId], correlationId, messageFlags);
-			}
-			else {
-				throw std::logic_error("The agent has no registered handler at all for the protocol " + std::to_string(mb.protocolId));
-			}
+			return sendWithSpecificHandler(mb, protocolHandlers.at(mb.protocolId), correlationId, messageFlags);
 		}
 
 		/**
@@ -396,7 +328,7 @@ namespace ETP_NS
 		* @param storeLastWriteFilter	An optional filter to limit the dataspaces returned by date/time last saved to the store.
 		*								The store returns a list of dataspaces whose last changed date/time is greater than the specified date/time.
 		*								It must be a UTC dateTime value, serialized as a positive int 64bits, using the Avro logical type timestamp-micros (microseconds from the Unix Epoch, 1 January 1970 00:00:00.000000 UTC).
-		* @param return	The available dataspaces the store could return.
+		* @param return					The available dataspaces the store could return.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> getDataspaces(int64_t storeLastWriteFilter = -1);
 
@@ -405,8 +337,8 @@ namespace ETP_NS
 		* This function should be used with caution if Dataspace Handlers have been overidden.
 		* It actually sends a message and block the current thread untill a response has been received from the store.
 		*
-		* @param dataspaces  ETP general map : One each for each dataspace the customer wants to add or update.
-		* @param return	The map keys corresponding to the dataspaces which have been put successfully into the store.
+		* @param dataspaces	ETP general map : One each for each dataspace the customer wants to add or update.
+		* @param return		The map keys corresponding to the dataspaces which have been put successfully into the store.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> putDataspaces(const std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace>& dataspaces);
 
@@ -415,10 +347,57 @@ namespace ETP_NS
 		* This function should be used with caution if Dataspace Handlers have been overidden.
 		* It actually sends a message and block the current thread untill a response has been received from the store.
 		*
-		* @param dataspaceUris  ETP general map where the values must be the URIs for the dataspaces the customer wants to delete.
-		* @param return	The map keys corresponding to the dataspaces which have been deleted successfully.
+		* @param dataspaceUris	ETP general map where the values must be the URIs for the dataspaces the customer wants to delete.
+		* @param return			The map keys corresponding to the dataspaces which have been deleted successfully.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> deleteDataspaces(const std::map<std::string, std::string>& dataspaceUris);
+
+		/*********************
+		*** DATASPACE OSDU ***
+		**********************/
+
+		/**
+		* A customer sends to a store to discover information of particular dataspaces.
+		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param dataspaceUris	ETP general map : One each for each dataspace, identified by their URI, the customer wants to get info about.
+		* @param return			The dataspaces the store could return.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> getDataspaceInfo(const std::map<std::string, std::string>& dataspaceUris);
+
+		/**
+		* Copy by reference some dataspaces into another one.
+		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param sourceDataspaceUris	ETP general map : One each for each source dataspace to be copied. They are identified by their URI.
+		* @param targetDataspaceUri		The URI of the ETP dataspace where the sourceDataspaces have to be copied by reference.
+		* @param return					The map keys corresponding to the dataspaces which have been successfully copied into the target dataspace.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> copyDataspacesContent(const std::map<std::string, std::string>& sourceDataspaceUris, const std::string& targetDataspaceUri);
+
+		/**
+		* A customer sends to a store to lock or unlock one or more dataspaces.
+		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param dataspaceUris	ETP general map where the values must be the URIs for the dataspaces the customer wants to lock or unlock.
+		* @param lock			true for locking the dataspaces, false to unlock the dataspaces
+		* @param return			The map keys corresponding to the dataspaces which have been successfully locked or unlocked.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> lockDataspaces(const std::map<std::string, std::string>& dataspaceUris, bool lock);
+
+		/**
+		* Copy by reference some dataobjects into another dataspace.
+		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param sourceUris			ETP general map : One each for each source dataobject to be copied. They are identified by their URI.
+		* @param targetDataspaceUri	The URI of the ETP dataspace where the source dataobjects have to be copied by reference.
+		* @param return				The map keys corresponding to the dataobjects which have been successfully copied into the target dataspace.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> copyToDataspace(const std::map<std::string, std::string>& sourceUris, const std::string& targetDataspaceUri);
 
 		/****************
 		*** DISCOVERY ***
@@ -552,7 +531,7 @@ namespace ETP_NS
 	protected:
 		boost::beast::flat_buffer receivedBuffer;
 		/// The default handlers for each subprotocol. Default handlers are at the index of the corresponding subprotocol id.
-		std::vector<std::shared_ptr<ETP_NS::ProtocolHandlers>> protocolHandlers;
+		std::unordered_map<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type, std::shared_ptr<ETP_NS::ProtocolHandlers>> protocolHandlers;
 		/// A map indicating which handlers must be used for responding to which message id.
 		std::unordered_map<int64_t, std::shared_ptr<ETP_NS::ProtocolHandlers>> specificProtocolHandlers;
 		std::mutex specificProtocolHandlersMutex;
@@ -567,7 +546,7 @@ namespace ETP_NS
 		/// Indicates if the ETP1.2 session is opened or not. It becomes false after the requestSession and openSession message
 		std::atomic<bool> etpSessionClosed{ true };
 		/// Timeout in milliseconds used when blocking waiting for message
-		std::atomic<double> _timeOut{ 10000 };
+		std::atomic<double> _timeOut{ 30000 };
 		/// Indicates if the session must be verbose or not
 		std::atomic<bool> _verbose{ false };
 		/// The queue of messages to be sent where the tuple respectively define message id, message and protocol handlers for responding to this message.
@@ -634,52 +613,68 @@ namespace ETP_NS
 		}
 
 		std::shared_ptr<ETP_NS::CoreHandlers> getCoreProtocolHandlers() {
-			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Core);
-			return protocolHandlers.size() > protocolId
-				? std::dynamic_pointer_cast<CoreHandlers>(protocolHandlers[protocolId])
-				: nullptr;
+			auto it = protocolHandlers.find(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core));
+			return it == protocolHandlers.end()
+				? nullptr
+				: std::dynamic_pointer_cast<CoreHandlers>(it->second);
 		}
 
 		std::shared_ptr<ETP_NS::DiscoveryHandlers> getDiscoveryProtocolHandlers() {
-			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
-			return protocolHandlers.size() > protocolId
-				? std::dynamic_pointer_cast<DiscoveryHandlers>(protocolHandlers[protocolId])
-				: nullptr;
+			auto it = protocolHandlers.find(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery));
+			return it == protocolHandlers.end()
+				? nullptr
+				: std::dynamic_pointer_cast<DiscoveryHandlers>(it->second);
 		}
 
 		std::shared_ptr<ETP_NS::StoreHandlers> getStoreProtocolHandlers() {
-			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Store);
-			return protocolHandlers.size() > protocolId
-				? std::dynamic_pointer_cast<StoreHandlers>(protocolHandlers[protocolId])
-				: nullptr;
+			auto it = protocolHandlers.find(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store));
+			return it == protocolHandlers.end()
+				? nullptr
+				: std::dynamic_pointer_cast<StoreHandlers>(it->second);
 		}
 
 		std::shared_ptr<ETP_NS::StoreNotificationHandlers> getStoreNotificationProtocolHandlers() {
-			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
-			return protocolHandlers.size() > protocolId
-				? std::dynamic_pointer_cast<StoreNotificationHandlers>(protocolHandlers[protocolId])
-				: nullptr;
+			auto it = protocolHandlers.find(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification));
+			return it == protocolHandlers.end()
+				? nullptr
+				: std::dynamic_pointer_cast<StoreNotificationHandlers>(it->second);
 		}
 
 		std::shared_ptr<ETP_NS::DataArrayHandlers> getDataArrayProtocolHandlers() {
-			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
-			return protocolHandlers.size() > protocolId
-				? std::dynamic_pointer_cast<DataArrayHandlers>(protocolHandlers[protocolId])
-				: nullptr;
+			auto it = protocolHandlers.find(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray));
+			return it == protocolHandlers.end()
+				? nullptr
+				: std::dynamic_pointer_cast<DataArrayHandlers>(it->second);
 		}
 
 		std::shared_ptr<ETP_NS::TransactionHandlers> getTransactionProtocolHandlers() {
-			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
-			return protocolHandlers.size() > protocolId
-				? std::dynamic_pointer_cast<TransactionHandlers>(protocolHandlers[protocolId])
-				: nullptr;
+			auto it = protocolHandlers.find(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction));
+			return it == protocolHandlers.end()
+				? nullptr
+				: std::dynamic_pointer_cast<TransactionHandlers>(it->second);
 		}
 
 		std::shared_ptr<ETP_NS::DataspaceHandlers> getDataspaceProtocolHandlers() {
-			const size_t protocolId = static_cast<size_t>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
-			return protocolHandlers.size() > protocolId
-				? std::dynamic_pointer_cast<DataspaceHandlers>(protocolHandlers[protocolId])
-				: nullptr;
+			auto it = protocolHandlers.find(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace));
+			return it == protocolHandlers.end()
+				? nullptr
+				: std::dynamic_pointer_cast<DataspaceHandlers>(it->second);
+		}
+
+		std::shared_ptr<ETP_NS::DataspaceOSDUHandlers> getDataspaceOSDUProtocolHandlers() {
+			auto it = protocolHandlers.find(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU));
+			return it == protocolHandlers.end()
+				? nullptr
+				: std::dynamic_pointer_cast<DataspaceOSDUHandlers>(it->second);
+		}
+
+		void setProtocolHandlers(std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type protocolId, std::shared_ptr<ProtocolHandlers> coreHandlers) {
+			// Verify that we don't modify handlers which could be in use on the io context thread
+			if (!isWebSocketSessionClosed()) {
+				throw std::logic_error("You cannot set some protocol handlers once the session is running.");
+			}
+
+			protocolHandlers[protocolId] = coreHandlers;
 		}
 	};
 }

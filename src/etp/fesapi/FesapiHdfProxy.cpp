@@ -71,7 +71,7 @@ Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata FesapiHdfPro
 	return handlers->getDataArrayMetadata();
 }
 
-COMMON_NS::AbstractObject::numericalDatatypeEnum  FesapiHdfProxy::getNumericalDatatype(const std::string & datasetName)
+COMMON_NS::AbstractObject::numericalDatatypeEnum FesapiHdfProxy::getNumericalDatatype(const std::string & datasetName)
 {
 	const auto daMetadata = getDataArrayMetadata(datasetName);
 	switch (daMetadata.transportArrayType) {

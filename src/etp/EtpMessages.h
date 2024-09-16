@@ -18,7 +18,7 @@ namespace Energistics {
 	namespace Etp {
 		namespace v12 {
 			namespace Datatypes {
-				enum class Protocol {
+				enum class Protocol : uint16_t {
 					Core = 0,
 					ChannelStreaming = 1,
 					ChannelDataFrame = 2,
@@ -44,6 +44,7 @@ namespace Energistics {
 					ChannelDataLoad = 22,
 					RESERVED_23 = 23,
 					Dataspace = 24,
+					DataspaceOSDU = 2424,
 					SupportedTypes = 25
 				};
 			}
@@ -92,7 +93,7 @@ namespace Energistics {
 						std::string authorization;
 						std::map<std::string, std::string> supplementalAuthorization;
 						static constexpr int messageTypeId=6;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
 					};
 				}
 			}
@@ -120,7 +121,7 @@ namespace Energistics {
 						bool success=false;
 						std::vector<std::string> challenges;
 						static constexpr int messageTypeId=7;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
 					};
 				}
 			}
@@ -147,7 +148,7 @@ namespace Energistics {
 					struct CloseSession {
 						std::string reason;
 						static constexpr int messageTypeId=5;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
 					};
 				}
 			}
@@ -172,7 +173,7 @@ namespace Energistics {
 					struct Pong {
 						int64_t currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 						static constexpr int messageTypeId=9;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
 					};
 				}
 			}
@@ -197,7 +198,7 @@ namespace Energistics {
 					struct Ping {
 						int64_t currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 						static constexpr int messageTypeId=8;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
 					};
 				}
 			}
@@ -222,7 +223,7 @@ namespace Energistics {
 					struct PutDataArraysResponse {
 						std::map<std::string, std::string> success;
 						static constexpr int messageTypeId=10;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
 					};
 				}
 			}
@@ -247,7 +248,7 @@ namespace Energistics {
 					struct PutDataSubarraysResponse {
 						std::map<std::string, std::string> success;
 						static constexpr int messageTypeId=11;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
 					};
 				}
 			}
@@ -272,7 +273,7 @@ namespace Energistics {
 					struct PutUninitializedDataArraysResponse {
 						std::map<std::string, std::string> success;
 						static constexpr int messageTypeId=12;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
 					};
 				}
 			}
@@ -297,7 +298,7 @@ namespace Energistics {
 					struct DeleteDataspaces {
 						std::map<std::string, std::string> uris;
 						static constexpr int messageTypeId=4;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
 					};
 				}
 			}
@@ -322,7 +323,7 @@ namespace Energistics {
 					struct DeleteDataspacesResponse {
 						std::map<std::string, std::string> success;
 						static constexpr int messageTypeId=5;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
 					};
 				}
 			}
@@ -349,7 +350,7 @@ namespace Energistics {
 						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.is_initialized(); }
 						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.get(); }
 						static constexpr int messageTypeId=1;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
 					};
 				}
 			}
@@ -374,7 +375,7 @@ namespace Energistics {
 					struct PutDataspacesResponse {
 						std::map<std::string, std::string> success;
 						static constexpr int messageTypeId=6;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
 					};
 				}
 			}
@@ -403,7 +404,7 @@ namespace Energistics {
 						int64_t get_deleteTimeFilter() const { return deleteTimeFilter.get(); }
 						std::vector<std::string> dataObjectTypes;
 						static constexpr int messageTypeId=5;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
 					};
 				}
 			}
@@ -432,7 +433,7 @@ namespace Energistics {
 					struct SubscribeNotificationsResponse {
 						std::map<std::string, std::string> success;
 						static constexpr int messageTypeId=10;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
 					};
 				}
 			}
@@ -458,7 +459,7 @@ namespace Energistics {
 						std::map<std::string, std::string> uris;
 						bool pruneContainedObjects=false;
 						static constexpr int messageTypeId=3;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
 					};
 				}
 			}
@@ -486,7 +487,7 @@ namespace Energistics {
 						std::map<std::string, std::string> uris;
 						std::string format = "xml";
 						static constexpr int messageTypeId=1;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
 					};
 				}
 			}
@@ -515,7 +516,7 @@ namespace Energistics {
 						std::string message;
 						std::vector<std::string> dataspaceUris;
 						static constexpr int messageTypeId=1;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
 					};
 				}
 			}
@@ -822,7 +823,7 @@ namespace Energistics {
 					struct DeleteDataObjectsResponse {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::ArrayOfString> deletedUris;
 						static constexpr int messageTypeId=10;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
 					};
 				}
 			}
@@ -1844,7 +1845,7 @@ namespace Energistics {
 						Energistics::Etp::v12::Datatypes::ErrorInfo get_error() const { return error.get(); }
 						std::map<std::string, Energistics::Etp::v12::Datatypes::ErrorInfo> errors;
 						static constexpr int messageTypeId=1000;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
 					};
 				}
 			}
@@ -1972,7 +1973,7 @@ namespace Energistics {
 						std::string data;
 						bool final=false;
 						static constexpr int messageTypeId=9;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
 					};
 				}
 			}
@@ -2003,7 +2004,7 @@ namespace Energistics {
 						int64_t changeTime;
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						static constexpr int messageTypeId=5;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
 					};
 				}
 			}
@@ -2034,7 +2035,7 @@ namespace Energistics {
 						int64_t changeTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						static constexpr int messageTypeId=3;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
 					};
 				}
 			}
@@ -2064,7 +2065,7 @@ namespace Energistics {
 						std::string reason;
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						static constexpr int messageTypeId=7;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
 					};
 				}
 			}
@@ -2091,7 +2092,7 @@ namespace Energistics {
 					struct UnsubscribeNotifications {
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						static constexpr int messageTypeId=4;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
 					};
 				}
 			}
@@ -2118,7 +2119,7 @@ namespace Energistics {
 						std::string data;
 						bool final=false;
 						static constexpr int messageTypeId=8;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
 					};
 				}
 			}
@@ -2149,7 +2150,7 @@ namespace Energistics {
 						std::string data;
 						bool final=false;
 						static constexpr int messageTypeId=3;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreQuery);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreQuery);
 					};
 				}
 			}
@@ -2178,7 +2179,7 @@ namespace Energistics {
 					struct CommitTransaction {
 						Energistics::Etp::v12::Datatypes::Uuid transactionUuid;
 						static constexpr int messageTypeId=3;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
 					};
 				}
 			}
@@ -2205,7 +2206,7 @@ namespace Energistics {
 						bool successful=false;
 						std::string failureReason;
 						static constexpr int messageTypeId=5;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
 					};
 				}
 			}
@@ -2234,7 +2235,7 @@ namespace Energistics {
 					struct RollbackTransaction {
 						Energistics::Etp::v12::Datatypes::Uuid transactionUuid;
 						static constexpr int messageTypeId=4;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
 					};
 				}
 			}
@@ -2261,7 +2262,7 @@ namespace Energistics {
 						bool successful=false;
 						std::string failureReason;
 						static constexpr int messageTypeId=6;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
 					};
 				}
 			}
@@ -2292,7 +2293,7 @@ namespace Energistics {
 						bool successful=false;
 						std::string failureReason;
 						static constexpr int messageTypeId=2;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Transaction);
 					};
 				}
 			}
@@ -2391,7 +2392,7 @@ namespace Energistics {
 						Energistics::Etp::v12::Datatypes::Uuid sessionId;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> endpointCapabilities;
 						static constexpr int messageTypeId=2;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
 					};
 				}
 			}
@@ -2446,7 +2447,7 @@ namespace Energistics {
 						bool serverAuthorizationRequired=false;
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> endpointCapabilities;
 						static constexpr int messageTypeId=1;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
 					};
 				}
 			}
@@ -3059,7 +3060,7 @@ namespace Energistics {
 					struct GetDataArraysResponse {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray> dataArrays;
 						static constexpr int messageTypeId=1;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
 					};
 				}
 			}
@@ -3084,7 +3085,7 @@ namespace Energistics {
 					struct GetDataSubarraysResponse {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray> dataSubarrays;
 						static constexpr int messageTypeId=8;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
 					};
 				}
 			}
@@ -3135,7 +3136,7 @@ namespace Energistics {
 					struct GetDataArrayMetadata {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier> dataArrays;
 						static constexpr int messageTypeId=6;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
 					};
 				}
 			}
@@ -3160,7 +3161,7 @@ namespace Energistics {
 					struct GetDataArrays {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier> dataArrays;
 						static constexpr int messageTypeId=2;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
 					};
 				}
 			}
@@ -3214,7 +3215,7 @@ namespace Energistics {
 					struct GetDataSubarrays {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::GetDataSubarraysType> dataSubarrays;
 						static constexpr int messageTypeId=3;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
 					};
 				}
 			}
@@ -3280,7 +3281,7 @@ namespace Energistics {
 					struct GetDataArrayMetadataResponse {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata> arrayMetadata;
 						static constexpr int messageTypeId=7;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
 					};
 				}
 			}
@@ -3334,7 +3335,7 @@ namespace Energistics {
 					struct PutDataArrays {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::PutDataArraysType> dataArrays;
 						static constexpr int messageTypeId=4;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
 					};
 				}
 			}
@@ -3391,7 +3392,7 @@ namespace Energistics {
 					struct PutDataSubarrays {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::PutDataSubarraysType> dataSubarrays;
 						static constexpr int messageTypeId=5;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
 					};
 				}
 			}
@@ -3442,7 +3443,7 @@ namespace Energistics {
 					struct PutUninitializedDataArrays {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::PutUninitializedDataArrayType> dataArrays;
 						static constexpr int messageTypeId=9;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataArray);
 					};
 				}
 			}
@@ -3606,7 +3607,7 @@ namespace Energistics {
 					struct GetDataspacesResponse {
 						std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> dataspaces;
 						static constexpr int messageTypeId=2;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
 					};
 				}
 			}
@@ -3631,7 +3632,7 @@ namespace Energistics {
 					struct PutDataspaces {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace> dataspaces;
 						static constexpr int messageTypeId=3;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
 					};
 				}
 			}
@@ -3645,6 +3646,215 @@ namespace avro {
 		}
 		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces& v) {
 			avro::decode(e, v.dataspaces);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct GetDataspaceInfo {
+						std::map<std::string, std::string> uris;
+						static constexpr int messageTypeId = 1;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo& v) {
+			avro::encode(e, v.uris);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo& v) {
+			avro::decode(e, v.uris);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct GetDataspaceInfoResponse {
+						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace> dataspaces;
+						static constexpr int messageTypeId = 2;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse& v) {
+			avro::encode(e, v.dataspaces);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse& v) {
+			avro::decode(e, v.dataspaces);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct CopyDataspacesContent {
+						std::map<std::string, std::string> dataspaces;
+						std::string targetDataspace;
+						static constexpr int messageTypeId = 3;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent& v) {
+			avro::encode(e, v.dataspaces);
+			avro::encode(e, v.targetDataspace);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent& v) {
+			avro::decode(e, v.dataspaces);
+			avro::decode(e, v.targetDataspace);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct CopyDataspacesContentResponse {
+						std::map<std::string, std::string> success;
+						static constexpr int messageTypeId = 4;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse& v) {
+			avro::encode(e, v.success);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse& v) {
+			avro::decode(e, v.success);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct LockDataspaces {
+						std::map<std::string, std::string> uris;
+						bool lock;
+						static constexpr int messageTypeId = 5;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces& v) {
+			avro::encode(e, v.uris);
+			avro::encode(e, v.lock);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces& v) {
+			avro::decode(e, v.uris);
+			avro::decode(e, v.lock);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct LockDataspacesResponse {
+						std::map<std::string, std::string> success;
+						static constexpr int messageTypeId = 6;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse& v) {
+			avro::encode(e, v.success);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse& v) {
+			avro::decode(e, v.success);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct CopyToDataspace {
+						std::map<std::string, std::string> uris;
+						std::string dataspaceUri;
+						static constexpr int messageTypeId = 7;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace& v) {
+			avro::encode(e, v.uris);
+			avro::encode(e, v.dataspaceUri);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace& v) {
+			avro::decode(e, v.uris);
+			avro::decode(e, v.dataspaceUri);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct CopyToDataspaceResponse {
+						std::map<std::string, std::string> success;
+						static constexpr int messageTypeId = 8;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse > {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse& v) {
+			avro::encode(e, v.success);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse& v) {
+			avro::decode(e, v.success);
 		}
 	};
 }
@@ -3685,7 +3895,7 @@ namespace Energistics {
 					struct GetDeletedResourcesResponse {
 						std::vector<Energistics::Etp::v12::Datatypes::Object::DeletedResource> deletedResources;
 						static constexpr int messageTypeId=6;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
 					};
 				}
 			}
@@ -4074,7 +4284,7 @@ namespace Energistics {
 					struct PutDataObjectsResponse {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::PutResponse> success;
 						static constexpr int messageTypeId=9;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
 					};
 				}
 			}
@@ -4171,7 +4381,7 @@ namespace Energistics {
 						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() const { return activeStatusFilter.get(); }
 						bool includeEdges=false;
 						static constexpr int messageTypeId=1;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
 					};
 				}
 			}
@@ -4213,7 +4423,7 @@ namespace Energistics {
 						bool has_activeStatusFilter() const { return activeStatusFilter.is_initialized(); }
 						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() const { return activeStatusFilter.get(); }
 						static constexpr int messageTypeId=1;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DiscoveryQuery);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DiscoveryQuery);
 					};
 				}
 			}
@@ -4252,7 +4462,7 @@ namespace Energistics {
 						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() const { return activeStatusFilter.get(); }
 						std::string format;
 						static constexpr int messageTypeId=1;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreQuery);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreQuery);
 					};
 				}
 			}
@@ -4317,7 +4527,7 @@ namespace Energistics {
 					struct GetResourcesEdgesResponse {
 						std::vector<Energistics::Etp::v12::Datatypes::Object::Edge> edges;
 						static constexpr int messageTypeId=7;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
 					};
 				}
 			}
@@ -4396,7 +4606,7 @@ namespace Energistics {
 					struct GetResourcesResponse {
 						std::vector<Energistics::Etp::v12::Datatypes::Object::Resource> resources;
 						static constexpr int messageTypeId=4;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
 					};
 				}
 			}
@@ -4422,7 +4632,7 @@ namespace Energistics {
 						std::vector<Energistics::Etp::v12::Datatypes::Object::Resource> resources;
 						std::string serverSortOrder;
 						static constexpr int messageTypeId=2;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DiscoveryQuery);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DiscoveryQuery);
 					};
 				}
 			}
@@ -4452,7 +4662,7 @@ namespace Energistics {
 						Energistics::Etp::v12::Datatypes::Object::Resource resource;
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						static constexpr int messageTypeId=11;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
 					};
 				}
 			}
@@ -4517,7 +4727,7 @@ namespace Energistics {
 					struct GetDataObjectsResponse {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataObjects;
 						static constexpr int messageTypeId=4;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
 					};
 				}
 			}
@@ -4543,7 +4753,7 @@ namespace Energistics {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataObjects;
 						bool pruneContainedObjects=false;
 						static constexpr int messageTypeId=2;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store);
 					};
 				}
 			}
@@ -4571,7 +4781,7 @@ namespace Energistics {
 						std::vector<Energistics::Etp::v12::Datatypes::Object::DataObject> dataObjects;
 						std::string serverSortOrder;
 						static constexpr int messageTypeId=2;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreQuery);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreQuery);
 					};
 				}
 			}
@@ -4628,7 +4838,7 @@ namespace Energistics {
 						Energistics::Etp::v12::Datatypes::Object::ObjectChange change;
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						static constexpr int messageTypeId=2;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
 					};
 				}
 			}
@@ -4690,7 +4900,7 @@ namespace Energistics {
 					struct SubscribeNotifications {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::SubscriptionInfo> request;
 						static constexpr int messageTypeId=6;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
 					};
 				}
 			}
@@ -4715,7 +4925,7 @@ namespace Energistics {
 					struct UnsolicitedStoreNotifications {
 						std::vector<Energistics::Etp::v12::Datatypes::Object::SubscriptionInfo> subscriptions;
 						static constexpr int messageTypeId=8;
-						static constexpr int protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreNotification);
 					};
 				}
 			}

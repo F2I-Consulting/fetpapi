@@ -161,7 +161,7 @@ namespace ETP_NS
 		FETPAPI_DLL_IMPORT_OR_EXPORT uint16_t getProxyPort() const { return proxyPort; }
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setForceTls(bool force) { forceTls = force; }
-		FETPAPI_DLL_IMPORT_OR_EXPORT bool isTlsForced() { return forceTls; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT bool isTlsForced() const { return forceTls; }
 
 		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getApplicationName() const { return "F2I-CONSULTING ETP CLIENT"; }
 		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getApplicationVersion() const { return "0.0"; }

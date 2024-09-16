@@ -83,7 +83,7 @@ void DataspaceHandlers::on_PutDataspaces(const Energistics::Etp::v12::Protocol::
 void DataspaceHandlers::on_PutDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse& msg, int64_t)
 {
 	for (const auto& entry : msg.success) {
-		successKeys.push_back(entry.first);
+		successKeys.emplace_back(entry.first);
 	}
 }
 
@@ -95,6 +95,6 @@ void DataspaceHandlers::on_DeleteDataspaces(const Energistics::Etp::v12::Protoco
 void DataspaceHandlers::on_DeleteDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse& msg, int64_t)
 {
 	for (const auto& entry : msg.success) {
-		successKeys.push_back(entry.first);
+		successKeys.emplace_back(entry.first);
 	}
 }

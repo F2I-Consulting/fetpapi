@@ -113,7 +113,7 @@ namespace ETP_NS
 		 * @param proxyAuth				The HTTP authorization attribute to send to the proxy server. It may be empty if not needed.
 		 */
 		ClientSession(
-			InitializationParameters* initializationParams, const std::string& target, const std::string& etpServerAuth, const std::string& proxyAuth = "") :
+			InitializationParameters const* initializationParams, const std::string& target, const std::string& etpServerAuth, const std::string& proxyAuth = "") :
 			ioc(4),
 			resolver(ioc),
 			etpServerHost(initializationParams->getEtpServerHost()),
@@ -132,7 +132,7 @@ namespace ETP_NS
 			requestSession.applicationName = initializationParams->getApplicationName();
 			requestSession.applicationVersion = initializationParams->getApplicationVersion();
 
-			std::copy(std::begin(initializationParams->getInstanceId().data), std::end(initializationParams->getInstanceId().data), requestSession.clientInstanceId.array.begin());
+			std::copy(initializationParams->getInstanceId().begin(), initializationParams->getInstanceId().end(), requestSession.clientInstanceId.array.begin());
 
 			requestSession.requestedProtocols = initializationParams->makeSupportedProtocols();
 			requestSession.supportedDataObjects = initializationParams->makeSupportedDataObjects();

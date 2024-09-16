@@ -45,7 +45,7 @@ namespace {
 			portEnd = url.find("/", portStart);
 			int readPort = stoi(url.substr(portStart, portEnd - portStart));
 			if (readPort < 1 || readPort >(std::numeric_limits<int16_t>::max)()) {
-				throw std::out_of_range("The port " + std::to_string(readPort) + " is out of the allowed range for TCP ports ]0..2^16]");
+				throw std::out_of_range("The port " + std::to_string(readPort) + " is out of the allowed range for TCP ports (0,2^16)");
 			}
 			std::get<1>(result) = static_cast<uint16_t>(readPort);
 		}
@@ -89,7 +89,7 @@ std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> Initializatio
 
 	value.item.set_boolean(false);
 	result["SupportsAlternateRequestUris"] = value;
-	result["SupportsMessageHeaderExtension"] = value;
+	result["SupportsMessageHeaderExtensions"] = value;
 
 	return result;
 }
@@ -180,9 +180,19 @@ std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> InitializationP
 	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
 	result.push_back(protocol);
 
+	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU);
+	result.push_back(protocol);
+
 	return result;
 }
 
 void InitializationParameters::postSessionCreationOperation(AbstractSession* session) const {
 	session->setCoreProtocolHandlers(std::make_shared<CoreHandlers>(session));
+	session->setDiscoveryProtocolHandlers(std::make_shared<DiscoveryHandlers>(session));
+	session->setStoreProtocolHandlers(std::make_shared<StoreHandlers>(session));
+	session->setStoreNotificationProtocolHandlers(std::make_shared<StoreNotificationHandlers>(session));
+	session->setDataArrayProtocolHandlers(std::make_shared<DataArrayHandlers>(session));
+	session->setTransactionProtocolHandlers(std::make_shared<TransactionHandlers>(session));
+	session->setDataspaceProtocolHandlers(std::make_shared<DataspaceHandlers>(session));
+	session->setDataspaceOSDUProtocolHandlers(std::make_shared<DataspaceOSDUHandlers>(session));
 }

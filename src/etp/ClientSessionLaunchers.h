@@ -26,7 +26,14 @@ namespace ETP_NS
 {
 	namespace ClientSessionLaunchers
 	{
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ClientSession> createClientSession(InitializationParameters* initializationParams,
-			const std::string & etpServerAuthorization, const std::string& proxyAuthorization = "");
+		/**
+		* Create a client session based on some initialization parameters and authorization information.
+		* It does not run the created client session.
+		* @param initializationParams	The initialization parameters
+		* @param etpServerAuthorization The etp server authorization. It generally starts by "Bearer" followed by a token i.e. "Bearer myToken"
+		* @param proxyAuthorization		The proxy authorization. Necessary if the session connects to the ETP server through a protected proxy.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<ETP_NS::ClientSession> createClientSession(InitializationParameters const* initializationParams,
+			const std::string& etpServerAuthorization, const std::string& proxyAuthorization = "");
 	}
 }

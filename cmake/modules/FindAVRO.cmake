@@ -49,8 +49,13 @@ set(_AVRO_SEARCH_NORMAL
 unset(_AVRO_x86)
 list(APPEND _AVRO_SEARCHES _AVRO_SEARCH_NORMAL)
 
-set(AVRO_NAMES avrocpp avrocpp_s)
-set(AVRO_NAMES_DEBUG avrod avrocpp_d avrocpp_s_d)
+if(AVRO_USE_STATIC_LIBS)
+	set(AVRO_NAMES avrocpp_s)
+	set(AVRO_NAMES_DEBUG avrocpp_s_d)
+else()
+	set(AVRO_NAMES avrocpp)
+	set(AVRO_NAMES_DEBUG avrod avrocpp_d)
+endif()
 
 # Try each search configuration.
 foreach(search ${_AVRO_SEARCHES})

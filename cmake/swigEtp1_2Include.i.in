@@ -16,7 +16,9 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 -----------------------------------------------------------------------*/
-%module(directors="1") fetpapi
+%module(directors="1", "threads"=1) fetpapi
+%feature("autodoc", "1");
+%feature("python:annotations", "c");
 %catches(Swig::DirectorException);
 
 %{
@@ -28,9 +30,10 @@ under the License.
 %}
 
 #ifdef WITH_FESAPI
-%import "${FESAPI_INCLUDE_DIR}/fesapi/common/DataObjectReference.h"
-%import "${FESAPI_INCLUDE_DIR}/fesapi/common/HdfProxyFactory.h"
-%import "${FESAPI_INCLUDE_DIR}/fesapi/common/AbstractObject.h"
+%include "${FESAPI_INCLUDE_DIR}/fesapi/nsDefinitions.h"
+%import(module="fesapi") "${FESAPI_INCLUDE_DIR}/fesapi/common/DataObjectReference.h"
+%import(module="fesapi") "${FESAPI_INCLUDE_DIR}/fesapi/common/HdfProxyFactory.h"
+%import(module="fesapi") "${FESAPI_INCLUDE_DIR}/fesapi/common/AbstractObject.h"
 #endif
 
 %include "stdint.i"
@@ -125,13 +128,16 @@ under the License.
     }
     catch (std::invalid_argument & e) {
         SWIG_exception(SWIG_TypeError,const_cast<char*>(e.what()));
-    } 
+    }
     catch (std::out_of_range& e) {
         SWIG_exception(SWIG_IndexError,const_cast<char*>(e.what()));
     }
     catch (std::logic_error & e) {
         SWIG_exception(SWIG_SyntaxError,const_cast<char*>(e.what()));
-    } 
+    }
+    catch (std::runtime_error & e) {
+        SWIG_exception(SWIG_RuntimeError,const_cast<char*>(e.what()));
+    }
     catch(...) {
         SWIG_exception(SWIG_RuntimeError,"Unknown exception at F2I C++ API level");
     }
@@ -160,6 +166,7 @@ typedef long long 				time_t;
 	%nspace ETP_NS::DataArrayHandlers;
 	%nspace ETP_NS::TransactionHandlers;
 	%nspace ETP_NS::DataspaceHandlers;
+	%nspace ETP_NS::DataspaceOSDUHandlers;
 	%nspace ETP_NS::AbstractSession;
 	%nspace ETP_NS::ClientSession;
 	%nspace ETP_NS::InitializationParameters;
@@ -259,6 +266,15 @@ typedef long long 				time_t;
 	%nspace Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces;
 	%nspace Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse;
 	
+	%nspace Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo;
+	%nspace Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse;
+	%nspace Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent;
+	%nspace Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse;
+	%nspace Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces;
+	%nspace Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse;
+	%nspace Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace;
+	%nspace Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse;
+	
 	%nspace Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse;
 	%nspace Energistics::Etp::v12::Protocol::StoreNotification::Chunk;
 	%nspace Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked;
@@ -353,42 +369,42 @@ namespace Energistics {
 					double get_double();				
 					void set_double(const double& v);
 					
-					std::string get_string();				
+					std::string get_string();
 					void set_string(const std::string& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfBoolean get_ArrayOfBoolean();		
+					Energistics::Etp::v12::Datatypes::ArrayOfBoolean get_ArrayOfBoolean();
 					void set_ArrayOfBoolean(const Energistics::Etp::v12::Datatypes::ArrayOfBoolean& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfInt get_ArrayOfInt();			
+					Energistics::Etp::v12::Datatypes::ArrayOfInt get_ArrayOfInt();
 					void set_ArrayOfInt(const Energistics::Etp::v12::Datatypes::ArrayOfInt& v);
 					
 					Energistics::Etp::v12::Datatypes::ArrayOfLong get_ArrayOfLong();
-					void set_ArrayOfLong(const Energistics::Etp::v12::Datatypes::ArrayOfLong& v);	
+					void set_ArrayOfLong(const Energistics::Etp::v12::Datatypes::ArrayOfLong& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfFloat get_ArrayOfFloat();				
+					Energistics::Etp::v12::Datatypes::ArrayOfFloat get_ArrayOfFloat();
 					void set_ArrayOfFloat(const Energistics::Etp::v12::Datatypes::ArrayOfFloat& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfDouble get_ArrayOfDouble();	
+					Energistics::Etp::v12::Datatypes::ArrayOfDouble get_ArrayOfDouble();
 					void set_ArrayOfDouble(const Energistics::Etp::v12::Datatypes::ArrayOfDouble& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfString get_ArrayOfString();			
-					void set_ArrayOfString(const Energistics::Etp::v12::Datatypes::ArrayOfString& v);	
+					Energistics::Etp::v12::Datatypes::ArrayOfString get_ArrayOfString();
+					void set_ArrayOfString(const Energistics::Etp::v12::Datatypes::ArrayOfString& v);
 					
-					std::string get_bytes();				
-					void set_bytes(const std::string& v);		
+					std::string get_bytes();
+					void set_bytes(const std::string& v);
 				};
 				
-				struct DataValue{				
+				struct DataValue{
 					Energistics::Etp::v12::Datatypes::DataValueitem_t item;
 				};
 				
-				struct ErrorInfo{				
+				struct ErrorInfo{
 					std::string message;
 					int32_t code;
 				};
 				
 				struct AnyArrayitem_t {
-				public:				
+				public:
 					size_t idx() const;
 					
 					Energistics::Etp::v12::Datatypes::ArrayOfBoolean get_ArrayOfBoolean();
@@ -417,7 +433,7 @@ namespace Energistics {
 					Energistics::Etp::v12::Datatypes::AnyArrayitem_t item;
 				};	
 				
-				enum AnyArrayType {
+				enum class AnyArrayType {
 					arrayOfBoolean=0,
 					arrayOfInt=1,
 					arrayOfLong=2,
@@ -425,7 +441,7 @@ namespace Energistics {
 					arrayOfDouble=4,
 					arrayOfString=5,
 					bytes=6
-				};	
+				};
 				
 				enum class AnyLogicalArrayType {
 					arrayOfBoolean=0,
@@ -449,7 +465,7 @@ namespace Energistics {
 					arrayOfDouble64BE=18,
 					arrayOfString=19,
 					arrayOfCustom=20
-				};				
+				};
 			}
 		}
 	}
@@ -477,7 +493,7 @@ namespace Energistics {
 						std::vector<std::string> dataObjectTypes;
 					};
 					
-					enum ContextScopeKind {
+					enum class ContextScopeKind {
 						self=0,
 						sources=1,
 						targets=2,
@@ -528,7 +544,7 @@ namespace Energistics {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> customData;
 					};
 					
-					enum RelationshipKind {
+					enum class RelationshipKind {
 						Primary=0,
 						Secondary=1,
 						Both=2
@@ -793,6 +809,9 @@ namespace Energistics {
 						static const int messageTypeId=4;
 					};
 					
+#if defined(SWIGPYTHON)
+					%rename(Store_Chunk) Chunk;
+#endif
 					struct Chunk{					
 						Energistics::Etp::v12::Datatypes::Uuid blobId;
 						std::string data;
@@ -980,6 +999,61 @@ namespace Energistics {
 	}
 }
 
+/**************** DATASPACE OSDU PROTOCOL  *****************/
+
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace DataspaceOSDU {
+					struct GetDataspaceInfo {
+						std::map<std::string, std::string> uris;
+						static constexpr int messageTypeId = 1;
+					};
+					
+					struct GetDataspaceInfoResponse {
+						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace> dataspaces;
+						static constexpr int messageTypeId = 2;
+					};
+					
+					struct CopyDataspacesContent {
+						std::map<std::string, std::string> dataspaces;
+						std::string targetDataspace;
+						static constexpr int messageTypeId = 3;
+					};
+					
+					struct CopyDataspacesContentResponse {
+						std::map<std::string, std::string> success;
+						static constexpr int messageTypeId = 4;
+					};
+					
+					struct LockDataspaces {
+						std::map<std::string, std::string> uris;
+						bool lock;
+						static constexpr int messageTypeId = 5;
+					};
+					
+					struct LockDataspacesResponse {
+						std::map<std::string, std::string> success;
+						static constexpr int messageTypeId = 6;
+					};
+					
+					struct CopyToDataspace {
+						std::map<std::string, std::string> uris;
+						std::string dataspaceUri;
+						static constexpr int messageTypeId = 7;
+					};
+					
+					struct CopyToDataspaceResponse {
+						std::map<std::string, std::string> success;
+						static constexpr int messageTypeId = 8;
+					};
+				}
+			}
+		}
+	}
+}
+
 /**************** STORE NOTIFICATION PROTOCOL  *****************/
 
 namespace Energistics {
@@ -991,6 +1065,10 @@ namespace Energistics {
 						std::map<std::string, std::string> success;
 						static const int messageTypeId=10;
 					};
+					
+#if defined(SWIGPYTHON)
+					%rename(StoreNotification_Chunk) Chunk;
+#endif
 					struct Chunk{
 						Energistics::Etp::v12::Datatypes::Uuid blobId;
 						std::string data;
@@ -1053,6 +1131,7 @@ namespace Energistics {
 %shared_ptr(ETP_NS::DataArrayHandlers)
 %shared_ptr(ETP_NS::TransactionHandlers)
 %shared_ptr(ETP_NS::DataspaceHandlers)
+%shared_ptr(ETP_NS::DataspaceOSDUHandlers)
 %shared_ptr(ETP_NS::AbstractSession)
 %shared_ptr(ETP_NS::ClientSession)
 
@@ -1063,6 +1142,7 @@ namespace Energistics {
 %feature("director") ETP_NS::DataArrayHandlers;
 %feature("director") ETP_NS::TransactionHandlers;
 %feature("director") ETP_NS::DataspaceHandlers;
+%feature("director") ETP_NS::DataspaceOSDUHandlers;
 %feature("director") ETP_NS::InitializationParameters;
 
 /* Following extensions aims at preventing the Python garbage collector from 
@@ -1168,7 +1248,7 @@ namespace Energistics {
 			%}
 	}
 	
-	// Dataspace	
+	// Dataspace
 	%fragment("dataspace_handler_reference_init", "init") {
 		  dataspace_handler_reference();
 	}
@@ -1184,6 +1264,23 @@ namespace Energistics {
 		  PyObject_SetAttr($self, dataspace_handler_reference(), args);
 		%}
 	}
+	
+	// Dataspace OSDU
+	%fragment("dataspace_osdu_handler_reference_init", "init") {
+		  dataspace_osdu_handler_reference();
+	}
+	%fragment("dataspace_osdu_handler_reference_function", "header", fragment="dataspace_osdu_handler_reference_init") {
+		static PyObject *dataspace_osdu_handler_reference() {
+		  static PyObject *dataspace_osdu_handler_reference_string = SWIG_Python_str_FromChar("__dataspace_osdu_handler_reference");
+		  return dataspace_osdu_handler_reference_string;
+		}
+	}
+
+	%extend ETP_NS::AbstractSession {
+	%typemap(ret, fragment="dataspace_osdu_handler_reference_function") void setDataspaceOSDUProtocolHandlers(std::shared_ptr<DataspaceOSDUHandlers> dataspaceOSDUHandlers) %{
+		  PyObject_SetAttr($self, dataspace_osdu_handler_reference(), args);
+		%}
+	}
 #endif 
 	
 #ifdef SWIGCSHARP
@@ -1195,12 +1292,13 @@ namespace Energistics {
   private DataArrayHandlers dataArrayHandlersReference = null;
   private TransactionHandlers transactionHandlersReference = null;
   private DataspaceHandlers dataspaceHandlersReference = null;
+  private DataspaceOSDUHandlers dataspaceOSDUHandlersReference = null;
 %}
 
 %typemap(csin,
          post="      coreHandlersReference = $csinput;"
          ) std::shared_ptr<ETP_NS::CoreHandlers> coreHandlers "CoreHandlers.getCPtr($csinput)"
-		 
+
 %typemap(csin,
          post="      discoveryHandlersReference = $csinput;"
          ) std::shared_ptr<ETP_NS::DiscoveryHandlers> discoveryHandlers "DiscoveryHandlers.getCPtr($csinput)"
@@ -1208,24 +1306,28 @@ namespace Energistics {
 %typemap(csin,
          post="      storeHandlersReference = $csinput;"
          ) std::shared_ptr<ETP_NS::StoreHandlers> storeHandlers "StoreHandlers.getCPtr($csinput)"
-		 
+
 %typemap(csin,
          post="      storeNotificationHandlersReference = $csinput;"
          ) std::shared_ptr<ETP_NS::StoreNotificationHandlers> storeNotificationHandlers "StoreNotificationHandlers.getCPtr($csinput)"
-		 
+
 %typemap(csin,
          post="      dataArrayHandlersReference = $csinput;"
          ) std::shared_ptr<ETP_NS::DataArrayHandlers> dataArrayHandlers "DataArrayHandlers.getCPtr($csinput)"
-		 
+
 %typemap(csin,
          post="      transactionHandlersReference = $csinput;"
          ) std::shared_ptr<ETP_NS::TransactionHandlers> transactionHandlers "TransactionHandlers.getCPtr($csinput)"
-		 
+
 %typemap(csin,
          post="      dataspaceHandlersReference = $csinput;"
          ) std::shared_ptr<ETP_NS::DataspaceHandlers> dataspaceHandlers "DataspaceHandlers.getCPtr($csinput)"
-#endif	  
-	  
+
+%typemap(csin,
+         post="      dataspaceOSDUHandlersReference = $csinput;"
+         ) std::shared_ptr<ETP_NS::DataspaceOSDUHandlers> dataspaceOSDUHandlers "DataspaceOSDUHandlers.getCPtr($csinput)"
+#endif
+
 #ifdef SWIGJAVA
 %typemap(javacode) ETP_NS::AbstractSession %{
   private CoreHandlers coreHandlersReference;
@@ -1235,35 +1337,40 @@ namespace Energistics {
   private DataArrayHandlers dataArrayHandlersReference;
   private TransactionHandlers transactionHandlersReference;
   private DataspaceHandlers dataspaceHandlersReference;
+  private DataspaceOSDUHandlers dataspaceOSDUHandlersReference;
 %}
 
 %typemap(javain, 
          post="      coreHandlersReference = $javainput;"
          ) std::shared_ptr<ETP_NS::CoreHandlers> coreHandlers "CoreHandlers.getCPtr($javainput)"
-		 
+
 %typemap(javain, 
          post="      discoveryHandlersReference = $javainput;"
          ) std::shared_ptr<ETP_NS::DiscoveryHandlers> discoveryHandlers "DiscoveryHandlers.getCPtr($javainput)"
-		 
+
 %typemap(javain, 
          post="      storeHandlersReference = $javainput;"
          ) std::shared_ptr<ETP_NS::StoreHandlers> storeHandlers "StoreHandlers.getCPtr($javainput)"
-		 
+
 %typemap(javain, 
          post="      storeNotificationHandlersReference = $javainput;"
          ) std::shared_ptr<ETP_NS::StoreNotificationHandlers> storeNotificationHandlers "StoreNotificationHandlers.getCPtr($javainput)"
-		 
+
 %typemap(javain, 
          post="      dataArrayHandlersReference = $javainput;"
          ) std::shared_ptr<ETP_NS::DataArrayHandlers> dataArrayHandlers "DataArrayHandlers.getCPtr($javainput)"
-		 
+
 %typemap(javain,
          post="      transactionHandlersReference = $javainput;"
          ) std::shared_ptr<ETP_NS::TransactionHandlers> transactionHandlers "TransactionHandlers.getCPtr($javainput)"
-		 
+
 %typemap(javain, 
          post="      dataspaceHandlersReference = $javainput;"
          ) std::shared_ptr<ETP_NS::DataspaceHandlers> dataspaceHandlers "DataspaceHandlers.getCPtr($javainput)"
+
+%typemap(javain, 
+         post="      dataspaceOSDUHandlersReference = $javainput;"
+         ) std::shared_ptr<ETP_NS::DataspaceOSDUHandlers> dataspaceOSDUHandlers "DataspaceOSDUHandlers.getCPtr($javainput)"
 #endif
 
 namespace ETP_NS
@@ -1413,7 +1520,7 @@ namespace ETP_NS
 	    virtual void on_RollbackTransaction(const Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction & msg, int64_t correlationId);
 		virtual void on_RollbackTransactionResponse(const Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse & msg, int64_t correlationId);
 	};
-	
+
 	class DataspaceHandlers : public ProtocolHandlers
 	{
 	public:
@@ -1426,6 +1533,22 @@ namespace ETP_NS
 		virtual void on_PutDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse & msg, int64_t correlationId);
 	    virtual void on_DeleteDataspaces(const Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces & msg, int64_t correlationId);
 		virtual void on_DeleteDataspacesResponse(const Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse & msg, int64_t correlationId);
+	};
+
+	class DataspaceOSDUHandlers : public ProtocolHandlers
+	{
+	public:
+		DataspaceOSDUHandlers(AbstractSession* mySession);
+		virtual ~DataspaceOSDUHandlers();
+
+		virtual void on_GetDataspaceInfo(const Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo& msg, int64_t correlationId);
+		virtual void on_GetDataspaceInfoResponse(const Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse& msg, int64_t correlationId);
+	    virtual void on_CopyDataspacesContent(const Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent& msg, int64_t correlationId);
+		virtual void on_CopyDataspacesContentResponse(const Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse & msg, int64_t correlationId);
+		virtual void on_LockDataspaces(const Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces& msg, int64_t correlationId);
+		virtual void on_LockDataspacesResponse(const Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse& msg, int64_t correlationId);
+	    virtual void on_CopyToDataspace(const Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace& msg, int64_t correlationId);
+		virtual void on_CopyToDataspaceResponse(const Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse & msg, int64_t correlationId);
 	};
 
 	%nodefaultctor AbstractSession;
@@ -1444,7 +1567,8 @@ namespace ETP_NS
 		void setDataArrayProtocolHandlers(std::shared_ptr<DataArrayHandlers> dataArrayHandlers);
 		void setTransactionProtocolHandlers(std::shared_ptr<TransactionHandlers> transactionHandlers);
 		void setDataspaceProtocolHandlers(std::shared_ptr<DataspaceHandlers> dataspaceHandlers);
-		
+		void setDataspaceOSDUProtocolHandlers(std::shared_ptr<DataspaceOSDUHandlers> dataspaceOsduHandlers);
+
 		template<typename T> int64_t sendWithSpecificHandler(const T & mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
 			int64_t msgId = encode(mb, correlationId, messageFlags); // put the message to write in the queue
@@ -1506,6 +1630,15 @@ namespace ETP_NS
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse>;
+		
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse>;
 		
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::Chunk>;
@@ -1578,6 +1711,15 @@ namespace ETP_NS
 		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse>;
 		
+		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo>;
+		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse>;
+		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent>;
+		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse>;
+		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces>;
+		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse>;
+		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace>;
+		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse>;
+		
 		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse>;
 		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::Chunk>;
 		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked>;
@@ -1645,6 +1787,15 @@ namespace ETP_NS
 		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse>;
 		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces>;
 		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse>;
+		
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse>;
 		
 		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse>;
 		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::Chunk>;
@@ -1720,6 +1871,53 @@ namespace ETP_NS
 		* @param return	The map keys corresponding to the dataspaces which have been deleted successfully.
 		*/
 		std::vector<std::string> deleteDataspaces(const std::map<std::string, std::string>& dataspaceUris);
+
+		/*********************
+		*** DATASPACE OSDU ***
+		**********************/
+
+		/**
+		* A customer sends to a store to discover information of particular dataspaces.
+		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param dataspaceUris	ETP general map : One each for each dataspace, identified by their URI, the customer wants to get info about.
+		* @param return	The dataspaces the store could return.
+		*/
+		std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> getDataspaceInfo(const std::map<std::string, std::string>& dataspaceUris);
+
+		/**
+		* Copy by reference some dataspaces into another one.
+		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param sourceDataspaceUris  ETP general map : One each for each source dataspace to be copied. They are identified by their URI.
+		* @param targetDataspaceUri  The URI of the ETP dataspace where the sourceDataspaces have to be copied by reference.
+		* @param return	The map keys corresponding to the dataspaces which have been successfully copied into the target dataspace.
+		*/
+		std::vector<std::string> copyDataspacesContent(const std::map<std::string, std::string>& sourceDataspaceUris, const std::string& targetDataspaceUri);
+
+		/**
+		* A customer sends to a store to lock or unlock one or more dataspaces.
+		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param dataspaceUris  ETP general map where the values must be the URIs for the dataspaces the customer wants to lock or unlock.
+		* @param lock true for locking the dataspaces, false to unlock the dataspaces
+		* @param return	The map keys corresponding to the dataspaces which have been successfully locked or unlocked.
+		*/
+		std::vector<std::string> lockDataspaces(const std::map<std::string, std::string>& dataspaceUris, bool lock);
+
+		/**
+		* Copy by reference some dataobjects into another dataspace.
+		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param sourceUris  ETP general map : One each for each source dataobject to be copied. They are identified by their URI.
+		* @param targetDataspaceUri  The URI of the ETP dataspace where the source dataobjects have to be copied by reference.
+		* @param return	The map keys corresponding to the dataobjects which have been successfully copied into the target dataspace.
+		*/
+		std::vector<std::string> copyToDataspace(const std::map<std::string, std::string>& sourceUris, const std::string& targetDataspaceUri);
 
 		/****************
 		*** DISCOVERY ***
@@ -1915,7 +2113,7 @@ namespace ETP_NS
 		uint16_t getProxyPort() const;
 
 		void setForceTls(bool force);
-		bool isTlsForced();
+		bool isTlsForced() const;
 
 		virtual std::string getApplicationName() const;
 		virtual std::string getApplicationVersion() const;
@@ -1931,8 +2129,15 @@ namespace ETP_NS
 
 	namespace ClientSessionLaunchers
 	{
-		std::shared_ptr<ETP_NS::ClientSession> createClientSession(InitializationParameters* initializationParams,
-			const std::string & etpServerAuthorization, const std::string& proxyAuthorization = "");
+		/**
+		* Create a client session based on some initialization parameters and authorization information.
+		* It does not run the created client session.
+		* @param initializationParams	The initialization parameters
+		* @param etpServerAuthorization The etp server authorization. It generally starts by "Bearer" followed by a token i.e. "Bearer myToken"
+		* @param proxyAuthorization		The proxy authorization. Necessary if the session connects to the ETP server through a protected proxy.
+		*/
+		std::shared_ptr<ETP_NS::ClientSession> createClientSession(InitializationParameters const* initializationParams,
+			const std::string& etpServerAuthorization, const std::string& proxyAuthorization = "");
 	}
 	
 #ifdef WITH_FESAPI

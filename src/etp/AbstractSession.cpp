@@ -121,13 +121,16 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 					specificProtocolHandlers.erase(specificProtocolHandlerIt);
 				}
 			}
-			else if (receivedMhProtocol < protocolHandlers.size() && protocolHandlers[receivedMhProtocol] != nullptr) {
-				// Receive a message to be processed with a common protocol handler in case for example an unsollicited notification
-				protocolHandlers[receivedMhProtocol]->decodeMessageBody(receivedMh, d);
-			}
 			else {
-				std::cerr << "Received a message with id " << receivedMh.messageId << " for which non protocol handlers is associated. Protocol " << receivedMhProtocol << std::endl;
-				send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(4, "The agent does not support the protocol " + std::to_string(receivedMhProtocol) + " identified in a message header."), receivedMh.messageId, 0x02);
+				auto normalProtocolHandlerIt = protocolHandlers.find(receivedMhProtocol);
+				if (normalProtocolHandlerIt != protocolHandlers.end()) {
+					// Receive a message to be processed with a common protocol handler in case for example an unsollicited notification
+					normalProtocolHandlerIt->second->decodeMessageBody(receivedMh, d);
+				}
+				else {
+					std::cerr << "Received a message with id " << receivedMh.messageId << " for which non protocol handlers is associated. Protocol " << receivedMhProtocol << std::endl;
+					send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(4, "The agent does not support the protocol " + std::to_string(receivedMhProtocol) + " identified in a message header."), receivedMh.messageId, 0x02);
+				}
 			}
 		}
 		flushReceivingBuffer();
@@ -192,6 +195,76 @@ std::vector<std::string> AbstractSession::deleteDataspaces(const std::map<std::s
 
 	Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces msg;
 	msg.uris = dataspaceUris;
+	sendAndBlock(msg, 0, 0x02);
+	std::vector<std::string> result = handlers->getSuccessKeys();
+	handlers->clearSuccessKeys();
+	return result;
+}
+
+
+
+/*********************
+*** DATASPACE OSDU ***
+**********************/
+
+std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> AbstractSession::getDataspaceInfo(const std::map<std::string, std::string>& dataspaceUris)
+{
+	std::shared_ptr<DataspaceOSDUHandlers> handlers = getDataspaceOSDUProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any dataspace OSDU protocol handlers.");
+	}
+
+	Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo msg;
+	msg.uris = dataspaceUris;
+	sendAndBlock(msg, 0, 0x02);
+	std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> result = handlers->getDataspaces();
+	handlers->clearDataspaces();
+	handlers->clearSuccessKeys();
+	return result;
+}
+
+std::vector<std::string> AbstractSession::copyDataspacesContent(const std::map<std::string, std::string>& sourceDataspaceUris, const std::string& targetDataspaceUri)
+{
+	std::shared_ptr<DataspaceOSDUHandlers> handlers = getDataspaceOSDUProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any dataspace OSDU protocol handlers.");
+	}
+
+	Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent msg;
+	msg.dataspaces = sourceDataspaceUris;
+	msg.targetDataspace = targetDataspaceUri;
+	sendAndBlock(msg, 0, 0x02);
+	std::vector<std::string> result = handlers->getSuccessKeys();
+	handlers->clearSuccessKeys();
+	return result;
+}
+
+std::vector<std::string> AbstractSession::lockDataspaces(const std::map<std::string, std::string>& dataspaceUris, bool lock)
+{
+	std::shared_ptr<DataspaceOSDUHandlers> handlers = getDataspaceOSDUProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any dataspace OSDU protocol handlers.");
+	}
+
+	Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces msg;
+	msg.uris = dataspaceUris;
+	msg.lock = lock;
+	sendAndBlock(msg, 0, 0x02);
+	std::vector<std::string> result = handlers->getSuccessKeys();
+	handlers->clearSuccessKeys();
+	return result;
+}
+
+std::vector<std::string> AbstractSession::copyToDataspace(const std::map<std::string, std::string>& sourceUris, const std::string& targetDataspaceUri)
+{
+	std::shared_ptr<DataspaceOSDUHandlers> handlers = getDataspaceOSDUProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any dataspace OSDU protocol handlers.");
+	}
+
+	Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace msg;
+	msg.uris = sourceUris;
+	msg.dataspaceUri = targetDataspaceUri;
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<std::string> result = handlers->getSuccessKeys();
 	handlers->clearSuccessKeys();

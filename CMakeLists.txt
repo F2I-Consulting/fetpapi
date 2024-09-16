@@ -1,4 +1,8 @@
-cmake_minimum_required(VERSION 3.12)
+if (WIN32)
+	cmake_minimum_required(VERSION 3.21)
+else ()
+	cmake_minimum_required(VERSION 3.12)
+endif (WIN32)
 
 project(Fetpapi)
 
@@ -11,7 +15,7 @@ set (FETPAPI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # version mechanism
 set (Fetpapi_VERSION_MAJOR 0)
-set (Fetpapi_VERSION_MINOR 2)
+set (Fetpapi_VERSION_MINOR 3)
 set (Fetpapi_VERSION_PATCH 0)
 set (Fetpapi_VERSION_TWEAK 0)
 
@@ -98,7 +102,7 @@ find_package (Threads)
 # Boost DEPENDENCY
 find_package(Boost 1.70)
 if (NOT Boost_FOUND)
-	# Boost system is required for Beast untill version 1.70 : https://www.boost.org/doc/libs/1_69_0/libs/beast/doc/html/beast/introduction.html
+	# Boost system is required for Beast until version 1.70 : https://www.boost.org/doc/libs/1_69_0/libs/beast/doc/html/beast/introduction.html
 	find_package(Boost 1.66 REQUIRED system)
 endif()
 if (WIN32 AND (Boost_VERSION_MAJOR EQUAL 1) AND (Boost_VERSION_MINOR LESS 74) AND (Boost_VERSION_MINOR GREATER 71))
@@ -147,6 +151,10 @@ if (WITH_ETP_SSL)
 		find_package(OpenSSL REQUIRED)
 	endif()
 	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+	# OpenSSL::applink is recommended under MSVC : https://cmake.org/cmake/help/latest/module/FindOpenSSL.html
+	if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+		target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::applink)
+	endif ()
 endif ()
 
 if (WITH_FESAPI)
@@ -182,41 +190,21 @@ endif (WITH_PYTHON_WRAPPING)
 # Getting source files
 # ============================================================================
 
-file (GLOB FETPAPI_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/*.cpp)
-file (GLOB FETPAPI_PROTOCOL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/ProtocolHandlers/*.cpp)
-file (GLOB FETPAPI_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/*.h)
-file (GLOB FETPAPI_PROTOCOL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/ProtocolHandlers/*.h)
-file (GLOB FETPAPI_TOOLS_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/tools/*.cpp)
-file (GLOB FETPAPI_TOOLS_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/tools/*.h)
+include(${CMAKE_CURRENT_SOURCE_DIR}/src/CMakeLists.txt)
 set (ALL_SOURCES_AND_HEADERS
 	${ALL_SOURCES_AND_HEADERS}
 	${FETPAPI_SOURCES}
-	${FETPAPI_PROTOCOL_SOURCES}
 	${FETPAPI_HEADERS}
+	${FETPAPI_PROTOCOL_SOURCES}
 	${FETPAPI_PROTOCOL_HEADERS}
 	${FETPAPI_TOOLS_HEADERS}
-	${FETPAPI_TOOLS_SOURCES}
+	${FETPAPI_FESAPI_SOURCES}
+	${FETPAPI_FESAPI_HEADERS}
+	${FETPAPI_SSL_SOURCES}
+	${FETPAPI_SSL_HEADERS}
 )
 
-if (WITH_ETP_SSL)
-	file (GLOB FETPAPI_SSL_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/ssl/*.cpp)
-	file (GLOB FETPAPI_SSL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/ssl/*.h)
-
-	set (ALL_SOURCES_AND_HEADERS
-		${ALL_SOURCES_AND_HEADERS}
-		${FETPAPI_SSL_SOURCES}
-		${FETPAPI_SSL_HEADERS}
-	)
-endif (WITH_ETP_SSL)
-
 if (WITH_FESAPI)
-	file (GLOB FETPAPI_FESAPI_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/fesapi/*.cpp)
-	file (GLOB FETPAPI_FESAPI_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/src/etp/fesapi/*.h)
-	set (ALL_SOURCES_AND_HEADERS
-		${ALL_SOURCES_AND_HEADERS}
-		${FETPAPI_FESAPI_SOURCES}
-		${FETPAPI_FESAPI_HEADERS}
-	)
 	target_include_directories(${PROJECT_NAME} PRIVATE ${FESAPI_INCLUDE_DIR})
 endif (WITH_FESAPI)
 
@@ -233,7 +221,7 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 
 # organizing sources and headers in the Visual Studio Project
 if (WIN32)
-	source_group ("tools" FILES ${FETPAPI_TOOLS_SOURCES} ${FETPAPI_TOOLS_HEADERS})
+	source_group ("tools" FILES ${FETPAPI_TOOLS_HEADERS})
 
 	set (ETP_PREFIX "etp")
 	source_group ("${ETP_PREFIX}" FILES ${FETPAPI_SOURCES} ${FETPAPI_HEADERS})
@@ -340,3 +328,28 @@ endif (WITH_FESAPI)
 
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FetpapiConfig.cmake
         DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/Fetpapi")
+
+if (WITH_PYTHON_WRAPPING)
+	IF (WIN32)
+		install (
+			TARGETS ${PROJECT_NAME}
+			RUNTIME DESTINATION ${CMAKE_CURRENT_LIST_DIR}/python/fetpapi/
+		)
+		install(
+			TARGETS ${PROJECT_NAME}
+			RUNTIME_DEPENDENCY_SET dep-set
+		)
+		cmake_path(GET SSL_EAY_RELEASE PARENT_PATH openSslLibPath)
+		cmake_path(GET openSslLibPath PARENT_PATH openSslPath)
+		cmake_path(APPEND openSslPath "bin" OUTPUT_VARIABLE openSslBinPath)
+		install(
+			RUNTIME_DEPENDENCY_SET dep-set
+			PRE_EXCLUDE_REGEXES "api-ms-.*" "ext-ms-.*" "[Ff]esapi[Cc]pp.*\\.dll"
+			POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
+			DIRECTORIES ${openSslBinPath}
+			RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/python/fetpapi/
+		)
+	ENDIF (WIN32)
+	install(CODE "execute_process(COMMAND	${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/python/setup.py bdist_wheel
+											WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/python)")
+endif (WITH_PYTHON_WRAPPING)

@@ -1,12 +1,12 @@
-# Included in ../src/CMakeLists.txt if java build is selected.
+# Included in ../CMakeLists.txt if java build is selected.
 
-find_package(SWIG 3.0 REQUIRED)
+find_package(SWIG 3.4 REQUIRED)
 
 find_package(JNI REQUIRED)
 find_package(Java REQUIRED)
 include(UseJava)
 
-set(SWIG_LINKED_TO_RELEASE ON CACHE BOOL "Is your SWIG generated library linked to the release or debug version of FesapiCpp ?")
+set(SWIG_LINKED_TO_RELEASE ON CACHE BOOL "Is your SWIG generated library linked to the release or debug version of Fetpapi ?")
 
 message("Generating SWIG Java files...")
 #Cleaning
@@ -17,7 +17,7 @@ endif (TO_DELETE)
 file (REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/java/src/com/f2i_consulting/fetpapi/etp)
 
 # The name of the library is different on Windows because it includes the version
-# The assembly name is used to load the debug vs release FESAPI library in the Java example
+# The assembly name is used to load the debug vs release FETPAPI library in the Java example
 if (WIN32)
 	if (SWIG_LINKED_TO_RELEASE)
 		set (ASSEMBLY_NAME ${PROJECT_NAME}${CMAKE_RELEASE_POSTFIX}.${Fetpapi_VERSION})
@@ -31,6 +31,14 @@ else (WIN32)
 		set (ASSEMBLY_NAME ${PROJECT_NAME}${CMAKE_DEBUG_POSTFIX})
 	endif (SWIG_LINKED_TO_RELEASE)
 endif (WIN32)
+if (WITH_FESAPI)
+	if (SWIG_LINKED_TO_RELEASE)
+		get_filename_component(FESAPI_ASSEMBLY_NAME ${FESAPI_LIBRARY_RELEASE} NAME_WLE)
+	else (SWIG_LINKED_TO_RELEASE)
+		get_filename_component(FESAPI_ASSEMBLY_NAME ${FESAPI_LIBRARY_DEBUG} NAME_WLE)
+	endif (SWIG_LINKED_TO_RELEASE)
+	configure_file(${CMAKE_SOURCE_DIR}/cmake/FetpapiClientUsingFesapi.java ${CMAKE_SOURCE_DIR}/java/src/com/f2i_consulting/example/FetpapiClientUsingFesapi.java) # Overwrite if different(WIN32)
+endif (WITH_FESAPI)
 
 # SWIG execution
 set (EXECUTE_COMMAND "${SWIG_EXECUTABLE}")
@@ -95,7 +103,7 @@ if (SWIG_LINKED_TO_RELEASE)
 	)
 else (SWIG_LINKED_TO_RELEASE)
 	install (
-		FILES ${CMAKE_CURRENT_BINARY_DIR}/fetpapiJava${CMAKE_DEBUG_POSTFIX}-${Fesapi_VERSION}.jar
+		FILES ${CMAKE_CURRENT_BINARY_DIR}/fetpapiJava${CMAKE_DEBUG_POSTFIX}-${Fetpapi_VERSION}.jar
 		DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	)
 endif (SWIG_LINKED_TO_RELEASE)
