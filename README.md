@@ -1,9 +1,9 @@
 
 # Prepare your build environment
- - Create a folder called fesapiEnv.
+ - Create a folder called fetpapiEnv.
  - In this folder create the three following folders
 	 - build
-	 - fetpapi (Git clone this repository into this folder "fetpapi". You should then have a path fesapiEnv/fetpapi/src)
+	 - fetpapi (Git clone this repository into this folder "fetpapi". You should then have a path fetpapiEnv/fetpapi/src)
 	 - dependencies 
   - The following compilers are known to work (used in CI)
     - gcc from version 4.8
@@ -15,14 +15,11 @@ Download (build and install if necessary) third party libraries:
 - (OPTIONALLY) OpenSSL : version 1.1 is known to work.
 - (OPTIONALLY) [FESAPI](https://github.com/F2I-Consulting/fesapi/releases) : All versions from version 2.7.0.0 should be ok.
 
-We advise you to install these third party libraries respectively into
-- fesapiEnv/dependencies/boost-particularVersion
-- fesapiEnv/dependencies/avro-particularVersion
 # Configure the build
 FETPAPI uses cmake as its build tool. A 3.12 version or later of cmake is required https://cmake.org/download/. We also recommend using cmake-gui (already included in the bin folder of the binary releases of cmake) which provides a graphical user interface on top of cmake. If you want to use cmake in command line, you would find example in [Github Actions file](./.github/workflows/github-actions.yml). Follow the below instructions :
 
-- yourPath/fesapiEnv/fetpapi defines where is the source code folder
-- yourPath/fesapiEnv/build/theNameYouWant defines where to build the binaries
+- yourPath/fetpapiEnv/fetpapi defines where is the source code folder
+- yourPath/fetpapiEnv/build/theNameYouWant defines where to build the binaries
 - Click on "Configure" button and select your favorite compiler : it will raise several errors.
 - give real path and files to the following cmake variables:
 	- BOOST
@@ -30,7 +27,7 @@ FETPAPI uses cmake as its build tool. A 3.12 version or later of cmake is requir
 	- AVRO (using [our own cmake find module](./cmake/modules/FindAVRO.cmake))
 		- (ONLY IF NOT AUTOMATICALLY FOUND) AVRO_ROOT : The path to the folder containing include and lib folders of AVRO
 - Click again on "Configure" button. You should no more have errors so you can now click on "Generate" button.
-- You can now build your solution with your favorite compiler (and linker) using the generated solution in yourPath/fesapiEnv/build/theNameYouWant
+- You can now build your solution with your favorite compiler (and linker) using the generated solution in yourPath/fetpapiEnv/build/theNameYouWant
 - OPTIONALLY, you can also set the variables WITH_DOTNET_WRAPPING, WITH_PYTHON_WRAPPING to true if you want to also generate wrappers on top of FETPAPI for these two other programming languages. Don't forget to click again on "Configure" button once you changed the value of these two variables.
 	- You will then have to also provide the path to the SWIG (version 3 as a mininum version) executable http://swig.org/download.html in the SWIG_EXECUTABLE variable (and click again on "Configure" button)
 	- you will find the wrappers in fetpapi/cs/src (fetpapi/cs also contains a VS2015 project for the wrappers) or fetpapi/python/src
