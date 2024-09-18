@@ -136,8 +136,8 @@ namespace ETP_NS
 		/**
 		 * Set the Dataspace protocol handlers
 		 */
-		FETPAPI_DLL_IMPORT_OR_EXPORT void setDataspaceOSDUProtocolHandlers(std::shared_ptr<DataspaceOSDUHandlers> dataspaceOsduHandlers) {
-			setProtocolHandlers(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU), dataspaceOsduHandlers);
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setDataspaceOSDUProtocolHandlers(std::shared_ptr<DataspaceOSDUHandlers> dataspaceOSDUHandlers) {
+			setProtocolHandlers(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DataspaceOSDU), dataspaceOSDUHandlers);
 		}
 
 		/**
