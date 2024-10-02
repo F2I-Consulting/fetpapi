@@ -1,5 +1,5 @@
 if (WIN32)
-	cmake_minimum_required(VERSION 3.21)
+	cmake_minimum_required(VERSION 3.27)
 else ()
 	cmake_minimum_required(VERSION 3.12)
 endif (WIN32)
@@ -16,7 +16,7 @@ set (FETPAPI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 # version mechanism
 set (Fetpapi_VERSION_MAJOR 0)
 set (Fetpapi_VERSION_MINOR 3)
-set (Fetpapi_VERSION_PATCH 0)
+set (Fetpapi_VERSION_PATCH 1)
 set (Fetpapi_VERSION_TWEAK 0)
 
 set (Fetpapi_VERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR}.${Fetpapi_VERSION_PATCH}.${Fetpapi_VERSION_TWEAK})
@@ -131,14 +131,12 @@ if (WIN32)
 	target_link_libraries (${PROJECT_NAME} PRIVATE bcrypt.lib)
 
 	set_target_properties(${PROJECT_NAME} PROPERTIES
-		PDB_NAME ${PROJECT_NAME}.${Fetpapi_VERSION}
-		PDB_NAME_DEBUG ${PROJECT_NAME}${CMAKE_DEBUG_POSTFIX}.${Fetpapi_VERSION}
 		LINK_FLAGS "/INCREMENTAL:NO /OPT:REF"
 		RUNTIME_OUTPUT_DIRECTORY ${FETPAPI_BINARY_DIR}
-		SUFFIX .${Fetpapi_VERSION}.dll
-		IMPORT_SUFFIX .${Fetpapi_VERSION}.lib
-		VERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR}
-	)
+		IMPORT_SUFFIX -${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR}.lib
+		DLL_NAME_WITH_SOVERSION TRUE
+		VERSION ${Fetpapi_VERSION}
+		SOVERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR})
 else (WIN32)
 	set_target_properties(${PROJECT_NAME} PROPERTIES
 		VERSION ${Fetpapi_VERSION}
