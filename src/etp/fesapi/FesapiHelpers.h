@@ -47,10 +47,29 @@ namespace ETP_NS
 		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::Resource buildEtpResourceFromEnergisticsObject(COMMON_NS::AbstractObject const* obj, bool countRels = true);
 
 		/**
+		* Build and return an ETP resource from an Energistics object defined by an UUID in a DataObjectRepository.
+		* @param repo		The repository where the required UUID is defined
+		* @param uuid		The UUID describing the Energistics object
+		* @param countRels	Indicate if the returned resource contain the count of source or target relationships.
+		* @return			The ETP resource built from the Energistics object
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::Resource buildEtpResourceFromEnergisticsObject(
+			COMMON_NS::DataObjectRepository const* repo, const std::string& uuid, bool countRels = true);
+
+		/**
 		* Build and return an ETP data object from an Energistics object.
 		* @param obj	The input Energistics obj
 		* @return		The ETP data object built from the Energistics object
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::DataObject buildEtpDataObjectFromEnergisticsObject(COMMON_NS::AbstractObject * obj, bool includeSerialization = true);
+
+		/**
+		* Build and return an ETP data object from an Energistics object defined by an UUID in a DataObjectRepository.
+		* @param repo	The repository where the required UUID is defined
+		* @param uuid	The UUID describing the Energistics object
+		* @return		The ETP data object built from the Energistics object
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::DataObject buildEtpDataObjectFromEnergisticsObject(
+			COMMON_NS::DataObjectRepository const* repo, const std::string& uuid, bool includeSerialization = true);
 	}
 }

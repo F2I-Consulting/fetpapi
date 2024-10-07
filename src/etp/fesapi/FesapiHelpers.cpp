@@ -48,6 +48,11 @@ Energistics::Etp::v12::Datatypes::Object::Resource ETP_NS::FesapiHelpers::buildE
 	return result;
 }
 
+Energistics::Etp::v12::Datatypes::Object::Resource ETP_NS::FesapiHelpers::buildEtpResourceFromEnergisticsObject(
+	COMMON_NS::DataObjectRepository const* repo, const std::string& uuid, bool countRels) {
+	return buildEtpResourceFromEnergisticsObject(repo->getDataObjectByUuid(uuid), countRels);
+}
+
 Energistics::Etp::v12::Datatypes::Object::DataObject ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(COMMON_NS::AbstractObject * obj, bool includeSerialization)
 {
 	Energistics::Etp::v12::Datatypes::Object::DataObject result;
@@ -67,4 +72,9 @@ Energistics::Etp::v12::Datatypes::Object::DataObject ETP_NS::FesapiHelpers::buil
 	result.resource = ETP_NS::FesapiHelpers::buildEtpResourceFromEnergisticsObject(obj);
 
 	return result;
+}
+
+Energistics::Etp::v12::Datatypes::Object::DataObject ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(
+	COMMON_NS::DataObjectRepository const* repo, const std::string& uuid, bool includeSerialization) {
+	return buildEtpDataObjectFromEnergisticsObject(repo->getDataObjectByUuid(uuid), includeSerialization);
 }
