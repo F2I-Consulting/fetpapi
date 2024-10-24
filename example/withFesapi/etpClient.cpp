@@ -215,6 +215,10 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 
 				repo.addOrReplaceGsoapProxy(graphResource.second.data, ETP_NS::EtpHelpers::getDataObjectType(graphResource.second.resource.uri), ETP_NS::EtpHelpers::getDataspaceUri(graphResource.second.resource.uri));
 			}
+
+			for (std::string warning : repo.getWarnings()) {
+				std::cerr << warning << std::endl;
+			}
 		}
 		else if (commandTokens[0] == "GetXYZPoints") {
 			if (commandTokens.size() == 1) {

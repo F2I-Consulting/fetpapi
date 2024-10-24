@@ -61,8 +61,8 @@ jobs:
           cd build
           cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi2_10_1_0-cpp-vs2019-x64-staticfHdf1143-staticZlib13 -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
           cmake --build . --config Release -j2
-  ubuntu-20:
-    runs-on: ubuntu-20.04
+  ubuntu-22:
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - name: APT install
@@ -88,8 +88,8 @@ jobs:
           cd build
           cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE ${{ github.workspace }}
           cmake --build . --config Release -j2
-  ubuntu-20-java11:
-    runs-on: ubuntu-20.04
+  ubuntu-22-java11:
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -119,18 +119,18 @@ jobs:
           cd build
           cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }}
           cmake --build . --config Release -j2
-  ubuntu-20-java11-with-fesapi:
-    runs-on: ubuntu-20.04
+  ubuntu-22-java11-with-fesapi:
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false  # 'false' means Don't stop matrix workflows even if some matrix failed.
       matrix:
         include: [
-          { xcc_name: 'gcc 9',      xcc_pkg: gcc-9,       cc: gcc-9,      cxx: g++-9 },
           { xcc_name: 'gcc 10',     xcc_pkg: gcc-10,      cc: gcc-10,     cxx: g++-10 },
-          { xcc_name: 'clang 9',    xcc_pkg: clang-9,     cc: clang-9,    cxx: clang++-9 },
-          { xcc_name: 'clang 10',   xcc_pkg: clang-10,    cc: clang-10,   cxx: clang++-10 },
-          { xcc_name: 'clang 11',   xcc_pkg: clang-11,    cc: clang-11,   cxx: clang++-11 },
-          # { xcc_name: 'clang 12',   xcc_pkg: clang-12,    cc: clang,   cxx: clang++ },
+          { xcc_name: 'gcc 11',     xcc_pkg: gcc-11,      cc: gcc-11,     cxx: g++-11 },
+          { xcc_name: 'gcc 12',     xcc_pkg: gcc-12,      cc: gcc-12,     cxx: g++-12 },
+          { xcc_name: 'clang 13',   xcc_pkg: clang-13,    cc: clang-13,   cxx: clang++-13 },
+          { xcc_name: 'clang 14',   xcc_pkg: clang-14,    cc: clang-14,   cxx: clang++-14 },
+          { xcc_name: 'clang 15',   xcc_pkg: clang-15,    cc: clang-15,   cxx: clang++-15 },
         ]
     env:
       XCC: $${{ matrix.xcc_name }}                        # Set environment variables
