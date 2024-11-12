@@ -52,14 +52,14 @@ jobs:
           cmake --install .
       - name: FESAPI install
         run: |
-          (New-Object System.Net.WebClient).DownloadFile("https://github.com/F2I-Consulting/fesapi/releases/download/v2.10.1.0/fesapi2_10_1_0-cpp-vs2019-x64-staticfHdf1143-staticZlib13.zip", "${{ runner.temp }}\fesapi.zip")
+          (New-Object System.Net.WebClient).DownloadFile("https://github.com/F2I-Consulting/fesapi/releases/download/v2.11.0.0/fesapi2_11_0_0-cpp-vs2019-x64-staticfHdf1145-staticZlib131.zip", "${{ runner.temp }}\fesapi.zip")
           7z x ${{ runner.temp }}\fesapi.zip -o${{ runner.temp }}
       - name: CMake build and install
         run: |
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi2_10_1_0-cpp-vs2019-x64-staticfHdf1143-staticZlib13 -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
+          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi2_11_0_0-cpp-vs2019-x64-staticfHdf1145-staticZlib131 -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
           cmake --build . --config Release -j2
   ubuntu-22:
     runs-on: ubuntu-22.04
@@ -148,7 +148,7 @@ jobs:
           sudo apt install -y ${{ matrix.xcc_pkg }} libhdf5-dev libminizip-dev libboost-all-dev
       - name: FESAPI install
         run: |
-          git clone --branch v2.10.1.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
+          git clone --branch v2.11.0.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
           cd ${{ runner.temp }}
           mkdir fesapi-build
           cd fesapi-build
@@ -172,14 +172,11 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.10.1.0.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-1.11.3-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.11.0.0.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
           cmake --build . --config Release -j2
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
+  build_wheels_linux:
+    name: Build wheels on ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Stub `setup.py` check
@@ -222,11 +219,11 @@ jobs:
             cmake3 --build . -j2 --config Release &&
             cmake3 --install . &&
             cd / &&
-            wget https://github.com/F2I-Consulting/fesapi/archive/refs/tags/v2.10.1.0.zip &&
-            unzip v2.10.1.0.zip &&
+            wget https://github.com/F2I-Consulting/fesapi/archive/refs/tags/v2.11.0.0.zip &&
+            unzip v2.11.0.0.zip &&
             mkdir fesapi-build &&
             cd fesapi-build &&
-            cmake3 -DCMAKE_BUILD_TYPE=Release -DBoost_ROOT=/boost-install -DHDF5_ROOT=/hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fesapi-install /fesapi-2.10.1.0 &&
+            cmake3 -DCMAKE_BUILD_TYPE=Release -DBoost_ROOT=/boost-install -DHDF5_ROOT=/hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fesapi-install /fesapi-2.11.0.0 &&
             cmake3 --build . -j2 --config Release &&
             cmake3 --install . &&
             cd / &&
@@ -243,5 +240,75 @@ jobs:
           output-dir: wheelhouse
       - uses: actions/upload-artifact@v4
         with:
-          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          name: cibw-wheels-ubuntu-latest
+          path: ./wheelhouse/*.whl
+  build_wheels_mac:
+    name: Build wheels on macos-14
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Stub `setup.py` check
+        # It will be generated during CMake run
+        # https://github.com/pypa/cibuildwheel/issues/1139
+        run: touch python/setup.py
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.19.2
+        env:
+          CIBW_BUILD: cp38-macosx_* cp39-macosx_* cp310-macosx_* cp311-macosx_* cp312-macosx_* cp313-macosx_*
+          CIBW_ARCHS: auto64
+          CIBW_BEFORE_ALL: >
+            brew install boost swig &&
+            cd ${{ github.workspace }}/.. &&
+            wget https://github.com/openssl/openssl/releases/download/openssl-3.4.0/openssl-3.4.0.tar.gz &&
+            tar xf openssl-3.4.0.tar.gz &&
+            cd openssl-3.4.0 &&
+            ./Configure --prefix=${{ github.workspace }}/../openssl-install --openssldir=${{ github.workspace }}/../openssl-install &&
+            make &&
+            make install &&
+            git clone https://github.com/F2I-Consulting/Minizip.git ${{ github.workspace }}/../minizip &&
+            mkdir ${{ github.workspace }}/../minizip-build &&
+            cd ${{ github.workspace }}/../minizip-build &&
+            cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/../minizip-install ${{ github.workspace }}/../minizip &&
+            cmake --build . -j2 --config Release &&
+            cmake --install . &&
+            cd ${{ github.workspace }}/.. &&
+            wget https://archive.apache.org/dist/avro/avro-1.11.3/cpp/avro-cpp-1.11.3.tar.gz &&
+            tar xf avro-cpp-1.11.3.tar.gz &&
+            sed -i '' 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' avro-cpp-1.11.3/CMakeLists.txt &&
+            sed -i '' 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.11.3/CMakeLists.txt &&
+            mkdir avro-build &&
+            cd avro-build &&
+            cmake -Wno-dev -Wno-deprecated -DBoost_ROOT=/boost-install -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/../avro-install ${{ github.workspace }}/../avro-cpp-1.11.3 &&
+            cmake --build . -j2 --target avrocpp_s --config Release &&
+            cmake --install . &&
+            cd ${{ github.workspace }}/.. &&
+            wget https://github.com/HDFGroup/hdf5/releases/download/hdf5_1.14.5/hdf5-1.14.5.tar.gz &&
+            tar xf hdf5-1.14.5.tar.gz &&
+            mkdir hdf5-build &&
+            cd hdf5-build &&
+            cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS:BOOL=OFF -DBUILD_TESTING:BOOL=OFF -DHDF5_BUILD_TOOLS:BOOL=OFF -DHDF5_BUILD_EXAMPLES:BOOL=OFF -DHDF5_BUILD_CPP_LIB:BOOL=OFF -DHDF5_BUILD_HL_LIB:BOOL=OFF -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/../hdf5-install ${{ github.workspace }}/../hdf5-1.14.5 &&
+            cmake --build . -j2 --config Release &&
+            cmake --install . &&
+            cd ${{ github.workspace }}/.. &&
+            wget https://github.com/F2I-Consulting/fesapi/archive/refs/tags/v2.11.0.0.zip &&
+            unzip v2.11.0.0.zip &&
+            mkdir fesapi-build &&
+            cd fesapi-build &&
+            cmake -DCMAKE_BUILD_TYPE=Release -DMINIZIP_ROOT=${{ github.workspace }}/../minizip-install -DHDF5_ROOT=${{ github.workspace }}/../hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/../fesapi-install ${{ github.workspace }}/../fesapi-2.11.0.0 &&
+            cmake --build . -j2 --config Release &&
+            cmake --install . &&
+            mkdir ${{ github.workspace }}/../build &&
+            cd ${{ github.workspace }}/../build &&
+            cmake -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{ github.workspace }}/../openssl-install -DAVRO_ROOT=${{ github.workspace }}/../avro-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ github.workspace }}/../fesapi-install -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/../fetpapi-install ${{ github.workspace }} &&
+            cmake --build . -j2 --config Release &&
+            cmake --install .
+          # See https://cibuildwheel.pypa.io/en/stable/faq/#macos-passing-dyld_library_path-to-delocate
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
+            DYLD_LIBRARY_PATH=${{ github.workspace }}/../fesapi-install/lib:${{ github.workspace }}/../fetpapi-install/lib delocate-wheel --require-archs {delocate_archs} -w {dest_dir} {wheel}
+        with:
+          package-dir: ./python
+          output-dir: wheelhouse
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-macos-14
           path: ./wheelhouse/*.whl
