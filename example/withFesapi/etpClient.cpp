@@ -440,15 +440,15 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 			else if (commandTokens[0] == "List") {
 				std::cout << "*** START LISTING ***" << std::endl;
 				for (const auto& entryPair : repo.getDataObjects()) {
-					for (const auto* obj : entryPair.second) {
+					for (std::unique_ptr<COMMON_NS::AbstractObject> const& obj : entryPair.second) {
 						if (!obj->isPartial()) {
 							std::cout << "******************" << entryPair.first << " : " << obj->getTitle() << "******************" << std::endl;
 							std::cout << "*** SOURCE REL ***" << std::endl;
-							for (auto srcObj : obj->getRepository()->getSourceObjects(obj)) {
+							for (auto srcObj : obj->getRepository()->getSourceObjects(obj.get())) {
 								std::cout << srcObj->getUuid() << " : " << srcObj->getXmlTag() << std::endl;
 							}
 							std::cout << "*** TARGET REL ***" << std::endl;
-							for (auto targetObj : obj->getRepository()->getTargetObjects(obj)) {
+							for (auto targetObj : obj->getRepository()->getTargetObjects(obj.get())) {
 								std::cout << targetObj->getUuid() << " : " << targetObj->getXmlTag() << std::endl;
 							}
 							std::cout << std::endl;

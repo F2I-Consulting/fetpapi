@@ -55,11 +55,11 @@ if (WITH_FESAPI)
 	set (FESAPI_LIBRARY_RELEASE_WLE ",'${FESAPI_LIBRARY_RELEASE_WLE}'")
 endif ()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-	set (EXTRA_COMPILE_ARGS "extra_compile_args=['/DSWIG_TYPE_TABLE=FESTAPI']")
+	set (EXTRA_COMPILE_ARGS "extra-compile-args=['/DSWIG_TYPE_TABLE=FESTAPI']")
 else ()
-	set (EXTRA_COMPILE_ARGS "extra_compile_args=['-DSWIG_TYPE_TABLE=FESTAPI', '-std=c++11']")
+	set (EXTRA_COMPILE_ARGS "extra-compile-args=['-DSWIG_TYPE_TABLE=FESTAPI', '-std=c++11']")
 endif()
-configure_file(${CMAKE_SOURCE_DIR}/cmake/setup_etp.py.in ${CMAKE_SOURCE_DIR}/python/setup.py) # Overwrite if different
+configure_file(${CMAKE_SOURCE_DIR}/cmake/pyproject.toml.in ${CMAKE_SOURCE_DIR}/python/pyproject.toml) # Overwrite if different
 
 # SWIG execution
 message("Generating SWIG Python files...")

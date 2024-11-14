@@ -1,3 +1,11 @@
-Enable CMake boolean variable SWIG_PYTHON_BUILTIN if you want more performance : read [SWIG documentation](http://swig.org/Doc4.0/SWIGDocumentation.html#Python_nn28) for more information about this "builtin" parameter. The main drawback of using such a parameter is that it will be harder/impossible for your Python IDE to enable autocompletion for your FETPAPI python extension. The recommendation is to use SWIG_PYTHON_BUILTIN only in production.
+**FETPAPI** is an API for Energistics Transfer Protocol (aka ETP™)
+ETP is the default standard to interact with the OSDU RDDMS.
 
-Please disable the SWIG_LINKED_TO_RELEASE cmake variable if you build FETPAPI in Debug mode.
+### Examples
+
+A Python script and a Jupyter Notebook are available [here](https://github.com/F2I-Consulting/fetpapi/tree/main/python/example).
+
+### Credits
+FETPAPI Product incorporates ETP™ technology/standards provided by the Energistics Consortium, Inc.
+
+ETP is trademark or registered trademark of Energistics Consortium, Inc.

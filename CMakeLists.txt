@@ -350,6 +350,6 @@ if (WITH_PYTHON_WRAPPING)
 			RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/python/fetpapi/
 		)
 	ENDIF (WIN32)
-	install(CODE "execute_process(COMMAND	${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/python/setup.py bdist_wheel
+	install(CODE "execute_process(COMMAND	\"${Python3_EXECUTABLE}\" -m build --wheel
 											WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/python)")
 endif (WITH_PYTHON_WRAPPING)
