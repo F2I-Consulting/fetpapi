@@ -1,4 +1,4 @@
-**FETPAPI** is an API for Energistics Transfer Protocol (aka ETP™)
+**FETPAPI** is a library for using the Energistics Transfer Protocol (aka ETP™)
 ETP is the default standard to interact with the OSDU RDDMS.
 
 ### Examples

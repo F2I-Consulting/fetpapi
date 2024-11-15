@@ -11,7 +11,7 @@ authors     = [
 maintainers = [
     {name = "F2I-CONSULTING"},
 ]
-description = "An API for the Energistics Transfer Protocol"
+description = "A library for using the Energistics Transfer Protocol"
 readme      = "README.md"
 classifiers=[
     'Development Status :: 5 - Production/Stable',
@@ -19,6 +19,7 @@ classifiers=[
     'License :: OSI Approved :: Apache Software License',
     'Operating System :: Microsoft :: Windows',
     'Operating System :: POSIX :: Linux',
+    'Operating System :: MacOS',
     'Natural Language :: English',
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.8',
