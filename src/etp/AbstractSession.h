@@ -166,9 +166,14 @@ namespace ETP_NS
 		template<typename T> void sendAndBlock(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
 			int64_t msgId = send(mb, correlationId, messageFlags);
+			// The correlationId of the first message MUST be set to 0 and the correlationId of all successive
+			// messages in the same multipart request or notification MUST be set to the messageId of the first
+			// message of the multipart request or notification.
+			// If the request message is itself multipart, the correlationId of each message of the multipart
+			// response MUST be set to the messageId of the FIRST message in the multipart request.
 
 			auto t_start = std::chrono::high_resolution_clock::now();
-			while (isMessageStillProcessing(msgId)) {
+			while (isMessageStillProcessing(correlationId == 0 ? msgId : correlationId)) {
 				if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > _timeOut) {
 					throw std::runtime_error("Time out waiting for a response of message id " + std::to_string(msgId));
 				}

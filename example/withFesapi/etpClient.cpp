@@ -487,7 +487,7 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				auto allUuids = repo.getUuids();
 				for (size_t i = 0; i < allUuids.size(); ++i) {
 					auto* dataObj = repo.getDataObjectByUuid(allUuids[i]);
-					dataObj->setUriSource("eml:///dataspace('pwls/3.0')");
+					dataObj->setUriSource("eml:///dataspace('pv/test')");
 					putDataObjectsMap[std::to_string(i)] = ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(dataObj);
 				}
 				auto results = session->putDataObjects(putDataObjectsMap);
@@ -595,7 +595,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	clientSession->setTimeOut(1500000);
+	clientSession->setTimeOut(60000);
 	askUser(clientSession, repo);
 
 #ifdef _WIN32

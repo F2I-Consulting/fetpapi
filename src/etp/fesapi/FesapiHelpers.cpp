@@ -69,7 +69,7 @@ Energistics::Etp::v12::Datatypes::Object::DataObject ETP_NS::FesapiHelpers::buil
 		result.format = "xml";
 		result.data = obj->serializeIntoString();
 	}
-	result.resource = ETP_NS::FesapiHelpers::buildEtpResourceFromEnergisticsObject(obj);
+	result.resource = ETP_NS::FesapiHelpers::buildEtpResourceFromEnergisticsObject(obj, false);
 
 	return result;
 }
