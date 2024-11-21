@@ -10,8 +10,8 @@ def start_etp_server(client_session):
     client_session.run()
     print('Client session do no more run...')
 
-etp_server_url = "wss://..."
-authorization = "Bearer ..."
+etp_server_url = "ws://etp.f2i-consulting.com:9002/"
+authorization = "Basic Zm9vOmJhcg=="
 initialization_params = fetpapi.InitializationParameters(str(uuid.uuid4()), etp_server_url)
 # OSDU RDDMS requires some additional header fields compared to ETP server
 additionalHeaderField = fetpapi.MapStringString()
