@@ -56,7 +56,7 @@ issues = "https://github.com/F2I-Consulting/fetpapi/issues"
 packages=['fetpapi']
 package-dir={"fetpapi" = "fetpapi"}
 ext-modules = [
-    {name='_fetpapi', sources=['swigGeneratedPythonWrapper.cpp'], include-dirs=['${Boost_INCLUDE_DIR}','${AVRO_INCLUDE_DIR}'${FESAPI_INCLUDE_DIR_FOR_SETUP_PY}], library-dirs=['${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}'${AVRO_LIBRARY_DIR_RELEASE}${Boost_LIBRARY_DIR_RELEASE}${FESAPI_LIBRARY_DIR_RELEASE}], libraries=['${ASSEMBLY_NAME}'${AVRO_LIBRARY_RELEASE_WLE}${Boost_LIBRARY_RELEASE_WLE}${FESAPI_LIBRARY_RELEASE_WLE}], ${EXTRA_COMPILE_ARGS}}
+    {name='fetpapi._fetpapi', sources=['swigGeneratedPythonWrapper.cpp'], include-dirs=['${Boost_INCLUDE_DIR}','${AVRO_INCLUDE_DIR}'${FESAPI_INCLUDE_DIR_FOR_SETUP_PY}], library-dirs=['${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}'${AVRO_LIBRARY_DIR_RELEASE}${Boost_LIBRARY_DIR_RELEASE}${FESAPI_LIBRARY_DIR_RELEASE}], libraries=['${ASSEMBLY_NAME}'${AVRO_LIBRARY_RELEASE_WLE}${Boost_LIBRARY_RELEASE_WLE}${FESAPI_LIBRARY_RELEASE_WLE}], ${EXTRA_COMPILE_ARGS}}
 ]
 
 [tool.setuptools.package-data]
