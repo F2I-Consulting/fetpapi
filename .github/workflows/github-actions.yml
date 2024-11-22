@@ -152,7 +152,7 @@ jobs:
           cd ${{ runner.temp }}
           mkdir fesapi-build
           cd fesapi-build
-          cmake -DMINIZIP_INCLUDE_DIR=/usr/include/minizip -DMINIZIP_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libminizip.so.1.0.0 -DCMAKE_BUILD_TYPE=Release -DWITH_JAVA_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fesapi-install -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} ${{ runner.temp }}/fesapi-src
+          cmake -DCMAKE_CXX_STANDARD=17 -DMINIZIP_INCLUDE_DIR=/usr/include/minizip -DMINIZIP_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libminizip.so.1.0.0 -DCMAKE_BUILD_TYPE=Release -DWITH_JAVA_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fesapi-install -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} ${{ runner.temp }}/fesapi-src
           cmake --build . -j2
           cmake --install .
       - name: AVRO INSTALL
@@ -223,7 +223,7 @@ jobs:
             unzip v2.11.0.0.zip &&
             mkdir fesapi-build &&
             cd fesapi-build &&
-            cmake3 -DCMAKE_BUILD_TYPE=Release -DBoost_ROOT=/boost-install -DHDF5_ROOT=/hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fesapi-install /fesapi-2.11.0.0 &&
+            cmake3 -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=17 -DBoost_ROOT=/boost-install -DHDF5_ROOT=/hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fesapi-install /fesapi-2.11.0.0 &&
             cmake3 --build . -j2 --config Release &&
             cmake3 --install . &&
             cd / &&
@@ -300,7 +300,7 @@ jobs:
             cmake --install . &&
             mkdir ${{ github.workspace }}/../build &&
             cd ${{ github.workspace }}/../build &&
-            cmake -DCMAKE_BUILD_TYPE=Release -DOPENSSL_ROOT_DIR=${{ github.workspace }}/../openssl-install -DAVRO_ROOT=${{ github.workspace }}/../avro-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ github.workspace }}/../fesapi-install -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/../fetpapi-install ${{ github.workspace }} &&
+            cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=17 -DOPENSSL_ROOT_DIR=${{ github.workspace }}/../openssl-install -DAVRO_ROOT=${{ github.workspace }}/../avro-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ github.workspace }}/../fesapi-install -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/../fetpapi-install ${{ github.workspace }} &&
             cmake --build . -j2 --config Release &&
             cmake --install .
           # See https://cibuildwheel.pypa.io/en/stable/faq/#macos-passing-dyld_library_path-to-delocate

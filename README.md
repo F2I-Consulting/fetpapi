@@ -6,7 +6,7 @@
 	 - fetpapi (Git clone this repository into this folder "fetpapi". You should then have a path fetpapiEnv/fetpapi/src)
 	 - dependencies 
   - The following compilers are known to work (used in CI)
-    - gcc from version 4.8
+    - gcc from version 8
 	- visual studio from version 2019
 # Prepare the dependencies
 Download (build and install if necessary) third party libraries:

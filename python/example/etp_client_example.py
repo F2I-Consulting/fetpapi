@@ -96,5 +96,6 @@ if repo.getHorizonGrid2dRepresentationCount() > 0:
 else:
     print("This dataspace has no 2d Grid")
 
-client_session.close();
+repo.clear()
+client_session.close()
 print("FINISHED")
