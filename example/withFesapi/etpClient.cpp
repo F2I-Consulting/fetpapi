@@ -55,7 +55,8 @@ void printHelp()
 	std::cout << "\tCopyDataspace sourceDataspace targetDataspace" << std::endl << "\t\tCopy by reference a dataspace into another one" << std::endl << std::endl;
 	std::cout << "\tGetResources URI scope(default self) depth(default 1) countObjects(true or false, default is true) includeSecondaryTargets(true or false, default is false) includeSecondarySources(true or false, default is false) dataTypeFilter,dataTypeFilter,...(default noFilter)" << std::endl << std::endl;
 	std::cout << "\tGetDataObjects dataObjectURI,dataObjectURI,..." << std::endl << "\t\tGet the objects from an ETP store and store them into the in memory Dataobject repository (only create partial TARGET relationships, not any SOURCE relationships)" << std::endl << std::endl;
-	std::cout << "\tGetXYZPoints URI" << std::endl << "\t\tGet the XYZ points of a rep from store and print some of them." << std::endl << std::endl;
+	std::cout << "\tGetXYZPoints URI sourcesDepth(default 0)" << std::endl << "\t\tGet the XYZ points of a rep from store and print some of them." << std::endl << std::endl;
+	std::cout << "\tCopyDataObjectsByValue URI" << std::endl << "\t\tCopy a dataobject by value on server side." << std::endl << std::endl;
 	std::cout << "\tPutDataObject UUID" << std::endl << "\t\tPut the XML part of a dataobject which is on the client side (use \"Load\" command to load some dataobjects on client side) to the store" << std::endl << std::endl;
 	std::cout << "\tPutAllDataObjects" << std::endl << "\t\tPut the XML part of all dataobjects which is on the client side (use \"Load\" command to load some dataobjects on client side) to the store" << std::endl << std::endl;
 	std::cout << "\tGetDataArrayMetadata epcExternalPartURI datasetPathInEpcExternalPart" << std::endl << "\t\tGet the metadata of a dataset included in an EpcExternalPart over ETP." << std::endl << std::endl;
@@ -245,29 +246,15 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				std::cout << "XYZ Point Index " << xyzPointIndex << " : " << xyzPoints[xyzPointIndex * 3] << "," << xyzPoints[xyzPointIndex * 3 + 1] << "," << xyzPoints[xyzPointIndex * 3 + 2] << std::endl;
 			}
 		}
-		else if (commandTokens[0] == "GetXYZPoints") {
+		else if (commandTokens[0] == "CopyDataObjectsByValue") {
 			if (commandTokens.size() == 1) {
-				std::cerr << "Please provide some ETP URIs of a RESQML representation" << std::endl;
+				std::cerr << "Please provide some ETP URIs of an Energistics dataobject" << std::endl;
 				continue;
 			}
-			/* This works in a blocking way i.e. getXyzPointCountOfPatch will return only when the store would have answered back.
-			HDF proxy factory and custom HDF proxy are used for that. See main.cpp for setting the custom HDF proxy factory.
-			You should also look at MyOwnStoreProtocolHandlers::on_GetDataObjectsResponse which allows to set the session information to the HDF proxy.
-			We could have hard set those information thanks to HDF proxy factory.
 
-			If you would want non blocking approach, please see GetDataArrays which require more work to fill in the arguments.
-			*/
-			std::string uuid = commandTokens[1].substr(commandTokens[1].rfind("(") + 1, 36);
-			auto* rep = repo.getDataObjectByUuid<RESQML2_NS::AbstractRepresentation>(uuid);
-			if (rep == nullptr) {
-				std::cerr << " The UUID " << uuid << " from URI " << commandTokens[1] << " does not correspond to a representation which is on client side. Please get first this dataobject from the store before to call GetXYZPoints on it." << std::endl;
-				continue;
-			}
-			auto xyzPointCount = rep->getXyzPointCountOfPatch(0);
-			std::unique_ptr<double[]> xyzPoints(new double[xyzPointCount * 3]);
-			rep->getXyzPointsOfPatch(0, xyzPoints.get());
-			for (auto xyzPointIndex = 0; xyzPointIndex < xyzPointCount && xyzPointIndex < 20; ++xyzPointIndex) {
-				std::cout << "XYZ Point Index " << xyzPointIndex << " : " << xyzPoints[xyzPointIndex * 3] << "," << xyzPoints[xyzPointIndex * 3 + 1] << "," << xyzPoints[xyzPointIndex * 3 + 2] << std::endl;
+			auto copiedUris = session->copyDataObjectsByValue(commandTokens[1], std::stoi(commandTokens.size() > 2 ? commandTokens[2] : 0));
+			for (auto& copiedUri : copiedUris) {
+				std::cout << "copied into " << copiedUri << std::endl;
 			}
 		}
 		else if (commandTokens[0] == "GetDataspaceInfo") {

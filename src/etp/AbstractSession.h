@@ -40,6 +40,7 @@ under the License.
 #include "ProtocolHandlers/DataArrayHandlers.h"
 #include "ProtocolHandlers/TransactionHandlers.h"
 #include "ProtocolHandlers/DataspaceHandlers.h"
+#include "ProtocolHandlers/StoreOSDUHandlers.h"
 #include "ProtocolHandlers/DataspaceOSDUHandlers.h"
 
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
@@ -103,6 +104,13 @@ namespace ETP_NS
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setStoreProtocolHandlers(std::shared_ptr<StoreHandlers> storeHandlers) {
 			setProtocolHandlers(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Store), storeHandlers);
+		}
+
+		/**
+		 * Set the Store protocol handlers
+		 */
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setStoreOSDUProtocolHandlers(std::shared_ptr<StoreOSDUHandlers> storeOSDUHandlers) {
+			setProtocolHandlers(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreOSDU), storeOSDUHandlers);
 		}
 
 		/**
@@ -480,6 +488,22 @@ namespace ETP_NS
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> deleteDataObjects(const std::map<std::string, std::string>& uris);
 
+		/*********************
+		***** STORE OSDU *****
+		**********************/
+
+		/**
+		* A customer sends to a store to copy by value a dataobject with potentially some of its sources based on their datatypes.
+		* This function should be used with caution if Store OSDU Handlers have been overidden.
+		* It actually sends a message and block the current thread untill a response has been received from the store.
+		*
+		* @param uri			The URI of the dataobject to be copied.
+		* @param sourcesDepth	The number of level if sources of the dataobject to be copied as well.
+		* @param sourcesDepth	The number of level if sources of the dataobject to be copied as well.
+		* @param return	The received dataobjects in a map where the key makes the link between the asked uris and the received dataobjects.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> copyDataObjectsByValue(const std::string& uri, int32_t sourcesDepth = 0, const std::vector<std::string>& dataObjectTypes = {});
+
 		/****************
 		** TRANSACTION **
 		****************/
@@ -664,6 +688,13 @@ namespace ETP_NS
 			return it == protocolHandlers.end()
 				? nullptr
 				: std::dynamic_pointer_cast<DataspaceHandlers>(it->second);
+		}
+
+		std::shared_ptr<ETP_NS::StoreOSDUHandlers> getStoreOSDUProtocolHandlers() {
+			auto it = protocolHandlers.find(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreOSDU));
+			return it == protocolHandlers.end()
+				? nullptr
+				: std::dynamic_pointer_cast<StoreOSDUHandlers>(it->second);
 		}
 
 		std::shared_ptr<ETP_NS::DataspaceOSDUHandlers> getDataspaceOSDUProtocolHandlers() {

@@ -162,6 +162,7 @@ typedef long long 				time_t;
 	%nspace ETP_NS::CoreHandlers;
 	%nspace ETP_NS::DiscoveryHandlers;
 	%nspace ETP_NS::StoreHandlers;
+	%nspace ETP_NS::StoreOSDUHandlers;
 	%nspace ETP_NS::StoreNotificationHandlers;
 	%nspace ETP_NS::DataArrayHandlers;
 	%nspace ETP_NS::TransactionHandlers;
@@ -238,6 +239,9 @@ typedef long long 				time_t;
 	%nspace Energistics::Etp::v12::Protocol::Store::DeleteDataObjects;
 	%nspace Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse;
 	%nspace Energistics::Etp::v12::Protocol::Store::Chunk;
+	
+	%nspace Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue;
+	%nspace Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse;
 	
 	%nspace Energistics::Etp::v12::Protocol::DataArray::GetDataArrays;
 	%nspace Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse;
@@ -834,6 +838,30 @@ namespace Energistics {
 	}
 }
 
+/**************** STORE OSDU PROTOCOL  *****************/
+
+namespace Energistics {
+	namespace Etp {	
+		namespace v12 {		
+			namespace Protocol {			
+				namespace StoreOSDU {				
+					struct CopyDataObjectsByValue{					
+						std::string uri;
+						int32_t sourcesDepth = 0;
+						std::vector<std::string> dataObjectTypes;
+						static constexpr int messageTypeId = 1;
+					};
+					
+					struct CopyDataObjectsByValueResponse {
+						std::vector<std::string> copiedDataObjects;
+						static constexpr int messageTypeId = 2;
+					};
+				}
+			}
+		}
+	}
+}
+
 /**************** DATA ARRAY PROTOCOL  *****************/
 
 namespace Energistics {
@@ -1127,6 +1155,7 @@ namespace Energistics {
 %shared_ptr(ETP_NS::CoreHandlers)
 %shared_ptr(ETP_NS::DiscoveryHandlers)
 %shared_ptr(ETP_NS::StoreHandlers)
+%shared_ptr(ETP_NS::StoreOSDUHandlers)
 %shared_ptr(ETP_NS::StoreNotificationHandlers)
 %shared_ptr(ETP_NS::DataArrayHandlers)
 %shared_ptr(ETP_NS::TransactionHandlers)
@@ -1138,6 +1167,7 @@ namespace Energistics {
 %feature("director") ETP_NS::CoreHandlers;
 %feature("director") ETP_NS::DiscoveryHandlers;
 %feature("director") ETP_NS::StoreHandlers;
+%feature("director") ETP_NS::StoreOSDUHandlers;
 %feature("director") ETP_NS::StoreNotificationHandlers;
 %feature("director") ETP_NS::DataArrayHandlers;
 %feature("director") ETP_NS::TransactionHandlers;
@@ -1178,6 +1208,7 @@ namespace Energistics {
 		%}
 	}
 	
+	// Store
 	%fragment("store_handler_reference_init", "init") {
 	  store_handler_reference();
 	}
@@ -1192,6 +1223,24 @@ namespace Energistics {
 	%extend ETP_NS::AbstractSession {
 		%typemap(ret, fragment="store_handler_reference_function") void setStoreProtocolHandlers(std::shared_ptr<StoreHandlers> storeHandlers) %{
 		  PyObject_SetAttr($self, store_handler_reference(), args);
+		%}
+	}
+	
+	// Store OSDU
+	%fragment("store_osdu_handler_reference_init", "init") {
+	  store_handler_reference();
+	}
+
+	%fragment("store_osdu_handler_reference_function", "header", fragment="store_osdu_handler_reference_init") {
+		static PyObject *store_osdu_handler_reference() {
+		  static PyObject *store_osdu_handler_reference_string = SWIG_Python_str_FromChar("__store_osdu_handler_reference");
+		  return store_osdu_handler_reference_string;
+		}
+	}
+
+	%extend ETP_NS::AbstractSession {
+		%typemap(ret, fragment="store_osdu_handler_reference_function") void setStoreOSDUProtocolHandlers(std::shared_ptr<StoreOSDUHandlers> storeOSDUHandlers) %{
+		  PyObject_SetAttr($self, store_osdu_handler_reference(), args);
 		%}
 	}
 	
@@ -1288,6 +1337,7 @@ namespace Energistics {
   private CoreHandlers coreHandlersReference = null;
   private DiscoveryHandlers discoveryHandlersReference = null;
   private StoreHandlers storeHandlersReference = null;
+  private StoreOSDUHandlers storeOSDUHandlersReference = null;
   private StoreNotificationHandlers storeNotificationHandlersReference = null;
   private DataArrayHandlers dataArrayHandlersReference = null;
   private TransactionHandlers transactionHandlersReference = null;
@@ -1306,6 +1356,10 @@ namespace Energistics {
 %typemap(csin,
          post="      storeHandlersReference = $csinput;"
          ) std::shared_ptr<ETP_NS::StoreHandlers> storeHandlers "StoreHandlers.getCPtr($csinput)"
+
+%typemap(csin,
+         post="      storeOSDUHandlersReference = $csinput;"
+         ) std::shared_ptr<ETP_NS::StoreOSDUHandlers> storeOSDUHandlers "StoreOSDUHandlers.getCPtr($csinput)"
 
 %typemap(csin,
          post="      storeNotificationHandlersReference = $csinput;"
@@ -1333,6 +1387,7 @@ namespace Energistics {
   private CoreHandlers coreHandlersReference;
   private DiscoveryHandlers discoveryHandlersReference;
   private StoreHandlers storeHandlersReference;
+  private StoreOSDUHandlers storeOSDUHandlersReference;
   private StoreNotificationHandlers storeNotificationHandlersReference;
   private DataArrayHandlers dataArrayHandlersReference;
   private TransactionHandlers transactionHandlersReference;
@@ -1351,6 +1406,10 @@ namespace Energistics {
 %typemap(javain, 
          post="      storeHandlersReference = $javainput;"
          ) std::shared_ptr<ETP_NS::StoreHandlers> storeHandlers "StoreHandlers.getCPtr($javainput)"
+
+%typemap(javain, 
+         post="      storeOSDUHandlersReference = $javainput;"
+         ) std::shared_ptr<ETP_NS::StoreOSDUHandlers> storeOSDUHandlers "StoreOSDUHandlers.getCPtr($javainput)"
 
 %typemap(javain, 
          post="      storeNotificationHandlersReference = $javainput;"
@@ -1461,12 +1520,22 @@ namespace ETP_NS
 		StoreHandlers(AbstractSession* mySession);
 		virtual ~StoreHandlers();
 
-	    virtual void on_GetDataObjects(const Energistics::Etp::v12::Protocol::Store::GetDataObjects & msg, int64_t correlationId);
-	    virtual void on_GetDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse & msg, int64_t correlationId);
-	    virtual void on_PutDataObjects(const Energistics::Etp::v12::Protocol::Store::PutDataObjects & msg, int64_t correlationId);
-		virtual void on_PutDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse & msg, int64_t correlationId);
-	    virtual void on_DeleteDataObjects(const Energistics::Etp::v12::Protocol::Store::DeleteDataObjects & msg, int64_t correlationId);
-		virtual void on_DeleteDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse & msg, int64_t correlationId);
+	    virtual void on_GetDataObjects(const Energistics::Etp::v12::Protocol::Store::GetDataObjects& msg, int64_t correlationId);
+	    virtual void on_GetDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse& msg, int64_t correlationId);
+	    virtual void on_PutDataObjects(const Energistics::Etp::v12::Protocol::Store::PutDataObjects& msg, int64_t correlationId);
+		virtual void on_PutDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse& msg, int64_t correlationId);
+	    virtual void on_DeleteDataObjects(const Energistics::Etp::v12::Protocol::Store::DeleteDataObjects& msg, int64_t correlationId);
+		virtual void on_DeleteDataObjectsResponse(const Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse& msg, int64_t correlationId);
+	};
+	
+	class StoreOSDUHandlers : public ProtocolHandlers
+	{
+	public:
+		StoreOSDUHandlers(AbstractSession* mySession);
+		virtual ~StoreOSDUHandlers();
+		
+		virtual void on_CopyDataObjectsByValue(const Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue& msg, int64_t correlationId);
+		virtual void on_CopyDataObjectsByValueResponse(const Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse& msg, int64_t correlationId);
 	};
 	
 	class StoreNotificationHandlers : public ProtocolHandlers
@@ -1563,6 +1632,7 @@ namespace ETP_NS
 		void setCoreProtocolHandlers(std::shared_ptr<ETP_NS::CoreHandlers> coreHandlers);
 		void setDiscoveryProtocolHandlers(std::shared_ptr<DiscoveryHandlers> discoveryHandlers);
 		void setStoreProtocolHandlers(std::shared_ptr<StoreHandlers> storeHandlers);
+		void setStoreOSDUProtocolHandlers(std::shared_ptr<StoreOSDUHandlers> storeOSDUHandlers);
 		void setStoreNotificationProtocolHandlers(std::shared_ptr<ETP_NS::StoreNotificationHandlers> storeNotificationHandlers);
 		void setDataArrayProtocolHandlers(std::shared_ptr<DataArrayHandlers> dataArrayHandlers);
 		void setTransactionProtocolHandlers(std::shared_ptr<TransactionHandlers> transactionHandlers);
@@ -1603,6 +1673,9 @@ namespace ETP_NS
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::DeleteDataObjects>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::Chunk>;
+			
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue>;
+		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse>;
 		
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataArrays>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse>;
@@ -1683,6 +1756,9 @@ namespace ETP_NS
 		%template(send) send<Energistics::Etp::v12::Protocol::Store::DeleteDataObjects>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Store::Chunk>;
+			
+		%template(send) send<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue>;
+		%template(send) send<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse>;
 		
 		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::GetDataArrays>;
 		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse>;
@@ -1760,6 +1836,9 @@ namespace ETP_NS
 		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::DeleteDataObjects>;
 		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse>;
 		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::Chunk>;
+			
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue>;
+		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse>;
 		
 		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::GetDataArrays>;
 		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse>;

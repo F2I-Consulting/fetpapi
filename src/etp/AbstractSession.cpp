@@ -414,6 +414,27 @@ std::vector<std::string> AbstractSession::deleteDataObjects(const std::map<std::
 	return result;
 }
 
+/********************
+***** STORE OSDU ****
+*********************/
+
+std::vector<std::string> AbstractSession::copyDataObjectsByValue(const std::string& uri, int32_t sourcesDepth, const std::vector<std::string>& dataObjectTypes)
+{
+	std::shared_ptr<StoreOSDUHandlers> handlers = getStoreOSDUProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any store OSDU protocol handlers.");
+	}
+
+	Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue msg;
+	msg.uri = uri;
+	msg.sourcesDepth = sourcesDepth;
+	msg.dataObjectTypes = dataObjectTypes;
+	sendAndBlock(msg, 0, 0x02);
+	std::vector<std::string> result = handlers->getCopiedDataobjects();
+	handlers->clearCopiedDataobjects();
+	return result;
+}
+
 /****************
 ** TRANSACTION **
 ****************/
