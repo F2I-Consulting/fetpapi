@@ -53,6 +53,7 @@ target_compile_options(${PROJECT_NAME}	PRIVATE
 	$<$<CXX_COMPILER_ID:MSVC>:/bigobj>
 	$<$<CXX_COMPILER_ID:MSVC>:/MP>
 	$<$<CXX_COMPILER_ID:MSVC>:/W4>
+	$<$<CXX_COMPILER_ID:MSVC>:/utf-8> # Necessary for fmt library which AVRO depends on
 	$<$<CXX_COMPILER_ID:GNU>:-Wall>
 	$<$<CXX_COMPILER_ID:GNU>:-Wextra>
 	$<$<CXX_COMPILER_ID:GNU>:-Wcast-qual>
@@ -110,6 +111,12 @@ endif()
 if (WIN32 AND (Boost_VERSION_MAJOR EQUAL 1) AND (Boost_VERSION_MINOR LESS 74) AND (Boost_VERSION_MINOR GREATER 71))
 	message(WARNING "You may experience min/max issue with this boost version : See https://github.com/boostorg/beast/issues/1980")
 endif ()
+target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ALL_NO_LIB)
+if (DEFINED Boost_SYSTEM_LIBRARY)
+	target_link_libraries (${PROJECT_NAME} PRIVATE Boost::system)
+else ()
+	target_link_libraries (${PROJECT_NAME} PRIVATE Boost::boost)
+endif()
 
 # avro DEPENDENCY
 find_package(AVRO REQUIRED)
@@ -124,11 +131,7 @@ if (WITH_FESAPI)
 	endif (WITH_JAVA_WRAPPING)
 endif (WITH_FESAPI)
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ALL_NO_LIB)
 target_link_libraries (${PROJECT_NAME} PRIVATE AVRO::AVRO ${CMAKE_THREAD_LIBS_INIT})
-if (DEFINED Boost_SYSTEM_LIBRARY)
-	target_link_libraries (${PROJECT_NAME} PRIVATE ${Boost_SYSTEM_LIBRARY})
-endif()
 if (WIN32)
 	target_link_libraries (${PROJECT_NAME} PRIVATE bcrypt.lib)
 
@@ -210,7 +213,7 @@ endif (WITH_FESAPI)
 
 target_sources(${PROJECT_NAME} PRIVATE ${ALL_SOURCES_AND_HEADERS})
 
-target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${AVRO_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${AVRO_INCLUDE_DIR})
 if (WITH_ETP_SSL)
 	target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${OPENSSL_INCLUDE_DIR})
 endif ()
@@ -339,14 +342,11 @@ if (WITH_PYTHON_WRAPPING)
 			TARGETS ${PROJECT_NAME}
 			RUNTIME_DEPENDENCY_SET dep-set
 		)
-		cmake_path(GET SSL_EAY_RELEASE PARENT_PATH openSslLibPath)
-		cmake_path(GET openSslLibPath PARENT_PATH openSslPath)
-		cmake_path(APPEND openSslPath "bin" OUTPUT_VARIABLE openSslBinPath)
 		install(
 			RUNTIME_DEPENDENCY_SET dep-set
 			PRE_EXCLUDE_REGEXES "api-ms-.*" "ext-ms-.*" "[Ff]esapi[Cc]pp.*\\.dll"
 			POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
-			DIRECTORIES ${openSslBinPath}
+			DIRECTORIES ${CMAKE_BINARY_DIR}
 			RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/python/fetpapi/
 		)
 	ENDIF (WIN32)

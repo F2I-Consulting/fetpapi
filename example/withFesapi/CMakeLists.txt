@@ -28,6 +28,19 @@ target_include_directories (${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/src/)
 add_dependencies (${PROJECT_NAME} Fetpapi)
 target_link_libraries (${PROJECT_NAME} PRIVATE Fetpapi)
 
+
+target_compile_options(${PROJECT_NAME}	PRIVATE
+	$<$<CXX_COMPILER_ID:MSVC>:/utf-8> # Necessary for fmt library which AVRO depends on
+)
+
+# Boost DEPENDENCY
+target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ALL_NO_LIB)
+if (DEFINED Boost_SYSTEM_LIBRARY)
+	target_link_libraries (${PROJECT_NAME} PRIVATE Boost::system)
+else ()
+	target_link_libraries (${PROJECT_NAME} PRIVATE Boost::boost)
+endif()
+
 target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ALL_NO_LIB)
 target_link_libraries (${PROJECT_NAME} PRIVATE AVRO::AVRO ${CMAKE_THREAD_LIBS_INIT})
 if (DEFINED Boost_SYSTEM_LIBRARY)
@@ -42,7 +55,7 @@ if (WITH_ETP_SSL)
 endif ()
 target_link_libraries(${PROJECT_NAME} PRIVATE FESAPI::FESAPI)
 
-target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${AVRO_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${AVRO_INCLUDE_DIR})
 if (WITH_ETP_SSL)
 	target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${OPENSSL_INCLUDE_DIR})
 endif ()
