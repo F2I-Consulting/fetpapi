@@ -30,8 +30,6 @@ under the License.
 #include <boost/uuid/uuid_io.hpp>
 #include <boost/uuid/nil_generator.hpp>
 
-#include "../nsDefinitions.h"
-
 #include "EtpHelpers.h"
 #include "ProtocolHandlers/CoreHandlers.h"
 #include "ProtocolHandlers/DiscoveryHandlers.h"

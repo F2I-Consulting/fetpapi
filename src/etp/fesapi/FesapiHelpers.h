@@ -20,20 +20,7 @@ under the License.
 
 #include <fesapi/common/AbstractObject.h>
 
-#include "../../nsDefinitions.h"
-#include "../EtpMessages.h"
-
-#if defined(_WIN32) && !defined(FETPAPI_STATIC)
-	#ifndef FETPAPI_DLL_IMPORT_OR_EXPORT
-		#if defined(Fetpapi_EXPORTS)
-			#define FETPAPI_DLL_IMPORT_OR_EXPORT __declspec(dllexport)
-		#else
-			#define FETPAPI_DLL_IMPORT_OR_EXPORT __declspec(dllimport)
-		#endif
-	#endif
-#else
-	#define FETPAPI_DLL_IMPORT_OR_EXPORT
-#endif
+#include "../AbstractSession.h"
 
 namespace ETP_NS
 {
@@ -54,14 +41,14 @@ namespace ETP_NS
 		* @return			The ETP resource built from the Energistics object
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::Resource buildEtpResourceFromEnergisticsObject(
-			COMMON_NS::DataObjectRepository const* repo, const std::string& uuid, bool countRels = true);
+			const COMMON_NS::DataObjectRepository& repo, const std::string& uuid, bool countRels = true);
 
 		/**
 		* Build and return an ETP data object from an Energistics object.
 		* @param obj	The input Energistics obj
 		* @return		The ETP data object built from the Energistics object
 		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::DataObject buildEtpDataObjectFromEnergisticsObject(COMMON_NS::AbstractObject * obj, bool includeSerialization = true);
+		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::DataObject buildEtpDataObjectFromEnergisticsObject(COMMON_NS::AbstractObject* obj, bool includeSerialization = true);
 
 		/**
 		* Build and return an ETP data object from an Energistics object defined by an UUID in a DataObjectRepository.
@@ -70,6 +57,13 @@ namespace ETP_NS
 		* @return		The ETP data object built from the Energistics object
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::Object::DataObject buildEtpDataObjectFromEnergisticsObject(
-			COMMON_NS::DataObjectRepository const* repo, const std::string& uuid, bool includeSerialization = true);
+			const COMMON_NS::DataObjectRepository& repo, const std::string& uuid, bool includeSerialization = true);
+
+		/**
+		* Set the session of all HDF Proxies included in a DataObjectRepository.
+		* @param repo		The repository where the HDF Proxies to update are located
+		* @param session	The new session to attach to al HDF Proxies of repo
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setSessionOfHdfProxies(const COMMON_NS::DataObjectRepository& repo, AbstractSession* session);
 	}
 }

@@ -311,7 +311,6 @@ jobs:
             cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS:BOOL=OFF -DBUILD_TESTING:BOOL=OFF -DHDF5_BUILD_TOOLS:BOOL=OFF -DHDF5_BUILD_EXAMPLES:BOOL=OFF -DHDF5_BUILD_CPP_LIB:BOOL=OFF -DHDF5_BUILD_HL_LIB:BOOL=OFF -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/../hdf5-install ${{ github.workspace }}/../hdf5-1.14.5 &&
             cmake --build . -j2 --config Release &&
             cmake --install . &&
-            brew install swig &&
             cd ${{ github.workspace }}/.. &&
             wget --no-verbose https://github.com/F2I-Consulting/fesapi/archive/refs/tags/v2.12.1.0.zip &&
             unzip v2.12.1.0.zip &&
@@ -337,6 +336,7 @@ jobs:
             cmake -Wno-dev -Wno-deprecated -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_STANDARD_REQUIRED=ON -DCMAKE_CXX_EXTENSIONS=OFF -DBOOST_ROOT=${{ github.workspace }}/../boost-install -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/../avro-install ${{ github.workspace }}/../avro-cpp-1.11.3 &&
             cmake --build . -j2 --target avrocpp_s --config Release &&
             cmake --install . &&
+            brew install swig &&
             mkdir ${{ github.workspace }}/../build &&
             cd ${{ github.workspace }}/../build &&
             cmake -DCMAKE_BUILD_TYPE=Release -DBOOST_ROOT=${{ github.workspace }}/../boost-install -DOPENSSL_ROOT_DIR=${{ github.workspace }}/../openssl-install -DAVRO_ROOT=${{ github.workspace }}/../avro-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ github.workspace }}/../fesapi-install -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/../fetpapi-install ${{ github.workspace }} &&

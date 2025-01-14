@@ -2249,7 +2249,7 @@ namespace ETP_NS
 		* @return			The ETP resource built from the Energistics object
 		*/
 		Energistics::Etp::v12::Datatypes::Object::Resource buildEtpResourceFromEnergisticsObject(
-			COMMON_NS::DataObjectRepository const* repo, const std::string& uuid, bool countRels = true);
+			const COMMON_NS::DataObjectRepository& repo, const std::string& uuid, bool countRels = true);
 
 		/**
 		* Build and return an ETP data object from an Energistics object.
@@ -2265,7 +2265,14 @@ namespace ETP_NS
 		* @return		The ETP data object built from the Energistics object
 		*/
 		Energistics::Etp::v12::Datatypes::Object::DataObject buildEtpDataObjectFromEnergisticsObject(
-			COMMON_NS::DataObjectRepository const* repo, const std::string& uuid, bool includeSerialization = true);
+			const COMMON_NS::DataObjectRepository& repo, const std::string& uuid, bool includeSerialization = true);
+
+		/**
+		* Set the session of all HDF Proxies included in a DataObjectRepository.
+		* @param repo		The repository where the HDF Proxies to update are located
+		* @param session	The new session to attach to al HDF Proxies of repo
+		*/
+		void setSessionOfHdfProxies(const COMMON_NS::DataObjectRepository& repo, AbstractSession* session);
 	}
 #endif
 }

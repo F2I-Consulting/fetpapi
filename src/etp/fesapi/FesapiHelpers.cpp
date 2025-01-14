@@ -18,6 +18,8 @@ under the License.
 -----------------------------------------------------------------------*/
 #include "FesapiHelpers.h"
 
+#include "FesapiHdfProxy.h"
+
 Energistics::Etp::v12::Datatypes::Object::Resource ETP_NS::FesapiHelpers::buildEtpResourceFromEnergisticsObject(COMMON_NS::AbstractObject const* obj, bool countRels)
 {
 	if (obj == nullptr) {
@@ -49,8 +51,9 @@ Energistics::Etp::v12::Datatypes::Object::Resource ETP_NS::FesapiHelpers::buildE
 }
 
 Energistics::Etp::v12::Datatypes::Object::Resource ETP_NS::FesapiHelpers::buildEtpResourceFromEnergisticsObject(
-	COMMON_NS::DataObjectRepository const* repo, const std::string& uuid, bool countRels) {
-	return buildEtpResourceFromEnergisticsObject(repo->getDataObjectByUuid(uuid), countRels);
+	const COMMON_NS::DataObjectRepository& repo, const std::string& uuid, bool countRels)
+{
+	return buildEtpResourceFromEnergisticsObject(repo.getDataObjectByUuid(uuid), countRels);
 }
 
 Energistics::Etp::v12::Datatypes::Object::DataObject ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(COMMON_NS::AbstractObject * obj, bool includeSerialization)
@@ -75,6 +78,14 @@ Energistics::Etp::v12::Datatypes::Object::DataObject ETP_NS::FesapiHelpers::buil
 }
 
 Energistics::Etp::v12::Datatypes::Object::DataObject ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(
-	COMMON_NS::DataObjectRepository const* repo, const std::string& uuid, bool includeSerialization) {
-	return buildEtpDataObjectFromEnergisticsObject(repo->getDataObjectByUuid(uuid), includeSerialization);
+	const COMMON_NS::DataObjectRepository& repo, const std::string& uuid, bool includeSerialization)
+{
+	return buildEtpDataObjectFromEnergisticsObject(repo.getDataObjectByUuid(uuid), includeSerialization);
+}
+
+void ETP_NS::FesapiHelpers::setSessionOfHdfProxies(const COMMON_NS::DataObjectRepository& repo, AbstractSession* session)
+{
+	for (auto* hdfProxy : repo.getDataObjects<ETP_NS::FesapiHdfProxy>()) {
+		hdfProxy->setSession(session);
+	}
 }
