@@ -1922,7 +1922,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to discover all dataspaces available on the store.
 		* This function should be used with caution if Dataspace Handlers have been overidden.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
 		*
 		* @param storeLastWriteFilter	An optional filter to limit the dataspaces returned by date/time last saved to the store.
 		*								The store returns a list of dataspaces whose last changed date/time is greater than the specified date/time.
@@ -1934,7 +1934,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to create one or more dataspaces.
 		* This function should be used with caution if Dataspace Handlers have been overidden.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
 		*
 		* @param dataspaces  ETP general map : One each for each dataspace the customer wants to add or update.
 		* @param return	The map keys corresponding to the dataspaces which have been put successfully into the store.
@@ -1944,7 +1944,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to delete one or more dataspaces.
 		* This function should be used with caution if Dataspace Handlers have been overidden.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
 		*
 		* @param dataspaceUris  ETP general map where the values must be the URIs for the dataspaces the customer wants to delete.
 		* @param return	The map keys corresponding to the dataspaces which have been deleted successfully.
@@ -1958,7 +1958,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to discover information of particular dataspaces.
 		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
 		*
 		* @param dataspaceUris	ETP general map : One each for each dataspace, identified by their URI, the customer wants to get info about.
 		* @param return	The dataspaces the store could return.
@@ -1968,7 +1968,7 @@ namespace ETP_NS
 		/**
 		* Copy by reference some dataspaces into another one.
 		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
 		*
 		* @param sourceDataspaceUris  ETP general map : One each for each source dataspace to be copied. They are identified by their URI.
 		* @param targetDataspaceUri  The URI of the ETP dataspace where the sourceDataspaces have to be copied by reference.
@@ -1979,7 +1979,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to lock or unlock one or more dataspaces.
 		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
 		*
 		* @param dataspaceUris  ETP general map where the values must be the URIs for the dataspaces the customer wants to lock or unlock.
 		* @param lock true for locking the dataspaces, false to unlock the dataspaces
@@ -1990,7 +1990,7 @@ namespace ETP_NS
 		/**
 		* Copy by reference some dataobjects into another dataspace.
 		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
 		*
 		* @param sourceUris  ETP general map : One each for each source dataobject to be copied. They are identified by their URI.
 		* @param targetDataspaceUri  The URI of the ETP dataspace where the source dataobjects have to be copied by reference.
@@ -2005,7 +2005,7 @@ namespace ETP_NS
 		/**
 		* A Customer sends this message to a store to discover data objects in the store.
 		* This function should be used with caution if Discovery Handlers have been overidden.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
 		*
 		* @param context				Includes the URI of the dataspace or data object to begin the discovery, what specific types of data objects are of interest,
 		*								and how many "levels" of relationships in the model to discover, among others. 
@@ -2026,7 +2026,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to discover data objects that have been deleted (which are sometimes called "tombstones").
 		* This function should be used with caution if Discovery Handlers have been overidden.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
 		*
 		* @param dataspaceUri			The URI of the dataspace where the objects were deleted.
 		* @param deleteTimeFilter		An optional filter to filter the discovery on a date when the data object was deleted in a particular store.
@@ -2047,7 +2047,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to get one or more data objects, each identified by a URI.
 		* This function should be used with caution if Store Handlers have been overidden.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
 		*
 		* @param uris	ETP general map where the values MUST be the URIs of a data object to be retrieved.
 		* @param return	The received dataobjects in a map where the key makes the link between the asked uris and the received dataobjects.
@@ -2057,7 +2057,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to add or update one or more data objects.
 		* This function should be used with caution if Store Handlers have been overidden.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
 		*
 		* @param uris	ETP general map where the values MUST be the data for each data object in the request, including each one's URI.
 		* @param return	The map keys corresponding to the dataObjects which have been put successfully.
@@ -2067,7 +2067,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to delete one or more data objects from the store.  
 		* This function should be used with caution if Store Handlers have been overidden.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
 		*
 		* @param uris	ETP general map where the values MUST be the URIs of a data object to be deleted.
 		* @param return	The map keys corresponding to the dataObjects which have been deleted successfully.
@@ -2081,10 +2081,11 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to begin a transaction.
 		* This function should be used with caution if Transaction Handlers have been overidden.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
 		*
 		* @param dataspaceUris  Indicates the dataspaces involved in the transaction. An empty STRING means the default dataspace. An empty LIST means all dataspaces.
-		* @param readOnly		Indicates that the request in the transaction is read-only (i.e., "get" messages). 
+		* @param readOnly		Indicates that the request in the transaction is read-only (i.e., "get" messages).
+		* @return Failure message or empty string if success
 		*/
 		std::string startTransaction(std::vector<std::string> dataspaceUris = {}, bool readOnly = false);
 
@@ -2092,7 +2093,8 @@ namespace ETP_NS
 		* A customer sends to a store to commit and end a transaction. This message implies that the customer 
 		* has received from or sent to the store all the data required for some purpose. The customer asserts that 
 		* the data sent in the scope of this transaction is a consistent unit of work.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
+		* @return Failure message or empty string if success
 		*/
 		std::string rollbackTransaction();
 
@@ -2100,7 +2102,8 @@ namespace ETP_NS
 		* A customer sends to a store to cancel a transaction. The store MUST disregard any requests or data sent 
 		* with that transaction. The current transaction (the one being canceled) MUST NOT change the state of 
 		* the store.
-		* It actually sends a message and block the current thread untill a response has been received from the store.
+		* It actually sends a message and block the current thread until a response has been received from the store.
+		* @return Failure message or empty string if success
 		*/
 		std::string commitTransaction();
 		

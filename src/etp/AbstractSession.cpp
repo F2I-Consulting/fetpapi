@@ -379,7 +379,8 @@ std::vector<std::string> AbstractSession::putDataObjects(const std::map<std::str
 
 		if (messageSize + dataObjectSize > maxWebSocketMessagePayloadSize) {
 			const int64_t sentMessageId = send(msg, correlationId);
-			result.insert(result.end(), handlers->getSuccessKeys().begin(), handlers->getSuccessKeys().end());
+			auto successKeys = handlers->getSuccessKeys();
+			result.insert(result.end(), successKeys.begin(), successKeys.end());
 			handlers->clearSuccessKeys();
 
 			msg.dataObjects.clear();
@@ -393,7 +394,8 @@ std::vector<std::string> AbstractSession::putDataObjects(const std::map<std::str
 		++it;
 	}
 	sendAndBlock(msg, correlationId, 0x02);
-	result.insert(result.end(), handlers->getSuccessKeys().begin(), handlers->getSuccessKeys().end());
+	auto successKeys = handlers->getSuccessKeys();
+	result.insert(result.end(), successKeys.begin(), successKeys.end());
 	handlers->clearSuccessKeys();
 	return result;
 }

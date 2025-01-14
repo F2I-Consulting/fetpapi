@@ -18,12 +18,15 @@ additionalHeaderField = fetpapi.MapStringString()
 additionalHeaderField["data-partition-id"] = "osdu"
 initialization_params.setAdditionalHandshakeHeaderFields(additionalHeaderField)
 
+print("Creating the session...")
 client_session = fetpapi.createClientSession(initialization_params, authorization)
 t = Thread(target=start_etp_server, args=(client_session,), daemon=True)
+print("Trying to connect to " + etp_server_url + " ...")
 t.start()
 start_time = perf_counter()
 while client_session.isEtpSessionClosed() and perf_counter() - start_time < 5:
-    sleep(0.25)	
+    sleep(0.25)
+    print("Trying to connect to " + etp_server_url + " ...")
 if client_session.isEtpSessionClosed():
     print("The ETP session could not be established in 5 seconds.")
     sys.exit()
@@ -59,7 +62,6 @@ repo = fesapi.DataObjectRepository()
 hdf_proxy_factory = fetpapi.FesapiHdfProxyFactory(client_session)
 print("Set specialized HdfProxy to deal with ETP DataArray subprotocol")
 repo.setHdfProxyFactory(hdf_proxy_factory)
-print(type(hdf_proxy_factory))
 
 print("Get dataobjects from the resources to the DataObjectRepository");
 uriMap = fetpapi.MapStringString();
@@ -102,7 +104,6 @@ if repo.getHorizonGrid2dRepresentationCount() > 0:
 else:
     print("This dataspace has no 2d Grid")
 
-print(type(hdf_proxy_factory))
 repo.clear()
 client_session.close()
 print("FINISHED")
