@@ -44,8 +44,9 @@ namespace Energistics {
 					ChannelDataLoad = 22,
 					RESERVED_23 = 23,
 					Dataspace = 24,
-					DataspaceOSDU = 2424,
-					SupportedTypes = 25
+					SupportedTypes = 25,
+					StoreOSDU = 2404,
+					DataspaceOSDU = 2424
 				};
 			}
 		}
@@ -3649,6 +3650,64 @@ namespace avro {
 		}
 	};
 }
+
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace StoreOSDU {
+					struct CopyDataObjectsByValue {
+						std::string uri;
+						int32_t sourcesDepth = 0;
+						std::vector<std::string> dataObjectTypes;
+						static constexpr int messageTypeId = 1;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue& v) {
+			avro::encode(e, v.uri);
+			avro::encode(e, v.sourcesDepth);
+			avro::encode(e, v.dataObjectTypes);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue& v) {
+			avro::decode(e, v.uri);
+			avro::decode(e, v.sourcesDepth);
+			avro::decode(e, v.dataObjectTypes);
+		}
+	};
+}
+namespace Energistics {
+	namespace Etp {
+		namespace v12 {
+			namespace Protocol {
+				namespace StoreOSDU {
+					struct CopyDataObjectsByValueResponse {
+						std::vector<std::string> copiedDataObjects;
+						static constexpr int messageTypeId = 2;
+						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreOSDU);
+					};
+				}
+			}
+		}
+	}
+}
+namespace avro {
+	template<> struct codec_traits<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse> {
+		static void encode(Encoder& e, const Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse& v) {
+			avro::encode(e, v.copiedDataObjects);
+		}
+		static void decode(Decoder& e, Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse& v) {
+			avro::decode(e, v.copiedDataObjects);
+		}
+	};
+}
+
 namespace Energistics {
 	namespace Etp {
 		namespace v12 {

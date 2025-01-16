@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = 'fetpapi'
+version     = '${Fetpapi_PYTHON_VERSION}'
+authors     = [
+    {name = "F2I-CONSULTING"},
+]
+maintainers = [
+    {name = "F2I-CONSULTING"},
+]
+description = "A library for using the Energistics Transfer Protocol"
+readme      = "README.md"
+classifiers=[
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: Apache Software License',
+    'Operating System :: Microsoft :: Windows',
+    'Operating System :: POSIX :: Linux',
+    'Operating System :: MacOS',
+    'Natural Language :: English',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
+    'Topic :: Software Development',
+    'Topic :: Software Development :: Libraries',
+    'Topic :: Software Development :: Libraries :: Application Frameworks ',
+    'Topic :: File Formats',
+]
+keywords = [
+    "energistics",
+    "resqml",
+    "eml",
+    "witsml",
+    "prodml",
+    "osdu",
+    "rddms",
+]
+requires-python = ">=3.8"
+dependencies = [
+    'fesapi==2.12.1',
+]
+
+[project.urls]
+source = "https://github.com/F2I-Consulting/fetpapi/issues"
+releasenotes = "https://github.com/F2I-Consulting/fetpapi/releases"
+documentation = "https://www.f2i-consulting.com/fetpapi/doxygen/"
+issues = "https://github.com/F2I-Consulting/fetpapi/issues"
+
+[tool.setuptools]
+packages=['fetpapi']
+package-dir={"fetpapi" = "fetpapi"}
+ext-modules = [
+    {name='fetpapi._fetpapi', sources=['swigGeneratedPythonWrapper.cpp'], include-dirs=['${Boost_INCLUDE_DIR}','${AVRO_INCLUDE_DIR}'${FESAPI_INCLUDE_DIR_FOR_SETUP_PY}], library-dirs=['${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}'${AVRO_LIBRARY_DIR_RELEASE}${Boost_LIBRARY_DIR_RELEASE}${FESAPI_LIBRARY_DIR_RELEASE}], libraries=['${ASSEMBLY_NAME}'${AVRO_LIBRARY_RELEASE_WLE}${Boost_LIBRARY_RELEASE_WLE}${FESAPI_LIBRARY_RELEASE_WLE}], ${EXTRA_COMPILE_ARGS}}
+]
+
+[tool.setuptools.package-data]
+fetpapi = ["*.dll", "*.so", "*.so.*"]

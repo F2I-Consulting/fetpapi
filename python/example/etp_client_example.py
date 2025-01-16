@@ -10,26 +10,29 @@ def start_etp_server(client_session):
     client_session.run()
     print('Client session do no more run...')
 
-etp_server_url = "wss://..."
-authorization = "Bearer ..."
+etp_server_url = "ws://etp.f2i-consulting.com:9002/"
+authorization = "Basic Zm9vOmJhcg=="
 initialization_params = fetpapi.InitializationParameters(str(uuid.uuid4()), etp_server_url)
 # OSDU RDDMS requires some additional header fields compared to ETP server
 additionalHeaderField = fetpapi.MapStringString()
 additionalHeaderField["data-partition-id"] = "osdu"
 initialization_params.setAdditionalHandshakeHeaderFields(additionalHeaderField)
 
+print("Creating the session...")
 client_session = fetpapi.createClientSession(initialization_params, authorization)
 t = Thread(target=start_etp_server, args=(client_session,), daemon=True)
+print("Trying to connect to " + etp_server_url + " ...")
 t.start()
 start_time = perf_counter()
 while client_session.isEtpSessionClosed() and perf_counter() - start_time < 5:
-    sleep(0.25)	
+    sleep(0.25)
+    print("Trying to connect to " + etp_server_url + " ...")
 if client_session.isEtpSessionClosed():
     print("The ETP session could not be established in 5 seconds.")
     sys.exit()
 print("Now connected to ETP Server")
 
-# Find an available ETP dataspace
+print("List dataspaces")
 all_dataspaces = client_session.getDataspaces()
 if all_dataspaces.empty() :
     print("There is no dataspace on this ETP server.")
@@ -38,24 +41,29 @@ for dataspace in all_dataspaces:
     print(dataspace.uri)
 dataspace = all_dataspaces.front()
 
-print("Working on dataspace " + dataspace.uri);
-# List resources of this ETP dataspace
+print("List resources of dataspace " + dataspace.uri)
 etp_context = fetpapi.ContextInfo()
 etp_context.uri = dataspace.uri
 etp_context.depth = 1
-all_resources = client_session.getResources(etp_context, fetpapi.ContextScopeKind__self);
+etp_context.navigableEdges = fetpapi.RelationshipKind_Both
+etp_context.includeSecondaryTargets = False
+etp_context.includeSecondarySources = False
+all_resources = client_session.getResources(etp_context, fetpapi.ContextScopeKind__self)
 if all_resources.empty() :
     print("There is no resource on this dataspace.")
     sys.exit()
-for resource in all_resources:
-    print(resource.uri)
+else :
+    print("There are " + str(len(all_resources)) + " resource on this dataspace.")
+for index, resource in enumerate(all_resources):
+    print(str(index) + ' : ' + resource.uri)
 
-# Create a FESAPI Dataobject repository to ease access to dataobjects
+print("Create a FESAPI Dataobject repository to ease access to dataobjects");
 repo = fesapi.DataObjectRepository()
 hdf_proxy_factory = fetpapi.FesapiHdfProxyFactory(client_session)
+print("Set specialized HdfProxy to deal with ETP DataArray subprotocol")
 repo.setHdfProxyFactory(hdf_proxy_factory)
 
-# Get dataobjects from the resources to the DataObjectRepository
+print("Get dataobjects from the resources to the DataObjectRepository");
 uriMap = fetpapi.MapStringString();
 for index, resource in enumerate(all_resources):
     uriMap[str(index)] = resource.uri
@@ -63,7 +71,7 @@ all_resources = client_session.getDataObjects(uriMap);
 for dataObject in all_resources.values():
     repo.addOrReplaceGsoapProxy(dataObject.data, fetpapi.getDataObjectType(dataObject.resource.uri), fetpapi.getDataspaceUri(dataObject.resource.uri))
 
-# Read data of the first ijk grid
+print("Read data of the first ijk grid");
 if repo.getIjkGridRepresentationCount() > 0:
     ijk_grid = repo.getIjkGridRepresentation(0)
     print("IJK Grid : " + ijk_grid.getTitle())
@@ -81,7 +89,7 @@ if repo.getIjkGridRepresentationCount() > 0:
 else:
     print("This dataspace has no IJK Grid")
 
-# Read data of the first 2d grid
+print("Read data of the first 2d grid");
 if repo.getHorizonGrid2dRepresentationCount() > 0:
     grid2d = repo.getHorizonGrid2dRepresentation(0)
     print("2d Grid : " + grid2d.getTitle())
@@ -96,5 +104,6 @@ if repo.getHorizonGrid2dRepresentationCount() > 0:
 else:
     print("This dataspace has no 2d Grid")
 
-client_session.close();
+repo.clear()
+client_session.close()
 print("FINISHED")

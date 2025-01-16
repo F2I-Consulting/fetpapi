@@ -348,11 +348,54 @@ std::vector<std::string> AbstractSession::putDataObjects(const std::map<std::str
 		throw std::logic_error("You did not register any store protocol handlers.");
 	}
 
+	// 50 bytes is the maximum (10 bytes by variable length integer, see https://protobuf.dev/programming-guides/encoding/#varints) size of a message header
+	// +10 is the size (variable length integer) of the map
+	// TODO : optimize by taking into account the real size and not the maximum size of a message header (and map size)
+	// +1 is the end (0 as a variable length integer) of the map
+	// +1 is the size of the pruneContainedObjects boolean
+	size_t messageSize = 62;
+
+	std::vector<std::string> result;
 	Energistics::Etp::v12::Protocol::Store::PutDataObjects msg;
-	msg.dataObjects = dataObjects;
 	msg.pruneContainedObjects = false;
-	sendAndBlock(msg, 0, 0x02);
-	std::vector<std::string> result = handlers->getSuccessKeys();
+
+	auto it = dataObjects.cbegin();
+	int64_t correlationId = 0;
+	while (it != dataObjects.cend()) {
+		// TODO: optimize by taking into account the real size and not the maximum size of variable length integer
+		// Add key size
+		size_t dataObjectSize = 10 + it->first.size();
+		// Add value size
+		dataObjectSize += 10 + it->second.resource.uri.size();
+			// ignore alternateUris for now
+		dataObjectSize += 10 + it->second.resource.name.size();
+		dataObjectSize += 10 + it->second.resource.has_sourceCount() ? 10 : 0;
+		dataObjectSize += 10 + it->second.resource.has_targetCount() ? 10 : 0;
+		dataObjectSize += 40; //  lastChanged, storeLastWrite, storeCreated, activeStatus
+			// ignore customData for now
+		dataObjectSize += 10 + it->second.format.size();
+		dataObjectSize += 10 + it->second.has_blobId() ? 100 : 0;
+		dataObjectSize += 10 + it->second.data.size();
+
+		if (messageSize + dataObjectSize > maxWebSocketMessagePayloadSize) {
+			const int64_t sentMessageId = send(msg, correlationId);
+			auto successKeys = handlers->getSuccessKeys();
+			result.insert(result.end(), successKeys.begin(), successKeys.end());
+			handlers->clearSuccessKeys();
+
+			msg.dataObjects.clear();
+			messageSize = 62;
+			if (correlationId == 0) {
+				correlationId = sentMessageId;
+			}
+		}
+		msg.dataObjects.emplace(it->first, it->second);
+		messageSize += dataObjectSize;
+		++it;
+	}
+	sendAndBlock(msg, correlationId, 0x02);
+	auto successKeys = handlers->getSuccessKeys();
+	result.insert(result.end(), successKeys.begin(), successKeys.end());
 	handlers->clearSuccessKeys();
 	return result;
 }
@@ -370,6 +413,27 @@ std::vector<std::string> AbstractSession::deleteDataObjects(const std::map<std::
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<std::string> result = handlers->getSuccessKeys();
 	handlers->clearSuccessKeys();
+	return result;
+}
+
+/********************
+***** STORE OSDU ****
+*********************/
+
+std::vector<std::string> AbstractSession::copyDataObjectsByValue(const std::string& uri, int32_t sourcesDepth, const std::vector<std::string>& dataObjectTypes)
+{
+	std::shared_ptr<StoreOSDUHandlers> handlers = getStoreOSDUProtocolHandlers();
+	if (handlers == nullptr) {
+		throw std::logic_error("You did not register any store OSDU protocol handlers.");
+	}
+
+	Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue msg;
+	msg.uri = uri;
+	msg.sourcesDepth = sourcesDepth;
+	msg.dataObjectTypes = dataObjectTypes;
+	sendAndBlock(msg, 0, 0x02);
+	std::vector<std::string> result = handlers->getCopiedDataobjects();
+	handlers->clearCopiedDataobjects();
 	return result;
 }
 

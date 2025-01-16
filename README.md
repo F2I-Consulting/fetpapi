@@ -6,14 +6,14 @@
 	 - fetpapi (Git clone this repository into this folder "fetpapi". You should then have a path fetpapiEnv/fetpapi/src)
 	 - dependencies 
   - The following compilers are known to work (used in CI)
-    - gcc from version 4.8
+    - gcc from version 8
 	- visual studio from version 2019
 # Prepare the dependencies
 Download (build and install if necessary) third party libraries:
 - BOOST : All versions from version 1.66 should be ok but you may experience some [min/max build issues](https://github.com/boostorg/beast/issues/1980) using version 1.72 or 1.73.
 - AVRO : https://avro.apache.org/releases.html#Download (starting from version 1.9.0 [except 1.11.1](https://issues.apache.org/jira/browse/AVRO-3601), build it with the above boost library.)
 - (OPTIONALLY) OpenSSL : version 1.1 is known to work.
-- (OPTIONALLY) [FESAPI](https://github.com/F2I-Consulting/fesapi/releases) : All versions from version 2.7.0.0 should be ok.
+- (OPTIONALLY) [FESAPI](https://github.com/F2I-Consulting/fesapi/releases) : All versions from version 2.7.0.0 should be ok but a minimal version of 2.11.0.0 is recommended to automatically recognize FESAPI CMake Variables using CMake find Module and build silently the EtpClient example.
 
 # Configure the build
 FETPAPI uses cmake as its build tool. A 3.12 version or later of cmake is required https://cmake.org/download/. We also recommend using cmake-gui (already included in the bin folder of the binary releases of cmake) which provides a graphical user interface on top of cmake. If you want to use cmake in command line, you would find example in [Github Actions file](./.github/workflows/github-actions.yml). Follow the below instructions :

@@ -1,5 +1,5 @@
 if (WIN32)
-	cmake_minimum_required(VERSION 3.21)
+	cmake_minimum_required(VERSION 3.27)
 else ()
 	cmake_minimum_required(VERSION 3.12)
 endif (WIN32)
@@ -16,7 +16,7 @@ set (FETPAPI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 # version mechanism
 set (Fetpapi_VERSION_MAJOR 0)
 set (Fetpapi_VERSION_MINOR 3)
-set (Fetpapi_VERSION_PATCH 0)
+set (Fetpapi_VERSION_PATCH 1)
 set (Fetpapi_VERSION_TWEAK 0)
 
 set (Fetpapi_VERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR}.${Fetpapi_VERSION_PATCH}.${Fetpapi_VERSION_TWEAK})
@@ -25,7 +25,9 @@ if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 	set (CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/install CACHE PATH "${PROJECT_NAME} install prefix" FORCE)
 endif (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
-set(CMAKE_CXX_STANDARD 11)
+if (NOT DEFINED CMAKE_CXX_STANDARD)
+    set(CMAKE_CXX_STANDARD 17)
+endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
@@ -51,6 +53,7 @@ target_compile_options(${PROJECT_NAME}	PRIVATE
 	$<$<CXX_COMPILER_ID:MSVC>:/bigobj>
 	$<$<CXX_COMPILER_ID:MSVC>:/MP>
 	$<$<CXX_COMPILER_ID:MSVC>:/W4>
+	$<$<CXX_COMPILER_ID:MSVC>:/utf-8> # Necessary for fmt library which AVRO depends on
 	$<$<CXX_COMPILER_ID:GNU>:-Wall>
 	$<$<CXX_COMPILER_ID:GNU>:-Wextra>
 	$<$<CXX_COMPILER_ID:GNU>:-Wcast-qual>
@@ -108,6 +111,12 @@ endif()
 if (WIN32 AND (Boost_VERSION_MAJOR EQUAL 1) AND (Boost_VERSION_MINOR LESS 74) AND (Boost_VERSION_MINOR GREATER 71))
 	message(WARNING "You may experience min/max issue with this boost version : See https://github.com/boostorg/beast/issues/1980")
 endif ()
+target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ALL_NO_LIB)
+if (DEFINED Boost_SYSTEM_LIBRARY)
+	target_link_libraries (${PROJECT_NAME} PRIVATE Boost::system)
+else ()
+	target_link_libraries (${PROJECT_NAME} PRIVATE Boost::boost)
+endif()
 
 # avro DEPENDENCY
 find_package(AVRO REQUIRED)
@@ -122,23 +131,17 @@ if (WITH_FESAPI)
 	endif (WITH_JAVA_WRAPPING)
 endif (WITH_FESAPI)
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ALL_NO_LIB)
 target_link_libraries (${PROJECT_NAME} PRIVATE AVRO::AVRO ${CMAKE_THREAD_LIBS_INIT})
-if (DEFINED Boost_SYSTEM_LIBRARY)
-	target_link_libraries (${PROJECT_NAME} PRIVATE ${Boost_SYSTEM_LIBRARY})
-endif()
 if (WIN32)
 	target_link_libraries (${PROJECT_NAME} PRIVATE bcrypt.lib)
 
 	set_target_properties(${PROJECT_NAME} PROPERTIES
-		PDB_NAME ${PROJECT_NAME}.${Fetpapi_VERSION}
-		PDB_NAME_DEBUG ${PROJECT_NAME}${CMAKE_DEBUG_POSTFIX}.${Fetpapi_VERSION}
 		LINK_FLAGS "/INCREMENTAL:NO /OPT:REF"
 		RUNTIME_OUTPUT_DIRECTORY ${FETPAPI_BINARY_DIR}
-		SUFFIX .${Fetpapi_VERSION}.dll
-		IMPORT_SUFFIX .${Fetpapi_VERSION}.lib
-		VERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR}
-	)
+		IMPORT_SUFFIX -${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR}.lib
+		DLL_NAME_WITH_SOVERSION TRUE
+		VERSION ${Fetpapi_VERSION}
+		SOVERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR})
 else (WIN32)
 	set_target_properties(${PROJECT_NAME} PROPERTIES
 		VERSION ${Fetpapi_VERSION}
@@ -210,7 +213,7 @@ endif (WITH_FESAPI)
 
 target_sources(${PROJECT_NAME} PRIVATE ${ALL_SOURCES_AND_HEADERS})
 
-target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${AVRO_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${AVRO_INCLUDE_DIR})
 if (WITH_ETP_SSL)
 	target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${OPENSSL_INCLUDE_DIR})
 endif ()
@@ -339,17 +342,14 @@ if (WITH_PYTHON_WRAPPING)
 			TARGETS ${PROJECT_NAME}
 			RUNTIME_DEPENDENCY_SET dep-set
 		)
-		cmake_path(GET SSL_EAY_RELEASE PARENT_PATH openSslLibPath)
-		cmake_path(GET openSslLibPath PARENT_PATH openSslPath)
-		cmake_path(APPEND openSslPath "bin" OUTPUT_VARIABLE openSslBinPath)
 		install(
 			RUNTIME_DEPENDENCY_SET dep-set
 			PRE_EXCLUDE_REGEXES "api-ms-.*" "ext-ms-.*" "[Ff]esapi[Cc]pp.*\\.dll"
 			POST_EXCLUDE_REGEXES ".*system32/.*\\.dll"
-			DIRECTORIES ${openSslBinPath}
+			DIRECTORIES ${CMAKE_BINARY_DIR}
 			RUNTIME DESTINATION ${CMAKE_SOURCE_DIR}/python/fetpapi/
 		)
 	ENDIF (WIN32)
-	install(CODE "execute_process(COMMAND	${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/python/setup.py bdist_wheel
+	install(CODE "execute_process(COMMAND	\"${Python3_EXECUTABLE}\" -m build --wheel
 											WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/python)")
 endif (WITH_PYTHON_WRAPPING)

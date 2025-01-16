@@ -85,31 +85,31 @@ namespace ETP_NS
 			auto dataArray = msg.dataArrays.begin()->second;
 			if (dataArray.data.item.idx() == 0) {
 				Energistics::Etp::v12::Datatypes::ArrayOfBoolean& avroArray = dataArray.data.item.get_ArrayOfBoolean();
-				for (auto i = 0; i < avroArray.values.size(); ++i) {
+				for (size_t i = 0; i < avroArray.values.size(); ++i) {
 					values[i] = avroArray.values[i];
 				}
 			}
 			else if (dataArray.data.item.idx() == 1) {
 				Energistics::Etp::v12::Datatypes::ArrayOfInt& avroArray = dataArray.data.item.get_ArrayOfInt();
-				for (auto i = 0; i < avroArray.values.size(); ++i) {
+				for (size_t i = 0; i < avroArray.values.size(); ++i) {
 					values[i] = avroArray.values[i];
 				}
 			}
 			else if (dataArray.data.item.idx() == 2) {
 				Energistics::Etp::v12::Datatypes::ArrayOfLong& avroArray = dataArray.data.item.get_ArrayOfLong();
-				for (auto i = 0; i < avroArray.values.size(); ++i) {
+				for (size_t i = 0; i < avroArray.values.size(); ++i) {
 					values[i] = avroArray.values[i];
 				}
 			}
 			else if (dataArray.data.item.idx() == 3) {
 				Energistics::Etp::v12::Datatypes::ArrayOfFloat& avroArray = dataArray.data.item.get_ArrayOfFloat();
-				for (auto i = 0; i < avroArray.values.size(); ++i) {
+				for (size_t i = 0; i < avroArray.values.size(); ++i) {
 					values[i] = avroArray.values[i];
 				}
 			}
 			else if (dataArray.data.item.idx() == 4) {
 				Energistics::Etp::v12::Datatypes::ArrayOfDouble& avroArray = dataArray.data.item.get_ArrayOfDouble();
-				for (auto i = 0; i < avroArray.values.size(); ++i) {
+				for (size_t i = 0; i < avroArray.values.size(); ++i) {
 					values[i] = avroArray.values[i];
 				}
 			}
@@ -123,7 +123,7 @@ namespace ETP_NS
 			*/
 			else if (dataArray.data.item.idx() == 6) {
 				std::string& avroValues = dataArray.data.item.get_bytes();
-				for (auto i = 0; i < avroValues.size(); ++i) {
+				for (size_t i = 0; i < avroValues.size(); ++i) {
 					values[i] = avroValues[i];
 				}
 			}
@@ -143,7 +143,7 @@ namespace ETP_NS
 
 			auto dataArray = receivedKeyValue.second;
 			size_t dataArrayValueCount = iterator->second.counts[0];
-			for (int dimIndex = 1; dimIndex < iterator->second.counts.size(); ++dimIndex) {
+			for (size_t dimIndex = 1; dimIndex < iterator->second.counts.size(); ++dimIndex) {
 				dataArrayValueCount *= iterator->second.counts[dimIndex];
 			}
 			auto currentStarts = iterator->second.starts;
