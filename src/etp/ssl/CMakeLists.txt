@@ -1,4 +1,6 @@
 set(FETPAPI_SSL_SOURCES	${CMAKE_CURRENT_LIST_DIR}/SslClientSession.cpp )
 set(FETPAPI_SSL_HEADERS	${CMAKE_CURRENT_LIST_DIR}/HttpsClientSession.h
-						${CMAKE_CURRENT_LIST_DIR}/ssl_stream.h
 						${CMAKE_CURRENT_LIST_DIR}/SslClientSession.h )
+if ((Boost_VERSION_MAJOR EQUAL 1) AND (Boost_VERSION_MINOR LESS 68))
+	list(APPEND FETPAPI_SSL_HEADERS  ${CMAKE_CURRENT_LIST_DIR}/ssl_stream.h)
+endif ()
