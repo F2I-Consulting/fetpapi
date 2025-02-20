@@ -70,18 +70,13 @@ namespace ETP_NS
 				uint16_t proxyPort = 80,
 				const std::string& proxyAuthorization = "")
 		{
-			size_t hostSizeWithNullTermChar = etpServerHost.size() + 1;
-			char* copyHost = new char[hostSizeWithNullTermChar];
-			std::memcpy(copyHost, etpServerHost.c_str(), hostSizeWithNullTermChar); // Copy host because it must be non const in SSL_set_tlsext_host_name
 			// Set SNI Hostname (many hosts need this to handshake successfully)
-			if (!SSL_set_tlsext_host_name(stream_.native_handle(), copyHost))
+			if (!SSL_set_tlsext_host_name(stream_.native_handle(), etpServerHost.data()))
 			{
 				boost::system::error_code ec{ static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category() };
 				std::cerr << ec.message() << "\n";
-				delete[] copyHost;
 				return;
 			}
-			delete[] copyHost;
 
 			// Set up an HTTP GET request message
 			req_.version(version);
