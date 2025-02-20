@@ -313,7 +313,7 @@ namespace ETP_NS
 		FETPAPI_DLL_IMPORT_OR_EXPORT void closeAndBlock() {
 			close();
 			auto t_start = std::chrono::high_resolution_clock::now();
-			while (!isEtpSessionClosed()) {
+			while (!webSocketSessionClosed) {
 				if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > _timeOut) {
 					throw std::runtime_error("Time out waiting for closing");
 				}
