@@ -52,6 +52,12 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 		else {
 			// This indicates an unexpected error
 			fesapi_log("on_read : error code number", ec.value(), "->", ec.message());
+			// This error may be a common one to ignore in case of SSL short read : https://github.com/boostorg/beast/issues/824
+			if (etpSessionClosed) {
+				fesapi_log("It looks that the other endpoint has closed the websocket session in a non graceful way.");
+				webSocketSessionClosed = true;
+				flushReceivingBuffer();
+			}
 		}
 
 		return;
