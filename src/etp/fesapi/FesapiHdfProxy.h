@@ -491,13 +491,8 @@ namespace ETP_NS
 			}
 
 			// First get metadata about the data array
-			std::vector<uint64_t> dimensions;
-
 			const Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata daMetadata = getDataArrayMetadata(datasetName);
-			size_t valueCount = 1;
-			for (int64_t dim : daMetadata.dimensions) {
-				valueCount *= dim;
-			}
+			const size_t valueCount = std::accumulate(daMetadata.dimensions.begin(), daMetadata.dimensions.end(), 1, std::multiplies<int64_t>());
 
 			size_t valueSize = 1;
 			switch (daMetadata.transportArrayType) {
@@ -509,7 +504,7 @@ namespace ETP_NS
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble: valueSize = 8; break;
 			default: throw std::logic_error("Array of strings are not implemented yet");
 			}
-			size_t wholeSize = valueCount * valueSize;
+			const size_t wholeSize = valueCount * valueSize;
 
 			// maxAllowedDataArraySize is the maximum serialized size of the array (including avro extra longs for array blocks)
 			const size_t maxAllowedDataArraySize = session_->getMaxWebSocketMessagePayloadSize()

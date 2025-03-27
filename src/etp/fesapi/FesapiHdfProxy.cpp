@@ -341,13 +341,13 @@ void FesapiHdfProxy::writeArrayNdSlab(
 		open();
 
 	// URI AND PATH
-	std::string uri{ buildEtp12Uri() };
+	const std::string uri{ buildEtp12Uri() };
 
-	std::string pathInResource{ (groupName.back() == '/' ?
+	const std::string pathInResource{ (groupName.back() == '/' ?
 		groupName : groupName + '/') + datasetName };
 
 	// Create Total Count
-	size_t totalCount = std::accumulate(numValuesInEachDimension, numValuesInEachDimension + numDimensions, 1, std::multiplies<size_t>());
+	const size_t totalCount = std::accumulate(numValuesInEachDimension, numValuesInEachDimension + numDimensions, 1, std::multiplies<size_t>());
 
 	// Determine Value Size (bytes) and Any Array Type
 	size_t valueSize{ 1 };
