@@ -32,6 +32,7 @@ under the License.
 #ifdef WITH_FESAPI
 %include "${FESAPI_INCLUDE_DIR}/fesapi/nsDefinitions.h"
 %import(module="fesapi") "${FESAPI_INCLUDE_DIR}/fesapi/common/DataObjectReference.h"
+%import(module="fesapi") "${FESAPI_INCLUDE_DIR}/fesapi/common/DataObjectRepository.h"
 %import(module="fesapi") "${FESAPI_INCLUDE_DIR}/fesapi/common/HdfProxyFactory.h"
 %import(module="fesapi") "${FESAPI_INCLUDE_DIR}/fesapi/common/AbstractObject.h"
 #endif
@@ -2281,7 +2282,9 @@ namespace ETP_NS
 }
 
 #ifdef WITH_FESAPI
-%pragma(java) moduleimports="import com.f2i_consulting.fesapi.common.AbstractObject;"
-%pragma(java) jniclassimports="import com.f2i_consulting.fesapi.common.AbstractObject;"
+%pragma(java) moduleimports="import com.f2i_consulting.fesapi.common.AbstractObject;
+import com.f2i_consulting.fesapi.common.DataObjectRepository;"
+%pragma(java) jniclassimports="import com.f2i_consulting.fesapi.common.AbstractObject;
+import com.f2i_consulting.fesapi.common.DataObjectRepository;"
 %pragma(csharp) moduleimports="using F2iConsulting.Fesapi.common;"
 #endif
