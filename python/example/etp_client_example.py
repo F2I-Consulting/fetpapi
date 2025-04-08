@@ -86,13 +86,32 @@ if repo.getIjkGridRepresentationCount() > 0:
     print("Cell 0,0,0 corner 0 is at index ", origin_index)
     print("Cell 0,0,0 corner 0 is  ", xyz_points.getitem(origin_index * 3), " ", xyz_points.getitem(origin_index * 3 + 1), " ", xyz_points.getitem(origin_index * 3 + 2))
     ijk_grid.unloadSplitInformation()
+
+    if ijk_grid.getValuesPropertyCount() > 0:
+        prop = ijk_grid.getValuesProperty(0)
+        print("Prop at index 0 : " + prop.getTitle())
+        print(type(prop))
+
+        if isinstance(prop, fesapi.Resqml2_ContinuousProperty):
+            prop_values = fesapi.DoubleArray(ijk_grid.getICellCount() * ijk_grid.getJCellCount() * ijk_grid.getKCellCount())
+            prop.getDoubleValuesOfPatch(0, prop_values)
+            print("Cell 0,0,0 has prop value ", prop_values.getitem(0))
+            print("Cell 1,0,0 has prop value ", prop_values.getitem(1))
+            print("Cell 2,0,0 has prop value ", prop_values.getitem(2))
+            print("Cell 3,0,0 has prop value ", prop_values.getitem(3))
+            print("Cell 4,0,0 has prop value ", prop_values.getitem(4))
+            print("Cell 5,0,0 has prop value ", prop_values.getitem(5))
+        else:
+            print(f"This property is a {type(prop)}")
+    else:
+        print("This IJK grid has no property")
 else:
     print("This dataspace has no IJK Grid")
 
 print("Read data of the first 2d grid");
 if repo.getHorizonGrid2dRepresentationCount() > 0:
     grid2d = repo.getHorizonGrid2dRepresentation(0)
-    print("2d Grid : " + grid2d.getTitle())
+    print("2d grid : " + grid2d.getTitle())
     print(f"iCount : {grid2d.getNodeCountAlongIAxis()} jCount : {grid2d.getNodeCountAlongJAxis()}")
     nb_z_points = grid2d.getNodeCountAlongIAxis() * grid2d.getNodeCountAlongJAxis()
     print(f"XYZ points count : {nb_z_points}")
@@ -101,6 +120,12 @@ if repo.getHorizonGrid2dRepresentationCount() > 0:
 
     print("Z value at index 0 : ", z_points.getitem(0))
     print("Z value at index 1 : ", z_points.getitem(1))
+
+    if grid2d.getValuesPropertyCount() > 0:
+        prop = repo.getValuesProperty(0)
+        print("Prop at index 0 : " + prop.getTitle())
+    else:
+        print("This 2d grid has no property")
 else:
     print("This dataspace has no 2d Grid")
 
