@@ -1268,10 +1268,9 @@ namespace Energistics {
 	}
 
 	%fragment("data_array_handler_reference_function", "header", fragment="data_array_handler_reference_init") {
-
-	static PyObject *data_array_handler_reference() {
-		static PyObject *data_array_handler_reference_string = SWIG_Python_str_FromChar("__data_array_handler_reference");
-		return data_array_handler_reference_string;
+		static PyObject *data_array_handler_reference() {
+		  static PyObject *data_array_handler_reference_string = SWIG_Python_str_FromChar("__data_array_handler_reference");
+		  return data_array_handler_reference_string;
 		}
 	}
 
