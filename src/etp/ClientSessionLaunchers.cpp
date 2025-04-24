@@ -67,12 +67,15 @@ std::shared_ptr<ETP_NS::ClientSession> ETP_NS::ClientSessionLaunchers::createCli
 #ifdef WITH_ETP_SSL
 	if (initializationParams->getEtpServerPort() == 443 || initializationParams->isTlsForced()) {
 		// The SSL context is required, and holds certificates
-		boost::asio::ssl::context ctx{ boost::asio::ssl::context::sslv23_client };
+		// From official ETP documentation : If the ETP server is supporting TLS, it MUST support v1.2 or greater
+		boost::asio::ssl::context ctx{ boost::asio::ssl::context::tlsv12_client };
 		ctx.set_default_verify_paths();
 		ctx.set_options(
 			boost::asio::ssl::context::default_workarounds
 			| boost::asio::ssl::context::no_sslv2
 			| boost::asio::ssl::context::no_sslv3
+			| boost::asio::ssl::context::no_tlsv1
+			| boost::asio::ssl::context::no_tlsv1_1
 			| boost::asio::ssl::context::single_dh_use
 		);
 
