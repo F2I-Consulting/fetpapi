@@ -66,11 +66,15 @@ namespace ETP_NS
 				std::cerr << "on_resolve : " << ec.message() << std::endl;
 			}
 
+			// Reality check: IPv6 is unlikely to be available yet
+			std::vector<tcp::endpoint> endpoints(results.begin(), results.end());
+			std::stable_partition(endpoints.begin(), endpoints.end(), [](auto entry) {return entry.protocol() == tcp::v4(); });
+
 			// Make the connection on the IP address we get from a lookup
 			boost::asio::async_connect(
 				ws_.next_layer().next_layer(),
-				results.begin(),
-				results.end(),
+				endpoints.begin(),
+				endpoints.end(),
 				std::bind(
 					&SslClientSession::on_ssl_connect,
 					std::static_pointer_cast<SslClientSession>(shared_from_this()),
