@@ -52,7 +52,7 @@ namespace ETP_NS
 					}
 				},
 				std::bind(
-					&AbstractClientSessionCRTP::on_handshake,
+					&ClientSession::on_handshake,
 					std::static_pointer_cast<AbstractClientSessionCRTP>(shared_from_this()),
 					std::placeholders::_1));
 #else
@@ -74,7 +74,7 @@ namespace ETP_NS
 			derived().ws().async_handshake(responseType,
 				etpServerHost + ":" + etpServerPort, etpServerTarget,
 				std::bind(
-					&AbstractClientSessionCRTP::on_handshake,
+					&ClientSession::on_handshake,
 					std::static_pointer_cast<AbstractClientSessionCRTP>(shared_from_this()),
 					std::placeholders::_1));
 #endif
@@ -107,25 +107,6 @@ namespace ETP_NS
 					shared_from_this(),
 					std::placeholders::_1,
 					std::placeholders::_2));
-		}
-
-		void on_handshake(boost::system::error_code ec)
-		{
-			if (ec) {
-				std::cerr << "on_handshake : " << ec.message() << std::endl;
-				std::cerr << "Sometimes some ETP server require a trailing slash at the end of their URL. Did you also check your optional \"data-partition-id\" additional Header Field?" << std::endl;
-				return;
-			}
-
-			if (!responseType.count(boost::beast::http::field::sec_websocket_protocol) ||
-				responseType[boost::beast::http::field::sec_websocket_protocol] != "etp12.energistics.org")
-				std::cerr << "The client MUST specify the Sec-Websocket-Protocol header value of etp12.energistics.org, and the server MUST reply with the same" << std::endl;
-
-			successfulConnection = true;
-			webSocketSessionClosed = false;
-
-			send(requestSession, 0, 0x02);
-			do_read();
 		}
 
 		void setMaxWebSocketMessagePayloadSize(int64_t value) final {

@@ -118,7 +118,7 @@ namespace ETP_NS
 				tcp::resolver::results_type results)
 		{
 			if (ec) {
-				std::cerr << "resolve : " << ec.message() << std::endl;
+				std::cerr << "HTTP over SSL resolve : " << ec.message() << std::endl;
 				return;
 			}
 
@@ -141,7 +141,7 @@ namespace ETP_NS
 			on_connect(boost::system::error_code ec)
 		{
 			if (ec) {
-				std::cerr << "connect : " << ec.message() << std::endl;
+				std::cerr << "HTTP over SSL connect : " << ec.message() << std::endl;
 				return;
 			}
 
@@ -173,7 +173,7 @@ namespace ETP_NS
 			boost::ignore_unused(bytes_transferred);
 
 			if (ec) {
-				std::cerr << "Proxy handshake write : " << ec.message() << std::endl;
+				std::cerr << "HTTP over SSL Proxy handshake write : " << ec.message() << std::endl;
 				return;
 			}
 
@@ -207,7 +207,7 @@ namespace ETP_NS
 		{
 			boost::ignore_unused(bytes_transferred);
 			if (ec) {
-				std::cerr << "read : " << ec.message() << std::endl;
+				std::cerr << "HTTP over SSL read : " << ec.message() << std::endl;
 				return;
 			}
 
@@ -224,7 +224,7 @@ namespace ETP_NS
 			on_handshake(boost::system::error_code ec)
 		{
 			if (ec) {
-				std::cerr << "handshake : " << ec.message() << std::endl;
+				std::cerr << "HTTP over SSL handshake : " << ec.message() << std::endl;
 				return;
 			}
 
@@ -245,7 +245,7 @@ namespace ETP_NS
 			boost::ignore_unused(bytes_transferred);
 
 			if (ec) {
-				std::cerr << "write : " << ec.message() << std::endl;
+				std::cerr << "HTTP over SSL write : " << ec.message() << std::endl;
 				return;
 			}
 
@@ -266,7 +266,7 @@ namespace ETP_NS
 			boost::ignore_unused(bytes_transferred);
 
 			if (ec) {
-				std::cerr << "read : " << ec.message() << std::endl;
+				std::cerr << "HTTP over SSL read : " << ec.message() << std::endl;
 				return;
 			}
 
