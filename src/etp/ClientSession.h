@@ -75,7 +75,7 @@ namespace ETP_NS
 		void on_handshake(boost::system::error_code ec)
 		{
 			if (ec) {
-				std::cerr << "on_handshake : " << ec.message() << std::endl;
+				std::cerr << "on WS handshake : " << ec.message() << std::endl;
 				std::cerr << "Sometimes some ETP server require a trailing slash at the end of their URL. Did you also check your optional \"data-partition-id\" additional Header Field?" << std::endl;
 				return;
 			}

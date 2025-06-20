@@ -74,7 +74,7 @@ namespace ETP_NS
 			if (!SSL_set_tlsext_host_name(stream_.native_handle(), etpServerHost.data()))
 			{
 				boost::system::error_code ec{ static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category() };
-				std::cerr << ec.message() << "\n";
+				std::cerr << "HTTPS on connect (SNI): " << ec.message() << "\n";
 				return;
 			}
 

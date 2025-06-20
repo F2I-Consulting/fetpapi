@@ -66,6 +66,13 @@ namespace ETP_NS
 				std::cerr << "on_resolve : " << ec.message() << std::endl;
 			}
 
+			// Set SNI Hostname (many hosts need this to handshake successfully)
+			if (!SSL_set_tlsext_host_name(ws_.next_layer().native_handle(), etpServerHost.c_str()))
+			{
+				boost::system::error_code ecSNI{ static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category() };
+				std::cerr << "Websocket on connect (SNI): " << ecSNI.message() << std::endl;
+			}
+
 			// Reality check: IPv6 is unlikely to be available yet
 			std::vector<tcp::endpoint> endpoints(results.begin(), results.end());
 			std::stable_partition(endpoints.begin(), endpoints.end(), [](auto entry) {return entry.protocol() == tcp::v4(); });

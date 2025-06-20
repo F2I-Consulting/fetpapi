@@ -32,7 +32,7 @@ namespace ETP_NS
 
 		void on_connect(boost::system::error_code ec) {
 			if (ec) {
-				std::cerr << "on_connect : " << ec.message() << std::endl;
+				std::cerr << "Websocket on connect : " << ec.message() << std::endl;
 			}
 
 #if BOOST_VERSION < 107000
