@@ -53,20 +53,10 @@ Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata FesapiHdfPro
 	// We don't care about the template parameter in this particular case
 	auto handlers = std::make_shared<GetFullDataArrayHandlers<int64_t>>(session_, nullptr);
 
-	const int64_t msgId = session_->sendWithSpecificHandler(
+	const int64_t msgId = session_->sendWithSpecificHandlerAndBlock(
 		buildGetDataArrayMetadataMessage(datasetName),
 		handlers,
 		0, 0x02);
-
-	// Blocking loop
-	auto t_start = std::chrono::high_resolution_clock::now();
-	// Use timeOut value for session.
-	auto timeOut = session_->getTimeOut();
-	while (session_->isMessageStillProcessing(msgId)) {
-		if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > timeOut) {
-			throw std::runtime_error("Time out waiting for a response of GetDataArrayMetadata message id " + std::to_string(msgId));
-		}
-	}
 
 	return handlers->getDataArrayMetadata();
 }

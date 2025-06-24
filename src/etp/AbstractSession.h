@@ -169,7 +169,7 @@ namespace ETP_NS
 		* @param messageFlags	The message flags to be sent within the header
 		* @return The ID of the message that has been put in the sending queue.
 		*/
-		template<typename T> void sendAndBlock(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
+		template<typename T> int64_t sendAndBlock(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
 			int64_t msgId = send(mb, correlationId, messageFlags);
 			// The correlationId of the first message MUST be set to 0 and the correlationId of all successive
@@ -184,6 +184,8 @@ namespace ETP_NS
 					throw std::runtime_error("Time out waiting for a response of message id " + std::to_string(msgId));
 				}
 			}
+
+			return msgId;
 		}
 
 		/**
@@ -221,6 +223,34 @@ namespace ETP_NS
 			}
 
 			return std::get<0>(queueItem);
+		}
+
+		/**
+		* Send a message to the server and register a specific handler for the response and block the thread until the answer of the server has been processed by the handlers
+		* Please look at setTimeOut if you want to set the default timeout value which is 10 000 ms.
+		*
+		* @param mb				The ETP message body to send
+		* @param correlationId	The ID of the message which this message is answering to.
+		* @param messageFlags	The message flags to be sent within the header
+		* @return The ID of the message that has been put in the sending queue.
+		*/
+		template<typename T> int64_t sendWithSpecificHandlerAndBlock(const T& mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
+		{
+			int64_t msgId = sendWithSpecificHandler(mb, specificHandler, correlationId, messageFlags);
+			// The correlationId of the first message MUST be set to 0 and the correlationId of all successive
+			// messages in the same multipart request or notification MUST be set to the messageId of the first
+			// message of the multipart request or notification.
+			// If the request message is itself multipart, the correlationId of each message of the multipart
+			// response MUST be set to the messageId of the FIRST message in the multipart request.
+
+			auto t_start = std::chrono::high_resolution_clock::now();
+			while (isMessageStillProcessing(correlationId == 0 ? msgId : correlationId)) {
+				if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > _timeOut) {
+					throw std::runtime_error("Time out waiting for a response of message id " + std::to_string(msgId));
+				}
+			}
+
+			return msgId;
 		}
 
 		/**

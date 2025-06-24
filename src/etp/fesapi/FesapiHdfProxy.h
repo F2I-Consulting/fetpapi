@@ -515,13 +515,10 @@ namespace ETP_NS
 			auto specializedHandler = std::make_shared<GetFullDataArrayHandlers<T>>(session_, values);
 			if (wholeSize + (valueCount + 1) * 8 <= maxAllowedDataArraySize) { // There can be valueCount array block and there is the length of the last array block
 				// Get all values at once
-				const int64_t msgId = session_->sendWithSpecificHandler(
+				const int64_t msgId = session_->sendWithSpecificHandlerAndBlock(
 					buildGetDataArraysMessage(datasetName),
 					specializedHandler,
 					0, 0x02);
-
-				// Blocking loop
-				while (session_->isMessageStillProcessing(msgId)) {}
 			}
 			else {
 				// Get all values using several data subarrays allowing more granular streaming
@@ -581,13 +578,10 @@ namespace ETP_NS
 				}
 
 				// Send message
-				const int64_t msgId = session_->sendWithSpecificHandler(
+				const int64_t msgId = session_->sendWithSpecificHandlerAndBlock(
 					msg,
 					specializedHandler,
 					0, 0x02);
-
-				// Blocking loop
-				while (session_->isMessageStillProcessing(msgId)) {}
 			}
 		}
 	};
