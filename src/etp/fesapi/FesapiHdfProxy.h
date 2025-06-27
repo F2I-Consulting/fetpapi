@@ -23,6 +23,7 @@ under the License.
 #include "../AbstractSession.h"
 #include "../ProtocolHandlers/GetFullDataArrayHandlers.h"
 
+#include <set>
 #include <type_traits>
 
 namespace ETP_NS
@@ -183,6 +184,26 @@ namespace ETP_NS
 			const uint64_t* numValuesInEachDimension,
 			const uint64_t* offsetValuesInEachDimension,
 			unsigned int numDimensions) final;
+
+		/**
+		* Find the array associated with @p groupName and @p name and write to it asynchronously.
+		* @param groupName                      The name of the group associated with the array.
+		* @param name                           The name of the array (potentially with multi dimensions).
+		* @param datatype						The specific datatype of the values to write.
+		* @param values                         1d array of specific datatype ordered firstly by fastest direction.
+		* @param numValuesInEachDimension       Number of values in each dimension of the array to write. They are ordered from fastest index to slowest index.
+		* @param offsetValuesInEachDimension    Offset values in each dimension of the array to write. They are ordered from fastest index to slowest index.
+		* @param numDimensions                  The number of the dimensions of the array to write.
+		* @return								All message ids which have been sent to the ETP server
+		*/
+		std::set<int64_t> async_writeArrayNdSlab(
+			const std::string& groupName,
+			const std::string& name,
+			COMMON_NS::AbstractObject::numericalDatatypeEnum datatype,
+			const void* values,
+			const uint64_t* numValuesInEachDimension,
+			const uint64_t* offsetValuesInEachDimension,
+			unsigned int numDimensions);
 
 		/**
 		* Write some string attributes into a group
