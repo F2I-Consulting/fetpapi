@@ -12,7 +12,7 @@
 Download (build and install if necessary) third party libraries:
 - BOOST : All versions from version 1.66 should be ok but you may experience some [min/max build issues](https://github.com/boostorg/beast/issues/1980) using version 1.72 or 1.73.
 - AVRO : https://avro.apache.org/releases.html#Download (starting from version 1.9.0 [except 1.11.1](https://issues.apache.org/jira/browse/AVRO-3601), build it with the above boost library.)
-- (OPTIONALLY) OpenSSL : version 1.1 is known to work.
+- (OPTIONALLY) OpenSSL : version 3.4 is known to work.
 - (OPTIONALLY) [FESAPI](https://github.com/F2I-Consulting/fesapi/releases) : All versions from version 2.7.0.0 should be ok but a minimal version of 2.11.0.0 is recommended to automatically recognize FESAPI CMake Variables using CMake find Module and build silently the EtpClient example.
 
 # Configure the build

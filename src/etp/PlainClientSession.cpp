@@ -24,15 +24,7 @@ using namespace ETP_NS;
 PlainClientSession::PlainClientSession(
 	InitializationParameters const* initializationParams, const std::string & target, const std::string & authorization, const std::string& proxyAuthorization,
 	const std::map<std::string, std::string>& additionalHandshakeHeaderFields, std::size_t frameSize) :
-		AbstractClientSessionCRTP<PlainClientSession>(initializationParams, target, authorization, proxyAuthorization),
-		ws_(ioc)
+		AbstractClientSessionCRTP<PlainClientSession>(initializationParams, target, authorization, proxyAuthorization), frameSize_(frameSize)
 {
-	ws_.binary(true);
-#if BOOST_VERSION < 107000
-	ws_.write_buffer_size(frameSize);
-#else
-	ws_.write_buffer_bytes(frameSize);
-#endif
-
 	additionalHandshakeHeaderFields_ = additionalHandshakeHeaderFields;
 }

@@ -35,23 +35,23 @@ namespace ETP_NS
 		virtual ~PlainClientSession() = default;
 
 		// Called by the base class
-		FETPAPI_DLL_IMPORT_OR_EXPORT websocket::stream<tcp::socket>& ws() { return ws_; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::unique_ptr<websocket::stream<tcp::socket>>& ws() { return ws_; }
 
 		bool isTls() const final{ return false; }
 
-		void on_resolve(boost::system::error_code ec, tcp::resolver::results_type results)
+		void asyncConnect()
 		{
-			if (ec) {
-				std::cerr << "on_resolve : " << ec.message() << std::endl;
-			}
-
-			// Reality check: IPv6 is unlikely to be available yet
-			std::vector<tcp::endpoint> endpoints(results.begin(), results.end());
-			std::stable_partition(endpoints.begin(), endpoints.end(), [](auto entry) {return entry.protocol() == tcp::v4(); });
+			ws_.reset(new websocket::stream<tcp::socket>(ioc));
+			ws_->binary(true);
+#if BOOST_VERSION < 107000
+			ws_->write_buffer_size(frameSize_);
+#else
+			ws_->write_buffer_bytes(frameSize_);
+#endif
 
 			// Make the connection on the IP address we get from a lookup
 			boost::asio::async_connect(
-				ws_.next_layer(),
+				ws_->next_layer(),
 				endpoints.begin(),
 				endpoints.end(),
 				std::bind(
@@ -61,6 +61,7 @@ namespace ETP_NS
 		}
 
 	private:
-		websocket::stream<tcp::socket> ws_;
+		std::unique_ptr<websocket::stream<tcp::socket>> ws_;
+		std::size_t frameSize_;
 	};
 }

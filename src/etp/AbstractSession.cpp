@@ -42,23 +42,29 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 	boost::ignore_unused(bytes_transferred);
 
 	if (ec) {
+		// If read completes with an error, it indicates there is an issue with the connection, so async_close would also complete with an error.
+		// Therefore, there is no need to call async_close; the destructor of websocket::stream will forcefully close the underlying socket.
+		flushReceivingBuffer();
 
 		if (ec == websocket::error::closed) {
 			// This indicates that the web socket (and consequently etp) session was closed
-			fesapi_log("The other endpoint closed the web socket (and consequently etp) connection.");
-			webSocketSessionClosed = true;
-			flushReceivingBuffer();
+			std::cerr << "The other endpoint closed the web socket (and consequently etp) connection" << std::endl;
 		}
 		else {
 			// This indicates an unexpected error
-			fesapi_log("on_read : error code number", ec.value(), "->", ec.message());
+			std::cerr << "on_read : error code number " << ec.value() << std::endl;
+			std::cerr << "on_read : error message " << ec.message() << std::endl;
+			std::cerr << "on_read : error category " << ec.category().name() << std::endl;
 			// This error may be a common one to ignore in case of SSL short read : https://github.com/boostorg/beast/issues/824
 			if (etpSessionClosed) {
-				fesapi_log("It looks that the other endpoint has closed the websocket session in a non graceful way.");
-				webSocketSessionClosed = true;
-				flushReceivingBuffer();
+				std::cerr << "It looks that the other endpoint has closed the websocket session in a non graceful way" << std::endl;
 			}
 		}
+
+		const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
+		specificProtocolHandlers.clear();
+		webSocketSessionClosed = true;
+		etpSessionClosed = true;
 
 		return;
 	}
@@ -147,7 +153,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 		send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(19, "The agent is unable to de-serialize the body of the message id " + std::to_string(receivedMh.messageId) + " : " + std::string(e.what())), 0, 0x02);
 	}
 
-	if (specificProtocolHandlers.empty() && isCloseRequested)
+	if (specificProtocolHandlers.empty() && isCloseRequested_)
 	{
 		etpSessionClosed = true;
 		send(Energistics::Etp::v12::Protocol::Core::CloseSession(), 0, 0x02);

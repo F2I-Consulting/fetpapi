@@ -93,7 +93,7 @@ namespace ETP_NS
 		*						where port is optional and is defaulted to 80 if scheme is "ws" or if no scheme is provided.
 		*						In "wss" schema cases, port is defaulted to 443.
 		* @param proxyUrl		The proxy URL. It must follow the syntax http://<host>:<port> or simply <host>:<port>.
-		*						Leave it empty if your connection to eptServerUrl is direct and does not pass throughr any proxy.
+		*						Leave it empty if your connection to eptServerUrl is direct and does not pass through any proxy.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT InitializationParameters(const std::string& instanceUuid,
 			const std::string& etpServerUrl, const std::string& proxyUrl = "")

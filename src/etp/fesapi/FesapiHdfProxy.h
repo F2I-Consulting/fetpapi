@@ -507,10 +507,6 @@ namespace ETP_NS
 
 		template<typename T> void readArrayNdOfValues(const std::string & datasetName, T* values)
 		{
-			if (!isOpened()) {
-				throw std::runtime_error("The ETP session does not look to be opened. Please reconnect.");
-			}
-
 			// First get metadata about the data array
 			const Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata daMetadata = getDataArrayMetadata(datasetName);
 			const size_t valueCount = std::accumulate(daMetadata.dimensions.begin(), daMetadata.dimensions.end(), 1, std::multiplies<int64_t>());

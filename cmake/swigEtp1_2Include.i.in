@@ -2133,7 +2133,7 @@ namespace ETP_NS
 		* Run the websocket and then the ETP session.
 		* Everything related to this session (including the completion handlers) will operate on the same unique thread in a single event loop.
 		*/
-		bool run();
+		void run();
 	};
 
 	class InitializationParameters

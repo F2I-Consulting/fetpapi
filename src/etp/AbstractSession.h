@@ -199,12 +199,22 @@ namespace ETP_NS
 		*/
 		template<typename T> int64_t sendWithSpecificHandler(const T & mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
+			if (mb.protocolId != 0 || mb.messageTypeId != 1) {
+				// Wait for a reconnection
+				while (isEtpSessionClosed() && !isCloseRequested()) {}
+				// Check if reconnection is successful
+				if (isEtpSessionClosed() && !isCloseRequested()) {
+					throw std::runtime_error("The ETP session could not be opened in order to send the message.");
+				}
+			}
+
 			// Encode the message into AVRO format
 			auto queueItem = encode(mb, correlationId, messageFlags);
 
 			const std::lock_guard<std::mutex> sendingQueueLock(sendingQueueMutex);
 			// Set the handlers which are going to be called for the response to this sent message
 			std::get<2>(queueItem) = specificHandler;
+
 			// Push the message into the queue
 			sendingQueue.push(queueItem);
 			fesapi_log("*************************************************");
@@ -250,6 +260,19 @@ namespace ETP_NS
 				}
 			}
 
+			// If the message has not been answered correctly
+			if (isEtpSessionClosed() && !isCloseRequested()) {
+				// Wait for a reconnection
+				while (isEtpSessionClosed() && !isCloseRequested()) {}
+				// Check if reconnection is successfull
+				if (isEtpSessionClosed()) {
+					throw std::runtime_error("The ETP session could not be opened in order to send again the message.");
+				}
+				else {
+					return sendWithSpecificHandlerAndBlock(mb, specificHandler, correlationId, messageFlags);
+				}
+			}
+
 			return msgId;
 		}
 
@@ -268,18 +291,6 @@ namespace ETP_NS
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void on_read(boost::system::error_code ec, std::size_t bytes_transferred);
 
-		void on_write(boost::system::error_code ec, std::size_t) {
-			if(ec) {
-				std::cerr << "on_write : " << ec.message() << std::endl;
-			}
-
-			// Remove the sent message from the queue
-			const std::lock_guard<std::mutex> sendingQueueLock(sendingQueueMutex);
-			sendingQueue.pop();
-
-			do_write();
-		}
-
 		void on_close(boost::system::error_code ec) {
 			if(ec) {
 				std::cerr << "on_close : " << ec.message() << std::endl;
@@ -291,6 +302,11 @@ namespace ETP_NS
 			// If we get here then the connection is closed gracefully
 			webSocketSessionClosed = true;
 		}
+
+		/**
+		* Check if the the closing of the session has been requested by this session or not.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT bool isCloseRequested() const { return isCloseRequested_; }
 
 		/**
 		* Check if the websocket session (starting after the HTTP handshake/upgrade) is not opened yet or has been closed.
@@ -305,7 +321,6 @@ namespace ETP_NS
 			const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
 			return (!sendingQueue.empty() && std::get<0>(sendingQueue.front()) <= msgId) || specificProtocolHandlers.count(msgId) > 0;
 		}
-		//FETPAPI_DLL_IMPORT_OR_EXPORT bool isMessageStillProcessing(int64_t msgId) const { return specificProtocolHandlers.count(msgId) > 0; }
 
 		virtual void setMaxWebSocketMessagePayloadSize(int64_t value) = 0;
 		int64_t getMaxWebSocketMessagePayloadSize() const { return maxWebSocketMessagePayloadSize; }
@@ -320,7 +335,7 @@ namespace ETP_NS
 		* This method does not block.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT void close() {
-			isCloseRequested = true;
+			isCloseRequested_ = true;
 			sendingQueueMutex.lock();
 			specificProtocolHandlersMutex.lock();
 			if (specificProtocolHandlers.empty() && sendingQueue.empty()) {
@@ -355,7 +370,10 @@ namespace ETP_NS
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT bool isEtpSessionClosed() const { return webSocketSessionClosed || etpSessionClosed; }
 
-		void setEtpSessionClosed(bool etpSessionClosed_) { etpSessionClosed = etpSessionClosed_; }
+		void setEtpSessionClosed(bool etpSessionClosed_) {
+			etpSessionClosed = etpSessionClosed_;
+			reconnectionTryCount_ = 0;
+		}
 
 		/****************
 		*** DATASPACE ***
@@ -617,7 +635,8 @@ namespace ETP_NS
 		/// The identifier of the session
 		boost::uuids::uuid identifier;
 		/// Indicates that the endpoint request to close the websocket session 
-		bool isCloseRequested{ false };
+		bool isCloseRequested_{ false };
+		size_t reconnectionTryCount_ = 0;
 
 		AbstractSession() = default;
 

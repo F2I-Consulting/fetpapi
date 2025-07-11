@@ -98,7 +98,7 @@ std::shared_ptr<ETP_NS::ClientSession> ETP_NS::ClientSessionLaunchers::createCli
 
 		std::size_t preferredMaxFrameSize = getNegotiatedMaxWebSocketFramePayloadSize(restClientSession->getResponse().body(), initializationParams->getPreferredMaxFrameSize());
 
-		result = std::make_shared<SslClientSession>(ctx, initializationParams, "/" + initializationParams->getEtpServerUrlPath(),
+		result = std::make_shared<SslClientSession>(std::move(ctx), initializationParams, "/" + initializationParams->getEtpServerUrlPath(),
 			authorization, proxyAuthorization,
 			initializationParams->getAdditionalHandshakeHeaderFields(), preferredMaxFrameSize);
 	}

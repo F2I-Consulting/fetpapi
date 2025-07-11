@@ -32,12 +32,13 @@ namespace ETP_NS
 
 		void on_connect(boost::system::error_code ec) {
 			if (ec) {
-				std::cerr << "Websocket on connect : " << ec.message() << std::endl;
+				std::cerr << "ERROR at Websocket connection : " << ec.message() << std::endl;
+				return;
 			}
 
 #if BOOST_VERSION < 107000
 			// Perform the websocket handshake
-			derived().ws().async_handshake_ex(responseType,
+			derived().ws()->async_handshake_ex(responseType,
 				etpServerHost + ":" + etpServerPort, etpServerTarget,
 				[&](websocket::request_type& m)
 				{
@@ -56,7 +57,7 @@ namespace ETP_NS
 					std::static_pointer_cast<AbstractClientSessionCRTP>(shared_from_this()),
 					std::placeholders::_1));
 #else
-			derived().ws().set_option(websocket::stream_base::decorator(
+			derived().ws()->set_option(websocket::stream_base::decorator(
 				[&](websocket::request_type& m)
 				{
 					m.insert(boost::beast::http::field::sec_websocket_protocol, "etp12.energistics.org");
@@ -71,7 +72,7 @@ namespace ETP_NS
 				})
 			);
 			// Perform the websocket handshake
-			derived().ws().async_handshake(responseType,
+			derived().ws()->async_handshake(responseType,
 				etpServerHost + ":" + etpServerPort, etpServerTarget,
 				std::bind(
 					&ClientSession::on_handshake,
@@ -85,7 +86,7 @@ namespace ETP_NS
 		* The ETP session had to be closed before.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT void do_close() {
-			derived().ws().async_close(websocket::close_code::normal,
+			derived().ws()->async_close(websocket::close_code::normal,
 				std::bind(
 					&AbstractSession::on_close,
 					shared_from_this(),
@@ -100,7 +101,7 @@ namespace ETP_NS
 			}
 
 			// Read a message into our buffer
-			derived().ws().async_read(
+			derived().ws()->async_read(
 				receivedBuffer,
 				std::bind(
 					&AbstractSession::on_read,
@@ -111,7 +112,7 @@ namespace ETP_NS
 
 		void setMaxWebSocketMessagePayloadSize(int64_t value) final {
 			maxWebSocketMessagePayloadSize = value;
-			derived().ws().read_message_max(value);
+			derived().ws()->read_message_max(value);
 		}
 
 	protected:
@@ -121,12 +122,12 @@ namespace ETP_NS
 		Derived& derived() { return static_cast<Derived&>(*this); }
 
 		void do_write() {
-			const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
 			if (sendingQueue.empty()) {
 				fesapi_log("The sending queue is empty.");
 				return;
 			}
 
+			const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
 			bool previousSentMessageCompleted = specificProtocolHandlers.find(std::get<0>(sendingQueue.front())) == specificProtocolHandlers.end();
 
 			if (!previousSentMessageCompleted) {
@@ -135,16 +136,26 @@ namespace ETP_NS
 			else {
 				fesapi_log("Sending Message id :", std::to_string(std::get<0>(sendingQueue.front())));
 
-				derived().ws().async_write(
+				derived().ws()->async_write(
 					boost::asio::buffer(std::get<1>(sendingQueue.front())),
-					std::bind(
-						&AbstractSession::on_write,
-						shared_from_this(),
-						std::placeholders::_1,
-						std::placeholders::_2));
+					[this, self{ this->shared_from_this() }](boost::system::error_code ec, std::size_t)
+					->void
+				{
+					if (ec) {
+						std::cerr << "on_write : " << ec.message() << std::endl;
+					}
+					else {
+						// Register the handler to respond to the sent message
+						const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
+						specificProtocolHandlers[std::get<0>(sendingQueue.front())] = std::get<2>(sendingQueue.front());
+					}
 
-				// Register the handler to respond to the sent message
-				specificProtocolHandlers[std::get<0>(sendingQueue.front())] = std::get<2>(sendingQueue.front());
+					// Remove the sent message from the queue
+					const std::lock_guard<std::mutex> sendingQueueLock(sendingQueueMutex);
+					sendingQueue.pop();
+
+					do_write();
+				});
 			}
 		}
 	};

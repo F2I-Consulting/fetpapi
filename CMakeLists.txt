@@ -15,8 +15,8 @@ set (FETPAPI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # version mechanism
 set (Fetpapi_VERSION_MAJOR 0)
-set (Fetpapi_VERSION_MINOR 3)
-set (Fetpapi_VERSION_PATCH 2)
+set (Fetpapi_VERSION_MINOR 4)
+set (Fetpapi_VERSION_PATCH 0)
 set (Fetpapi_VERSION_TWEAK 0)
 
 set (Fetpapi_VERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR}.${Fetpapi_VERSION_PATCH}.${Fetpapi_VERSION_TWEAK})

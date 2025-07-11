@@ -37,49 +37,41 @@ namespace ETP_NS
 {
 	class SslClientSession : public AbstractClientSessionCRTP<SslClientSession>
 	{
-	private:
-		websocket::stream<boost::beast::ssl_stream<tcp::socket>> ws_;
-		http::request<http::empty_body> proxyHandshake;
-		http::response<http::empty_body> proxyHandshakeResponse;
-		// use own response parser
-		// NOTE: 200 response to a CONNECT request from a tunneling proxy do not carry a body
-		http::response_parser<http::empty_body> http_proxy_handshake_parser;
-
 	public:
 		/*
 		* @param frameSize				Sets the size of the write buffer used by the implementation to send frames : https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/write_buffer_bytes/overload1.html.
 		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT SslClientSession(boost::asio::ssl::context& ctx,
+		FETPAPI_DLL_IMPORT_OR_EXPORT SslClientSession(boost::asio::ssl::context&& ctx,
 			InitializationParameters const* initializationParams, const std::string& target, const std::string& authorization, const std::string& proxyAuthorization = "",
 			const std::map<std::string, std::string>& additionalHandshakeHeaderFields = {}, std::size_t frameSize = 4096);
 
 		virtual ~SslClientSession() {}
 
 		// Called by the base class
-		FETPAPI_DLL_IMPORT_OR_EXPORT websocket::stream<boost::beast::ssl_stream<tcp::socket>>& ws() { return ws_; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::unique_ptr<websocket::stream<boost::beast::ssl_stream<tcp::socket>>>& ws() { return ws_; }
 
 		bool isTls() const final { return true; }
 
-		void on_resolve(boost::system::error_code ec, tcp::resolver::results_type results)
+		void asyncConnect()
 		{
-			if (ec) {
-				std::cerr << "on_resolve : " << ec.message() << std::endl;
-			}
+			ws_.reset(new websocket::stream<boost::beast::ssl_stream<tcp::socket>>(ioc, sslContext_));
+			ws_->binary(true);
+#if BOOST_VERSION < 107000
+			ws_->write_buffer_size(frameSize_);
+#else
+			ws_->write_buffer_bytes(frameSize_);
+#endif
 
 			// Set SNI Hostname (many hosts need this to handshake successfully)
-			if (!SSL_set_tlsext_host_name(ws_.next_layer().native_handle(), etpServerHost.c_str()))
+			if (!SSL_set_tlsext_host_name(ws_->next_layer().native_handle(), etpServerHost.c_str()))
 			{
 				boost::system::error_code ecSNI{ static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category() };
 				std::cerr << "Websocket on connect (SNI): " << ecSNI.message() << std::endl;
 			}
 
-			// Reality check: IPv6 is unlikely to be available yet
-			std::vector<tcp::endpoint> endpoints(results.begin(), results.end());
-			std::stable_partition(endpoints.begin(), endpoints.end(), [](auto entry) {return entry.protocol() == tcp::v4(); });
-
 			// Make the connection on the IP address we get from a lookup
 			boost::asio::async_connect(
-				ws_.next_layer().next_layer(),
+				ws_->next_layer().next_layer(),
 				endpoints.begin(),
 				endpoints.end(),
 				std::bind(
@@ -106,7 +98,7 @@ namespace ETP_NS
 				}
 
 				// Send the handshake to the proxy
-				http::async_write(ws_.next_layer().next_layer(), proxyHandshake,
+				http::async_write(ws_->next_layer().next_layer(), proxyHandshake,
 					std::bind(
 						&SslClientSession::on_proxy_handshake_write,
 						std::static_pointer_cast<SslClientSession>(shared_from_this()),
@@ -115,7 +107,7 @@ namespace ETP_NS
 			}
 			else {
 				// Perform the SSL handshake
-				ws_.next_layer().async_handshake(
+				ws_->next_layer().async_handshake(
 					boost::asio::ssl::stream_base::client,
 					std::bind(
 						&AbstractClientSessionCRTP::on_connect,
@@ -151,7 +143,7 @@ namespace ETP_NS
 			http_proxy_handshake_parser.skip(true); // see https://stackoverflow.com/a/49837467/10904212
 
 			// Receive the HTTP response
-			http::async_read(ws_.next_layer().next_layer(), receivedBuffer, http_proxy_handshake_parser,
+			http::async_read(ws_->next_layer().next_layer(), receivedBuffer, http_proxy_handshake_parser,
 				std::bind(
 					&SslClientSession::on_proxy_handshake_read,
 					std::static_pointer_cast<SslClientSession>(shared_from_this()),
@@ -171,12 +163,22 @@ namespace ETP_NS
 			}
 
 			// Perform the SSL handshake
-			ws_.next_layer().async_handshake(
+			ws_->next_layer().async_handshake(
 				boost::asio::ssl::stream_base::client,
 				std::bind(
 					&AbstractClientSessionCRTP::on_connect,
 					std::static_pointer_cast<AbstractClientSessionCRTP>(shared_from_this()),
 					std::placeholders::_1));
 		}
+
+	private:
+		boost::asio::ssl::context sslContext_;
+		std::unique_ptr<websocket::stream<boost::beast::ssl_stream<tcp::socket>>> ws_;
+		http::request<http::empty_body> proxyHandshake;
+		http::response<http::empty_body> proxyHandshakeResponse;
+		// use own response parser
+		// NOTE: 200 response to a CONNECT request from a tunneling proxy do not carry a body
+		http::response_parser<http::empty_body> http_proxy_handshake_parser;
+		std::size_t frameSize_;
 	};
 }

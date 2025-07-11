@@ -48,9 +48,7 @@ namespace ETP_NS
 		* Since this is a loop, you may want to operate this method on a dedicated thread not to block your program.
 		* This method returns only when the session is closed.
 		*/
-		bool run() {
-			successfulConnection = false;
-
+		void run() {
 			// Look up the domain name before to run the session
 			// It is important to do this before to run the io context. Otherwise running the io context would return immediately if nothing has to be done.
 			resolver.async_resolve(
@@ -66,17 +64,45 @@ namespace ETP_NS
 			// Run will return only when there will no more be any uncomplete operations (such as a reading operation for example)
 			getIoContext().run();
 
-			return successfulConnection;
+			std::cerr << "The IO Context does no more run" << std::endl;
+
+			// Try to reconnect up to 10 times
+			if (!isCloseRequested_ && reconnectionTryCount_ < 10) {
+				++reconnectionTryCount_;
+				std::cerr << "Session has been disconnected, trying to reconnect... " << reconnectionTryCount_ << "/10" << std::endl;
+				getIoContext().restart();
+				run();
+			}
+
+			if (!isCloseRequested_ && reconnectionTryCount_ >= 10) {
+				std::cerr << "Could not reconnect after 10 retries... Give up and close" << reconnectionTryCount_ << "/10" << std::endl;
+				isCloseRequested_ = true;
+			}
 		}
 		
-		virtual void on_resolve(boost::system::error_code ec, tcp::resolver::results_type results) = 0;
+		void on_resolve(boost::system::error_code ec, tcp::resolver::results_type results) {
+			if (ec) {
+				std::cerr << "on_resolve : " << ec.message() << std::endl;
+			}
+
+			// Reality check: IPv6 is unlikely to be available yet
+			endpoints = std::vector<tcp::endpoint>(results.begin(), results.end());
+			std::stable_partition(endpoints.begin(), endpoints.end(), [](auto entry) {return entry.protocol() == tcp::v4(); });
+
+			asyncConnect();
+		}
+
+		virtual void asyncConnect() = 0;
+
 		virtual bool isTls() const = 0;
 
 		void on_handshake(boost::system::error_code ec)
 		{
 			if (ec) {
-				std::cerr << "on WS handshake : " << ec.message() << std::endl;
-				std::cerr << "Sometimes some ETP server require a trailing slash at the end of their URL. Did you also check your optional \"data-partition-id\" additional Header Field?" << std::endl;
+				std::cerr << "on WS handshake, error code number : " << ec.value() << std::endl;
+				std::cerr << "on WS handshake, error message : " << ec.message() << std::endl;
+				std::cerr << "on WS handshake, error category : " << ec.category().name() << std::endl;
+				std::cerr << "Sometimes some ETP server require a trailing slash at the end of their URL. Did you also check your optional \"data-partition-id\" additional Header Field? Has your token expired?" << std::endl;
 				return;
 			}
 
@@ -84,7 +110,7 @@ namespace ETP_NS
 				responseType[boost::beast::http::field::sec_websocket_protocol] != "etp12.energistics.org")
 				std::cerr << "The client MUST specify the Sec-Websocket-Protocol header value of etp12.energistics.org, and the server MUST reply with the same" << std::endl;
 
-			successfulConnection = true;
+			fesapi_log("Now connected to Websocket");
 			webSocketSessionClosed = false;
 
 			send(requestSession, 0, 0x02);
@@ -103,8 +129,8 @@ namespace ETP_NS
 		std::string proxyAuthorization;
 		std::map<std::string, std::string> additionalHandshakeHeaderFields_;
 		websocket::response_type responseType; // In order to check handshake sec_websocket_protocol
+		std::vector<tcp::endpoint> endpoints; // Store the resolved endpoints to prevent calling resolve once again when reconnecting
 		Energistics::Etp::v12::Protocol::Core::RequestSession requestSession;
-		bool successfulConnection = false;
 
 		/**
 		 * @param initializationParams  The initialization parameters of the session including IP host, port, requestedProtocols, supportedDataObjects
@@ -114,7 +140,7 @@ namespace ETP_NS
 		 */
 		ClientSession(
 			InitializationParameters const* initializationParams, const std::string& target, const std::string& etpServerAuth, const std::string& proxyAuth = "") :
-			ioc(4),
+			ioc(),
 			resolver(ioc),
 			etpServerHost(initializationParams->getEtpServerHost()),
 			etpServerPort(std::to_string(initializationParams->getEtpServerPort())),

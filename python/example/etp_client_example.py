@@ -122,7 +122,7 @@ if repo.getHorizonGrid2dRepresentationCount() > 0:
     print("Z value at index 1 : ", z_points.getitem(1))
 
     if grid2d.getValuesPropertyCount() > 0:
-        prop = repo.getValuesProperty(0)
+        prop = grid2d.getValuesProperty(0)
         print("Prop at index 0 : " + prop.getTitle())
     else:
         print("This 2d grid has no property")
