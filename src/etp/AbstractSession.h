@@ -57,10 +57,7 @@ namespace ETP_NS
 		* If the ETP session is not set up, it returns the nil UUID.
 		*/
 		const boost::uuids::uuid& getIdentifier() {
-			if (isEtpSessionClosed()) {
-				identifier = boost::uuids::nil_uuid();
-			}
-
+			std::lock_guard<std::mutex> lock(identifierMutex);
 			return identifier;
 		}
 
@@ -77,11 +74,6 @@ namespace ETP_NS
 		double getTimeOut() const {
 			return _timeOut;
 		}
-
-		/**
-		* The list of subscriptions recorded by customers on this session.
-		*/
-		std::unordered_map<int64_t, Energistics::Etp::v12::Datatypes::Object::SubscriptionInfo> subscriptions;
 
 		/**
 		 * Set the Core protocol handlers
@@ -246,14 +238,14 @@ namespace ETP_NS
 		*/
 		template<typename T> int64_t sendWithSpecificHandlerAndBlock(const T& mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
-			int64_t msgId = sendWithSpecificHandler(mb, specificHandler, correlationId, messageFlags);
+			const int64_t msgId = sendWithSpecificHandler(mb, specificHandler, correlationId, messageFlags);
 			// The correlationId of the first message MUST be set to 0 and the correlationId of all successive
 			// messages in the same multipart request or notification MUST be set to the messageId of the first
 			// message of the multipart request or notification.
 			// If the request message is itself multipart, the correlationId of each message of the multipart
 			// response MUST be set to the messageId of the FIRST message in the multipart request.
 
-			auto t_start = std::chrono::high_resolution_clock::now();
+			const auto t_start = std::chrono::high_resolution_clock::now();
 			while (isMessageStillProcessing(correlationId == 0 ? msgId : correlationId)) {
 				if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > _timeOut) {
 					throw std::runtime_error("Time out waiting for a response of message id " + std::to_string(msgId));
@@ -369,11 +361,6 @@ namespace ETP_NS
 		* Check if the ETP session (starting after the Core.OpenSession or Core.RequestSession message) is not opened yet or has been closed.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT bool isEtpSessionClosed() const { return webSocketSessionClosed || etpSessionClosed; }
-
-		void setEtpSessionClosed(bool etpSessionClosed_) {
-			etpSessionClosed = etpSessionClosed_;
-			reconnectionTryCount_ = 0;
-		}
 
 		/****************
 		*** DATASPACE ***
@@ -633,7 +620,8 @@ namespace ETP_NS
 		/// The next available message id.
 		std::atomic<int64_t> messageId;
 		/// The identifier of the session
-		boost::uuids::uuid identifier;
+		boost::uuids::uuid identifier{ boost::uuids::nil_uuid() };
+		std::mutex identifierMutex;
 		/// Indicates that the endpoint request to close the websocket session 
 		bool isCloseRequested_{ false };
 		size_t reconnectionTryCount_ = 0;
@@ -644,6 +632,11 @@ namespace ETP_NS
 
 		void flushReceivingBuffer() {
 			receivedBuffer.consume(receivedBuffer.size());
+		}
+
+		void setEtpSessionClosed(bool etpSessionClosed_) {
+			etpSessionClosed = etpSessionClosed_;
+			reconnectionTryCount_ = 0;
 		}
 
 		/**
@@ -762,5 +755,7 @@ namespace ETP_NS
 
 			protocolHandlers[protocolId] = coreHandlers;
 		}
+
+		friend void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader& mh, avro::DecoderPtr d);
 	};
 }

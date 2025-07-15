@@ -54,6 +54,10 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 		}
 
 		session->setEtpSessionClosed(false);
+		{
+			std::lock_guard<std::mutex> lock(session->identifierMutex);
+			std::copy(os.sessionId.array.begin(), os.sessionId.array.end(), session->identifier.begin());
+		}
 		on_OpenSession(os, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::CloseSession::messageTypeId) {
@@ -104,7 +108,7 @@ void CoreHandlers::on_RequestSession(const Energistics::Etp::v12::Protocol::Core
 
 void CoreHandlers::on_OpenSession(const Energistics::Etp::v12::Protocol::Core::OpenSession &, int64_t)
 {
-	session->fesapi_log("The session has been opened with the default core protocol handlers.");
+	session->fesapi_log("The session", session->getIdentifier(), "has been opened with the default core protocol handlers.");
 }
 
 void CoreHandlers::on_CloseSession(const Energistics::Etp::v12::Protocol::Core::CloseSession &, int64_t)

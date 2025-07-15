@@ -50,6 +50,12 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 			// This indicates that the web socket (and consequently etp) session was closed
 			std::cerr << "The other endpoint closed the web socket (and consequently etp) connection" << std::endl;
 		}
+#if BOOST_VERSION > 106900
+		else if (ec == boost::beast::error::timeout) {
+			// This indicates that the web socket (and consequently etp) session was closed
+			std::cerr << "Beast timeout has been reached" << std::endl;
+		}
+#endif
 		else {
 			// This indicates an unexpected error
 			std::cerr << "on_read : error code number " << ec.value() << std::endl;
@@ -63,6 +69,9 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 
 		const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
 		specificProtocolHandlers.clear();
+		const std::lock_guard<std::mutex> sendingQueueLock(sendingQueueMutex);
+		std::queue< std::tuple<int64_t, std::vector<uint8_t>, std::shared_ptr<ETP_NS::ProtocolHandlers>> > empty;
+		std::swap(sendingQueue, empty);
 		webSocketSessionClosed = true;
 		etpSessionClosed = true;
 

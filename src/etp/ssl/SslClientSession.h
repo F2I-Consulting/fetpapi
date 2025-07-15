@@ -25,9 +25,12 @@ under the License.
 #include "ssl_stream.h"
 #elif BOOST_VERSION < 107000
 #include <boost/beast/experimental/core/ssl_stream.hpp>
-#else
+#elif BOOST_VERSION < 108600
 #include <boost/beast/http.hpp>
 #include <boost/beast/ssl.hpp>
+#include <boost/beast/websocket/ssl.hpp>
+#else
+#include <boost/asio/ssl.hpp>
 #include <boost/beast/websocket/ssl.hpp>
 #endif
 
@@ -48,13 +51,26 @@ namespace ETP_NS
 		virtual ~SslClientSession() {}
 
 		// Called by the base class
+#if BOOST_VERSION < 107000
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::unique_ptr<websocket::stream<boost::beast::ssl_stream<tcp::socket>>>& ws() { return ws_; }
+#elif BOOST_VERSION < 108600
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::unique_ptr<websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>>& ws() { return ws_; }
+#else
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::unique_ptr< websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>>& ws() { return ws_; }
+#endif
 
 		bool isTls() const final { return true; }
 
-		void asyncConnect()
+		void asyncConnect(const tcp::resolver::results_type& results)
 		{
+#if BOOST_VERSION < 107000
 			ws_.reset(new websocket::stream<boost::beast::ssl_stream<tcp::socket>>(ioc, sslContext_));
+#elif BOOST_VERSION < 108600
+			ws_.reset(new websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>(ioc, sslContext_));
+#else
+			ws_.reset(new websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>(ioc, sslContext_));
+#endif
+
 			ws_->binary(true);
 #if BOOST_VERSION < 107000
 			ws_->write_buffer_size(frameSize_);
@@ -69,7 +85,12 @@ namespace ETP_NS
 				std::cerr << "Websocket on connect (SNI): " << ecSNI.message() << std::endl;
 			}
 
+			// Reality check: IPv6 is unlikely to be available yet
+			std::vector<tcp::endpoint> endpoints = std::vector<tcp::endpoint>(results.begin(), results.end());
+			std::stable_partition(endpoints.begin(), endpoints.end(), [](auto entry) {return entry.protocol() == tcp::v4(); });
+
 			// Make the connection on the IP address we get from a lookup
+#if BOOST_VERSION < 107000
 			boost::asio::async_connect(
 				ws_->next_layer().next_layer(),
 				endpoints.begin(),
@@ -78,9 +99,20 @@ namespace ETP_NS
 					&SslClientSession::on_ssl_connect,
 					std::static_pointer_cast<SslClientSession>(shared_from_this()),
 					std::placeholders::_1));
+#else
+			boost::beast::get_lowest_layer(*ws_).async_connect(
+				endpoints,
+				boost::beast::bind_front_handler(
+					&SslClientSession::on_ssl_connect,
+					std::static_pointer_cast<SslClientSession>(shared_from_this())));
+#endif
 		}
 
+#if BOOST_VERSION < 107000
 		void on_ssl_connect(boost::system::error_code ec) {
+#else
+		void on_ssl_connect(boost::beast::error_code ec, tcp::resolver::results_type::endpoint_type) {
+#endif
 			if (ec) {
 				std::cerr << "on_ssl_connect : " << ec.message() << std::endl;
 			}
@@ -110,7 +142,7 @@ namespace ETP_NS
 				ws_->next_layer().async_handshake(
 					boost::asio::ssl::stream_base::client,
 					std::bind(
-						&AbstractClientSessionCRTP::on_connect,
+						&AbstractClientSessionCRTP::on_ssl_handshake,
 						std::static_pointer_cast<AbstractClientSessionCRTP>(shared_from_this()),
 						std::placeholders::_1));
 			}
@@ -166,14 +198,20 @@ namespace ETP_NS
 			ws_->next_layer().async_handshake(
 				boost::asio::ssl::stream_base::client,
 				std::bind(
-					&AbstractClientSessionCRTP::on_connect,
+					&AbstractClientSessionCRTP::on_ssl_handshake,
 					std::static_pointer_cast<AbstractClientSessionCRTP>(shared_from_this()),
 					std::placeholders::_1));
 		}
 
 	private:
 		boost::asio::ssl::context sslContext_;
+#if BOOST_VERSION < 107000
 		std::unique_ptr<websocket::stream<boost::beast::ssl_stream<tcp::socket>>> ws_;
+#elif BOOST_VERSION < 108600
+		std::unique_ptr<websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>> ws_;
+#else
+		std::unique_ptr<websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>> ws_;
+#endif
 		http::request<http::empty_body> proxyHandshake;
 		http::response<http::empty_body> proxyHandshakeResponse;
 		// use own response parser

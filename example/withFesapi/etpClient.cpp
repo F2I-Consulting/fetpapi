@@ -737,6 +737,7 @@ int main(int argc, char **argv)
 
 	std::cout << "Creating a client session..." << std::endl;
 	auto clientSession = ETP_NS::ClientSessionLaunchers::createClientSession(&initializationParams, authorization);
+	clientSession->setVerbose(true);
 
 	repo.setHdfProxyFactory(new ETP_NS::FesapiHdfProxyFactory(clientSession.get()));
 
@@ -752,7 +753,6 @@ int main(int argc, char **argv)
 	}
 
 	clientSession->setTimeOut(60000);
-	clientSession->setVerbose(false);
 	askUser(clientSession, repo);
 
 	sessionThread.join();

@@ -30,7 +30,7 @@ namespace ETP_NS
 
 		virtual ~AbstractClientSessionCRTP() = default;
 
-		void on_connect(boost::system::error_code ec) {
+		void on_ssl_handshake(boost::system::error_code ec) {
 			if (ec) {
 				std::cerr << "ERROR at Websocket connection : " << ec.message() << std::endl;
 				return;

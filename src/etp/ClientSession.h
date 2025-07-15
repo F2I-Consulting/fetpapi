@@ -85,14 +85,10 @@ namespace ETP_NS
 				std::cerr << "on_resolve : " << ec.message() << std::endl;
 			}
 
-			// Reality check: IPv6 is unlikely to be available yet
-			endpoints = std::vector<tcp::endpoint>(results.begin(), results.end());
-			std::stable_partition(endpoints.begin(), endpoints.end(), [](auto entry) {return entry.protocol() == tcp::v4(); });
-
-			asyncConnect();
+			asyncConnect(results);
 		}
 
-		virtual void asyncConnect() = 0;
+		virtual void asyncConnect(const tcp::resolver::results_type& results) = 0;
 
 		virtual bool isTls() const = 0;
 
@@ -129,7 +125,6 @@ namespace ETP_NS
 		std::string proxyAuthorization;
 		std::map<std::string, std::string> additionalHandshakeHeaderFields_;
 		websocket::response_type responseType; // In order to check handshake sec_websocket_protocol
-		std::vector<tcp::endpoint> endpoints; // Store the resolved endpoints to prevent calling resolve once again when reconnecting
 		Energistics::Etp::v12::Protocol::Core::RequestSession requestSession;
 
 		/**
