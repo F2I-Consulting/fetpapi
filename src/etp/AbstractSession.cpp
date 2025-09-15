@@ -276,7 +276,7 @@ std::vector<std::string> AbstractSession::lockDataspaces(const std::map<std::str
 	return result;
 }
 
-std::vector<std::string> AbstractSession::copyToDataspace(const std::map<std::string, std::string>& sourceUris, const std::string& targetDataspaceUri)
+std::vector<std::string> AbstractSession::copyToDataspace(const std::map<std::string, std::string>& sourceDataobjectUris, const std::string& targetDataspaceUri)
 {
 	std::shared_ptr<DataspaceOSDUHandlers> handlers = getDataspaceOSDUProtocolHandlers();
 	if (handlers == nullptr) {
@@ -284,7 +284,7 @@ std::vector<std::string> AbstractSession::copyToDataspace(const std::map<std::st
 	}
 
 	Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace msg;
-	msg.uris = sourceUris;
+	msg.uris = sourceDataobjectUris;
 	msg.dataspaceUri = targetDataspaceUri;
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<std::string> result = handlers->getSuccessKeys();
@@ -441,7 +441,7 @@ std::vector<std::string> AbstractSession::deleteDataObjects(const std::map<std::
 ***** STORE OSDU ****
 *********************/
 
-std::vector<std::string> AbstractSession::copyDataObjectsByValue(const std::string& uri, int32_t sourcesDepth, const std::vector<std::string>& dataObjectTypes)
+std::vector<std::string> AbstractSession::copyDataObjectsByValue(const std::string& sourceDataobjectUri, int32_t sourcesDepth, const std::vector<std::string>& dataObjectTypes)
 {
 	std::shared_ptr<StoreOSDUHandlers> handlers = getStoreOSDUProtocolHandlers();
 	if (handlers == nullptr) {
@@ -449,7 +449,7 @@ std::vector<std::string> AbstractSession::copyDataObjectsByValue(const std::stri
 	}
 
 	Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue msg;
-	msg.uri = uri;
+	msg.uri = sourceDataobjectUri;
 	msg.sourcesDepth = sourcesDepth;
 	msg.dataObjectTypes = dataObjectTypes;
 	sendAndBlock(msg, 0, 0x02);
