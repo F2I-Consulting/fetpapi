@@ -53,7 +53,7 @@ Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata FesapiHdfPro
 	// We don't care about the template parameter in this particular case
 	auto handlers = std::make_shared<GetFullDataArrayHandlers<int64_t>>(session_, nullptr);
 
-	const int64_t msgId = session_->sendWithSpecificHandlerAndBlock(
+	session_->sendWithSpecificHandlerAndBlock(
 		buildGetDataArrayMetadataMessage(datasetName),
 		handlers,
 		0, 0x02);
@@ -454,7 +454,7 @@ std::set<int64_t> FesapiHdfProxy::async_writeArrayNdSlab(
 		}
 
 		std::set<int64_t> intermediateResult = async_writeArrayNdSlab(groupName, datasetName, datatype,
-			(int8_t*)values + (writtenTotalCount * valueSize), counts.get(),
+			(const int8_t*)values + (writtenTotalCount * valueSize), counts.get(),
 			starts.get(), numDimensions);
 		sentMessageIds.insert(intermediateResult.begin(), intermediateResult.end());
 	}

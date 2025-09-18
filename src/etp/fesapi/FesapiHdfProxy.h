@@ -532,7 +532,7 @@ namespace ETP_NS
 			auto specializedHandler = std::make_shared<GetFullDataArrayHandlers<T>>(session_, values);
 			if (wholeSize + (valueCount + 1) * 8 <= maxAllowedDataArraySize) { // There can be valueCount array block and there is the length of the last array block
 				// Get all values at once
-				const int64_t msgId = session_->sendWithSpecificHandlerAndBlock(
+				session_->sendWithSpecificHandlerAndBlock(
 					buildGetDataArraysMessage(datasetName),
 					specializedHandler,
 					0, 0x02);
@@ -595,7 +595,7 @@ namespace ETP_NS
 				}
 
 				// Send message
-				const int64_t msgId = session_->sendWithSpecificHandlerAndBlock(
+				session_->sendWithSpecificHandlerAndBlock(
 					msg,
 					specializedHandler,
 					0, 0x02);

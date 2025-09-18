@@ -1951,6 +1951,7 @@ namespace ETP_NS
 		*
 		* @param dataspaceUris	ETP general map where the values must be the URIs for the dataspaces the customer wants to lock or unlock.
 		* @param lock			true for locking the dataspaces, false to unlock the dataspaces
+		*/
 		std::vector<std::string> lockDataspaces(const std::map<std::string, std::string>& dataspaceUris, bool lock);
 
 		/**
