@@ -64,8 +64,6 @@ namespace ETP_NS
 			// Run will return only when there will no more be any uncomplete operations (such as a reading operation for example)
 			getIoContext().run();
 
-			std::cerr << "The IO Context does no more run" << std::endl;
-
 			// Try to reconnect up to 10 times
 			if (!isCloseRequested_ && reconnectionTryCount_ < 10) {
 				++reconnectionTryCount_;

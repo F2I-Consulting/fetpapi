@@ -330,8 +330,10 @@ jobs:
             make &&
             make install &&
             cd ${{ github.workspace }}/.. &&
-            wget --no-verbose https://archive.apache.org/dist/avro/avro-1.11.3/cpp/avro-cpp-1.11.3.tar.gz &&
+            wget --no-verbose https://downloads.apache.org/avro/avro-1.11.3/cpp/avro-cpp-1.11.3.tar.gz &&
             tar xf avro-cpp-1.11.3.tar.gz &&
+            sed -i '' 's/cmake_minimum_required (VERSION 3.1)/cmake_minimum_required (VERSION 3.5)/' avro-cpp-1.11.3/CMakeLists.txt &&
+            sed -i '' 's/if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.0)/if (APPLE)/' avro-cpp-1.11.3/CMakeLists.txt &&
             sed -i '' 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' avro-cpp-1.11.3/CMakeLists.txt &&
             sed -i '' 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.11.3/CMakeLists.txt &&
             mkdir avro-build &&
