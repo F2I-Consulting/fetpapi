@@ -79,7 +79,7 @@ namespace ETP_NS
 #endif
 
 			// Set SNI Hostname (many hosts need this to handshake successfully)
-			if (!SSL_set_tlsext_host_name(ws_->next_layer().native_handle(), etpServerHost.c_str()))
+			if (!SSL_set_tlsext_host_name(ws_->next_layer().native_handle(), etpServerHost.data()))
 			{
 				boost::system::error_code ecSNI{ static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category() };
 				std::cerr << "Websocket on connect (SNI): " << ecSNI.message() << std::endl;

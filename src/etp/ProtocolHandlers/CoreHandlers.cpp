@@ -46,7 +46,7 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 		auto search = os.endpointCapabilities.find("MaxWebSocketMessagePayloadSize");
 		if (search != os.endpointCapabilities.end() &&
 			search->second.item.idx() == 3) {
-			const int64_t maxWebSocketMessagePayloadSize = search->second.item.get_long();
+			const uint64_t maxWebSocketMessagePayloadSize = search->second.item.get_long();
 			if (maxWebSocketMessagePayloadSize > 0 &&
 				maxWebSocketMessagePayloadSize < session->getMaxWebSocketMessagePayloadSize()) {
 				session->setMaxWebSocketMessagePayloadSize(maxWebSocketMessagePayloadSize);

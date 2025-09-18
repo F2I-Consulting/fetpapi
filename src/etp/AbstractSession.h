@@ -314,8 +314,8 @@ namespace ETP_NS
 			return (!sendingQueue.empty() && std::get<0>(sendingQueue.front()) <= msgId) || specificProtocolHandlers.count(msgId) > 0;
 		}
 
-		virtual void setMaxWebSocketMessagePayloadSize(int64_t value) = 0;
-		int64_t getMaxWebSocketMessagePayloadSize() const { return maxWebSocketMessagePayloadSize; }
+		virtual void setMaxWebSocketMessagePayloadSize(uint64_t value) = 0;
+		uint64_t getMaxWebSocketMessagePayloadSize() const { return maxWebSocketMessagePayloadSize; }
 
 		/****************
 		***** CORE ******
@@ -611,7 +611,7 @@ namespace ETP_NS
 		/// which should be determined by the limits imposed by the WebSocket library used by each endpoint. 
 		/// See https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/using_websocket/messages.html
 		/// and https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/read_message_max/overload1.html
-		int64_t maxWebSocketMessagePayloadSize{ 16000000 };
+		uint64_t maxWebSocketMessagePayloadSize{ 16000000 };
 		/// Indicates if the websocket session is opened or not. It becomes false after the websocket handshake
 		std::atomic<bool> webSocketSessionClosed{ true };
 		/// Indicates if the ETP1.2 session is opened or not. It becomes false after the requestSession and openSession message
@@ -672,7 +672,7 @@ namespace ETP_NS
 			avro::encode(*e, mh);
 			avro::encode(*e, mb);
 			e->flush();
-			const int64_t byteCount = e->byteCount();
+			const uint64_t byteCount = e->byteCount();
 
 			if (byteCount < maxWebSocketMessagePayloadSize) {
 				return std::make_tuple(mh.messageId, *avro::snapshot(*out).get(), nullptr);

@@ -2172,7 +2172,7 @@ namespace ETP_NS
 		InitializationParameters(const std::string& instanceUuid, const std::string & host, unsigned short port, const std::string & urlPath = "");
 		virtual ~InitializationParameters();
 
-		void setMaxWebSocketMessagePayloadSize(int64_t value);
+		void setMaxWebSocketMessagePayloadSize(uint64_t value);
 		uint64_t getMaxWebSocketMessagePayloadSize() const;
 
 		void setPreferredMaxFrameSize(uint64_t value);

@@ -99,24 +99,24 @@ void StoreNotificationHandlers::on_SubscribeNotificationsResponse(const Energist
 	session->fesapi_log("Received SubscribeNotificationsResponse");
 }
 
-void StoreNotificationHandlers::on_UnsubscribeNotifications(const Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications & msg, int64_t messageId, int64_t)
+void StoreNotificationHandlers::on_UnsubscribeNotifications(const Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications&, int64_t, int64_t)
 {
 	session->fesapi_log("on_UnsubscribeNotifications");
 
 	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The StoreHandlers::on_UnsubscribeNotifications method has not been overriden by the agent."), 0x02);
 }
 
-void StoreNotificationHandlers::on_UnsolicitedStoreNotifications(const Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications &, int64_t)
+void StoreNotificationHandlers::on_UnsolicitedStoreNotifications(const Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications&, int64_t)
 {
 	session->fesapi_log("Received UnsolicitedStoreNotifications");
 }
 
-void StoreNotificationHandlers::on_SubscriptionEnded(const Energistics::Etp::v12::Protocol::StoreNotification::SubscriptionEnded &, int64_t)
+void StoreNotificationHandlers::on_SubscriptionEnded(const Energistics::Etp::v12::Protocol::StoreNotification::SubscriptionEnded&, int64_t)
 {
 	session->fesapi_log("Received SubscriptionEnded ");
 }
 
-void StoreNotificationHandlers::on_ObjectChanged(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged & msg, int64_t)
+void StoreNotificationHandlers::on_ObjectChanged(const Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged& msg, int64_t)
 {
 	switch (msg.change.changeKind) {
 	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::authorized: session->fesapi_log("authorized"); break;
