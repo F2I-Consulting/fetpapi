@@ -2129,19 +2129,14 @@ namespace ETP_NS
 		std::string getDataspaceUri(const std::string& uri);
 
 		/**
-		* @param session Provide this parameter if you want to send a protocol exception in case of non validation.
+		* Validate an ETP URI
 		*/
-		Energistics::Etp::v12::Datatypes::ErrorInfo validateUri(const std::string & uri, ETP_NS::AbstractSession* session = nullptr);
+		bool validateUri(const std::string& uri);
 
 		/**
-		* @param session Provide this parameter if you want to send a protocol exception in case of non validation.
+		* @Validate an ETP dataobject URI
 		*/
-		Energistics::Etp::v12::Datatypes::ErrorInfo validateDataObjectUri(const std::string & uri, ETP_NS::AbstractSession* session = nullptr);
-
-		/**
-		* Build a protocol exception message which only contains a single error message (not a messsage map).
-		*/
-		Energistics::Etp::v12::Protocol::Core::ProtocolException buildSingleMessageProtocolException(int32_t m_code, const std::string & m_message);
+		bool validateDataObjectUri(const std::string& uri);
 	}
 
 	/******************* CLIENT ***************************/

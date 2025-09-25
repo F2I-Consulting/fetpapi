@@ -290,7 +290,7 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 			ctxInfo.includeSecondaryTargets = false;
 			ctxInfo.includeSecondarySources = false;
 			const auto resources = session->getResources(ctxInfo, Energistics::Etp::v12::Datatypes::Object::ContextScopeKind::targets);
-			std::cout << "************ GET ALL DATAOBJECTS ************" << std::endl;
+			std::cout << "************ GET ALL " << resources.size() << " DATAOBJECTS ************" << std::endl;
 			if (!resources.empty()) {
 				std::map< std::string, std::string > query;
 				size_t index = 0;
@@ -737,7 +737,7 @@ int main(int argc, char **argv)
 
 	std::cout << "Creating a client session..." << std::endl;
 	auto clientSession = ETP_NS::ClientSessionLaunchers::createClientSession(&initializationParams, authorization);
-	clientSession->setVerbose(true);
+	clientSession->setVerbose(false);
 
 	repo.setHdfProxyFactory(new ETP_NS::FesapiHdfProxyFactory(clientSession.get()));
 
