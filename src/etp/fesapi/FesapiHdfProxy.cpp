@@ -333,16 +333,19 @@ void FesapiHdfProxy::writeArrayNdSlab(
 
 	auto t_start = std::chrono::high_resolution_clock::now();
 	while (!stillProcessingMsgIds.empty()) {
+		std::vector<int64_t> idsToErase;
 		for (int64_t msgId : stillProcessingMsgIds) {
 			if (!session_->isMessageStillProcessing(msgId)) {
-				stillProcessingMsgIds.erase(msgId);
+				idsToErase.push_back(msgId);
 			}
+		}
+		for (int64_t msgId : idsToErase) {
+			stillProcessingMsgIds.erase(msgId);
 		}
 		if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > session_->getTimeOut()) {
 			throw std::runtime_error("Time out waiting for a writeArrayNdSlab response");
 		}
 	}
-	std::cerr << "writeArrayNdSlab Response got in " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " ms" << std::endl;
 }
 
 std::set<int64_t> FesapiHdfProxy::async_writeArrayNdSlab(

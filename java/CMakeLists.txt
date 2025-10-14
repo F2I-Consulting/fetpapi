@@ -20,9 +20,9 @@ file (REMOVE_RECURSE ${CMAKE_SOURCE_DIR}/java/src/com/f2i_consulting/fetpapi/etp
 # The assembly name is used to load the debug vs release FETPAPI library in the Java example
 if (WIN32)
 	if (SWIG_LINKED_TO_RELEASE)
-		set (ASSEMBLY_NAME ${PROJECT_NAME}${CMAKE_RELEASE_POSTFIX}.${Fetpapi_VERSION})
+		set (ASSEMBLY_NAME ${PROJECT_NAME}${CMAKE_RELEASE_POSTFIX}-${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR})
 	else (SWIG_LINKED_TO_RELEASE)
-		set (ASSEMBLY_NAME ${PROJECT_NAME}${CMAKE_DEBUG_POSTFIX}.${Fetpapi_VERSION})
+		set (ASSEMBLY_NAME ${PROJECT_NAME}${CMAKE_DEBUG_POSTFIX}-${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR})
 	endif (SWIG_LINKED_TO_RELEASE)
 else (WIN32)
 	if (SWIG_LINKED_TO_RELEASE)

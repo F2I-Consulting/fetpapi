@@ -299,7 +299,7 @@ typedef long long 				time_t;
 %include "std_array.i"
 
 %typemap(javaimports) SWIGTYPE %{
-	import com.f2i_consulting.fetpapi.*;
+import com.f2i_consulting.fetpapi.*;
 %}
 				
 namespace Energistics {
@@ -2134,7 +2134,7 @@ namespace ETP_NS
 		bool validateUri(const std::string& uri);
 
 		/**
-		* @Validate an ETP dataobject URI
+		* Validate an ETP dataobject URI
 		*/
 		bool validateDataObjectUri(const std::string& uri);
 	}
@@ -2217,7 +2217,7 @@ namespace ETP_NS
 	
 #ifdef WITH_FESAPI
 %typemap(javaimports) FesapiHdfProxyFactory %{
-	import com.f2i_consulting.fesapi.common.HdfProxyFactory;
+import com.f2i_consulting.fesapi.common.HdfProxyFactory;
 %}
 %typemap(csimports) FesapiHdfProxyFactory %{
 	using F2iConsulting.Fesapi.common;

@@ -16,7 +16,7 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 -----------------------------------------------------------------------*/
-package com.f2i_consulting.fetpapi.client;
+package com.f2i_consulting.example;
 
 import java.util.Optional;
 import java.util.UUID;

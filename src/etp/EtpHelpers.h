@@ -65,7 +65,7 @@ namespace ETP_NS
 		FETPAPI_DLL_IMPORT_OR_EXPORT bool validateUri(const std::string& uri);
 
 		/**
-		* @Validate an ETP dataobject URI
+		* Validate an ETP dataobject URI
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT bool validateDataObjectUri(const std::string& uri);
 
