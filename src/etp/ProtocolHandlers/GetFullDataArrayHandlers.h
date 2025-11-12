@@ -84,45 +84,45 @@ namespace ETP_NS
 		if (msg.dataArrays.size() == 1) {
 			auto dataArray = msg.dataArrays.begin()->second;
 			if (dataArray.data.item.idx() == 0) {
-				Energistics::Etp::v12::Datatypes::ArrayOfBoolean& avroArray = dataArray.data.item.get_ArrayOfBoolean();
+				const Energistics::Etp::v12::Datatypes::ArrayOfBoolean& avroArray = dataArray.data.item.get_ArrayOfBoolean();
 				for (size_t i = 0; i < avroArray.values.size(); ++i) {
 					values[i] = avroArray.values[i];
 				}
 			}
 			else if (dataArray.data.item.idx() == 1) {
-				Energistics::Etp::v12::Datatypes::ArrayOfInt& avroArray = dataArray.data.item.get_ArrayOfInt();
+				const Energistics::Etp::v12::Datatypes::ArrayOfInt& avroArray = dataArray.data.item.get_ArrayOfInt();
 				for (size_t i = 0; i < avroArray.values.size(); ++i) {
 					values[i] = avroArray.values[i];
 				}
 			}
 			else if (dataArray.data.item.idx() == 2) {
-				Energistics::Etp::v12::Datatypes::ArrayOfLong& avroArray = dataArray.data.item.get_ArrayOfLong();
+				const Energistics::Etp::v12::Datatypes::ArrayOfLong& avroArray = dataArray.data.item.get_ArrayOfLong();
 				for (size_t i = 0; i < avroArray.values.size(); ++i) {
 					values[i] = avroArray.values[i];
 				}
 			}
 			else if (dataArray.data.item.idx() == 3) {
-				Energistics::Etp::v12::Datatypes::ArrayOfFloat& avroArray = dataArray.data.item.get_ArrayOfFloat();
+				const Energistics::Etp::v12::Datatypes::ArrayOfFloat& avroArray = dataArray.data.item.get_ArrayOfFloat();
 				for (size_t i = 0; i < avroArray.values.size(); ++i) {
 					values[i] = avroArray.values[i];
 				}
 			}
 			else if (dataArray.data.item.idx() == 4) {
-				Energistics::Etp::v12::Datatypes::ArrayOfDouble& avroArray = dataArray.data.item.get_ArrayOfDouble();
+				const Energistics::Etp::v12::Datatypes::ArrayOfDouble& avroArray = dataArray.data.item.get_ArrayOfDouble();
 				for (size_t i = 0; i < avroArray.values.size(); ++i) {
 					values[i] = avroArray.values[i];
 				}
 			}
 			/*
 			else if (dataArray.data.item.idx() == 5) {
-				Energistics::Etp::v12::Datatypes::ArrayOfString& avroArray = dataArray.data.item.get_ArrayOfString();
+				const Energistics::Etp::v12::Datatypes::ArrayOfString& avroArray = dataArray.data.item.get_ArrayOfString();
 				for (auto i = 0; i < avroArray.values.size(); ++i) {
 					values[i] = avroArray.values[i];
 				}
 			}
 			*/
 			else if (dataArray.data.item.idx() == 6) {
-				std::string& avroValues = dataArray.data.item.get_bytes();
+				const std::string& avroValues = dataArray.data.item.get_bytes();
 				for (size_t i = 0; i < avroValues.size(); ++i) {
 					values[i] = avroValues[i];
 				}
@@ -162,45 +162,45 @@ namespace ETP_NS
 
 				// Copy from the ETP subarray to the receiving array
 				if (dataArray.data.item.idx() == 0) {
-					Energistics::Etp::v12::Datatypes::ArrayOfBoolean& avroArray = dataArray.data.item.get_ArrayOfBoolean();
+					const Energistics::Etp::v12::Datatypes::ArrayOfBoolean& avroArray = dataArray.data.item.get_ArrayOfBoolean();
 					for (auto i = 0; i < iterator->second.counts.back(); ++i) {
 						values[i + arrayOffset] = avroArray.values[i + subarrayOffset];
 					}
 				}
 				else if (dataArray.data.item.idx() == 1) {
-					Energistics::Etp::v12::Datatypes::ArrayOfInt& avroArray = dataArray.data.item.get_ArrayOfInt();
+					const Energistics::Etp::v12::Datatypes::ArrayOfInt& avroArray = dataArray.data.item.get_ArrayOfInt();
 					for (auto i = 0; i < iterator->second.counts.back(); ++i) {
 						values[i + arrayOffset] = avroArray.values[i + subarrayOffset];
 					}
 				}
 				else if (dataArray.data.item.idx() == 2) {
-					Energistics::Etp::v12::Datatypes::ArrayOfLong& avroArray = dataArray.data.item.get_ArrayOfLong();
+					const Energistics::Etp::v12::Datatypes::ArrayOfLong& avroArray = dataArray.data.item.get_ArrayOfLong();
 					for (auto i = 0; i < iterator->second.counts.back(); ++i) {
 						values[i + arrayOffset] = avroArray.values[i + subarrayOffset];
 					}
 				}
 				else if (dataArray.data.item.idx() == 3) {
-					Energistics::Etp::v12::Datatypes::ArrayOfFloat& avroArray = dataArray.data.item.get_ArrayOfFloat();
+					const Energistics::Etp::v12::Datatypes::ArrayOfFloat& avroArray = dataArray.data.item.get_ArrayOfFloat();
 					for (auto i = 0; i < iterator->second.counts.back(); ++i) {
 						values[i + arrayOffset] = avroArray.values[i + subarrayOffset];
 					}
 				}
 				else if (dataArray.data.item.idx() == 4) {
-					Energistics::Etp::v12::Datatypes::ArrayOfDouble& avroArray = dataArray.data.item.get_ArrayOfDouble();
+					const Energistics::Etp::v12::Datatypes::ArrayOfDouble& avroArray = dataArray.data.item.get_ArrayOfDouble();
 					for (auto i = 0; i < iterator->second.counts.back(); ++i) {
 						values[i + arrayOffset] = avroArray.values[i + subarrayOffset];
 					}
 				}
 				/*
 				else if (dataArray.data.item.idx() == 5) {
-					Energistics::Etp::v12::Datatypes::ArrayOfString& avroArray = dataArray.data.item.get_ArrayOfString();
+					const Energistics::Etp::v12::Datatypes::ArrayOfString& avroArray = dataArray.data.item.get_ArrayOfString();
 					for (auto i = 0; i < avroArray.values.size(); ++i) {
 						values[i] = avroArray.values[i];
 					}
 				}
 				*/
 				else if (dataArray.data.item.idx() == 6) {
-					std::string& avroValues = dataArray.data.item.get_bytes();
+					const std::string& avroValues = dataArray.data.item.get_bytes();
 					for (auto i = 0; i < iterator->second.counts.back(); ++i) {
 						values[i + arrayOffset] = avroValues[i + subarrayOffset];
 					}

@@ -18,13 +18,13 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
+#include <set>
+#include <type_traits>
+
 #include <fesapi/common/HdfProxyFactory.h>
 
 #include "../AbstractSession.h"
 #include "../ProtocolHandlers/GetFullDataArrayHandlers.h"
-
-#include <set>
-#include <type_traits>
 
 namespace ETP_NS
 {

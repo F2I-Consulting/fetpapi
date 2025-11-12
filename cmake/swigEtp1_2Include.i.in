@@ -377,22 +377,22 @@ namespace Energistics {
 					std::string get_string();
 					void set_string(const std::string& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfBoolean get_ArrayOfBoolean();
+					Energistics::Etp::v12::Datatypes::ArrayOfBoolean const& get_ArrayOfBoolean() const;
 					void set_ArrayOfBoolean(const Energistics::Etp::v12::Datatypes::ArrayOfBoolean& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfInt get_ArrayOfInt();
+					Energistics::Etp::v12::Datatypes::ArrayOfInt const& get_ArrayOfInt() const;
 					void set_ArrayOfInt(const Energistics::Etp::v12::Datatypes::ArrayOfInt& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfLong get_ArrayOfLong();
+					Energistics::Etp::v12::Datatypes::ArrayOfLong const& get_ArrayOfLong() const;
 					void set_ArrayOfLong(const Energistics::Etp::v12::Datatypes::ArrayOfLong& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfFloat get_ArrayOfFloat();
+					Energistics::Etp::v12::Datatypes::ArrayOfFloat const& get_ArrayOfFloat() const;
 					void set_ArrayOfFloat(const Energistics::Etp::v12::Datatypes::ArrayOfFloat& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfDouble get_ArrayOfDouble();
+					Energistics::Etp::v12::Datatypes::ArrayOfDouble const& get_ArrayOfDouble() const;
 					void set_ArrayOfDouble(const Energistics::Etp::v12::Datatypes::ArrayOfDouble& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfString get_ArrayOfString();
+					Energistics::Etp::v12::Datatypes::ArrayOfString const& get_ArrayOfString() const;
 					void set_ArrayOfString(const Energistics::Etp::v12::Datatypes::ArrayOfString& v);
 					
 					std::string get_bytes();
@@ -412,25 +412,25 @@ namespace Energistics {
 				public:
 					size_t idx() const;
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfBoolean get_ArrayOfBoolean();
+					Energistics::Etp::v12::Datatypes::ArrayOfBoolean const& get_ArrayOfBoolean() const;
 					void set_ArrayOfBoolean(const Energistics::Etp::v12::Datatypes::ArrayOfBoolean& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfInt get_ArrayOfInt();
+					Energistics::Etp::v12::Datatypes::ArrayOfInt const& get_ArrayOfInt() const;
 					void set_ArrayOfInt(const Energistics::Etp::v12::Datatypes::ArrayOfInt& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfLong get_ArrayOfLong();
+					Energistics::Etp::v12::Datatypes::ArrayOfLong const& get_ArrayOfLong() const;
 					void set_ArrayOfLong(const Energistics::Etp::v12::Datatypes::ArrayOfLong& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfFloat get_ArrayOfFloat();
+					Energistics::Etp::v12::Datatypes::ArrayOfFloat const& get_ArrayOfFloat() const;
 					void set_ArrayOfFloat(const Energistics::Etp::v12::Datatypes::ArrayOfFloat& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfDouble get_ArrayOfDouble();
+					Energistics::Etp::v12::Datatypes::ArrayOfDouble const& get_ArrayOfDouble() const;
 					void set_ArrayOfDouble(const Energistics::Etp::v12::Datatypes::ArrayOfDouble& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfString get_ArrayOfString();
+					Energistics::Etp::v12::Datatypes::ArrayOfString const& get_ArrayOfString() const;
 					void set_ArrayOfString(const Energistics::Etp::v12::Datatypes::ArrayOfString& v);
 					
-					std::string get_bytes();
+					std::string const& get_bytes() const;
 					void set_bytes(const std::string& v);
 				};
 				

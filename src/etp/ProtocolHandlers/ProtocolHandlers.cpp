@@ -37,10 +37,10 @@ void ProtocolHandlers::printDataObject(const Energistics::Etp::v12::Datatypes::O
 	}
 	std::cout << "name : " << dataObject.resource.name << std::endl;
 	if (dataObject.resource.sourceCount) {
-		std::cout << "source count : " << dataObject.resource.sourceCount.get() << std::endl;
+		std::cout << "source count : " << dataObject.resource.sourceCount.value() << std::endl;
 	}
 	if (dataObject.resource.targetCount) {
-		std::cout << "target count : " << dataObject.resource.targetCount.get() << std::endl;
+		std::cout << "target count : " << dataObject.resource.targetCount.value() << std::endl;
 	}
 
 	std::cout << "lastChanged : ";

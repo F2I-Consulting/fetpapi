@@ -121,7 +121,7 @@ void CoreHandlers::on_ProtocolException(const Energistics::Etp::v12::Protocol::C
 {
 	std::cerr << "EXCEPTION received for message_id " << correlationId << std::endl;
 	if (pe.error) {
-		std::cerr << "Single error code " << pe.error.get().code << " : " << pe.error.get().message << std::endl;
+		std::cerr << "Single error code " << pe.error.value().code << " : " << pe.error.value().message << std::endl;
 	}
 	else {
 		std::cerr << "One or more error code : " << std::endl;

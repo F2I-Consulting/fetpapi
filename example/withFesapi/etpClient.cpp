@@ -196,8 +196,8 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 			const auto resources = session->getResources(mb.context, mb.scope);
 			for (auto& resource : resources) {
 				std::cout << resource.uri << std::endl;
-				if (resource.has_sourceCount()) std::cout << "Source count: " << resource.sourceCount.get() << std::endl;
-				if (resource.has_targetCount()) std::cout << "Target count: " << resource.targetCount.get() << std::endl;
+				if (resource.has_sourceCount()) std::cout << "Source count: " << resource.sourceCount.value() << std::endl;
+				if (resource.has_targetCount()) std::cout << "Target count: " << resource.targetCount.value() << std::endl;
 			}
 			continue;
 		}
@@ -680,7 +680,7 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				Energistics::Etp::v12::Datatypes::AnyArray data;
 				Energistics::Etp::v12::Datatypes::ArrayOfInt arrayOfInt;
 				arrayOfInt.values = { 0,1,2,3,4,5,6,7,8,9 };
-				data.item.set_ArrayOfInt(arrayOfInt);
+				data.item.set_ArrayOfInt(std::move(arrayOfInt));
 				pda.dataArrays["0"].array.data = data;
 				std::cout << "Start sending the array" << std::endl;
 

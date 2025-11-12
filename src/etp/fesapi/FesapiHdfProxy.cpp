@@ -118,7 +118,7 @@ namespace {
 				static_cast<const double*>(values),
 				static_cast<const double*>(values) + totalCount);
 
-			data.item.set_ArrayOfDouble(avroArray);
+			data.item.set_ArrayOfDouble(std::move(avroArray));
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT) {
 			Energistics::Etp::v12::Datatypes::ArrayOfFloat avroArray;
@@ -127,7 +127,7 @@ namespace {
 				static_cast<const float*>(values),
 				static_cast<const float*>(values) + totalCount);
 
-			data.item.set_ArrayOfFloat(avroArray);
+			data.item.set_ArrayOfFloat(std::move(avroArray));
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64 ||
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64) {
@@ -137,7 +137,7 @@ namespace {
 				static_cast<const int64_t*>(values),
 				static_cast<const int64_t*>(values) + totalCount);
 
-			data.item.set_ArrayOfLong(avroArray);
+			data.item.set_ArrayOfLong(std::move(avroArray));
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32 ||
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32) {
@@ -147,7 +147,7 @@ namespace {
 				static_cast<const int32_t*>(values),
 				static_cast<const int32_t*>(values) + totalCount);
 
-			data.item.set_ArrayOfInt(avroArray);
+			data.item.set_ArrayOfInt(std::move(avroArray));
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16 ||
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16) {
@@ -157,7 +157,7 @@ namespace {
 				avroArray.values.push_back(static_cast<const short*>(values)[i]);
 			}
 
-			data.item.set_ArrayOfInt(avroArray);
+			data.item.set_ArrayOfInt(std::move(avroArray));
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8 ||
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8) {
@@ -167,7 +167,7 @@ namespace {
 				avroArray.push_back(static_cast<const char*>(values)[i]);
 			}
 
-			data.item.set_bytes(avroArray);
+			data.item.set_bytes(std::move(avroArray));
 		}
 		else {
 			throw logic_error(
