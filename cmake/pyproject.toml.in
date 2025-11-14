@@ -43,7 +43,7 @@ keywords = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    'fesapi==2.13.0',
+    'fesapi==2.14.0',
 ]
 
 [project.urls]
