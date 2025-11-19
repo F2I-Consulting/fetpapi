@@ -48,7 +48,12 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 
 		if (ec == websocket::error::closed) {
 			// This indicates that the web socket (and consequently etp) session was closed
-			std::cerr << "The other endpoint closed the web socket (and consequently etp) connection" << std::endl;
+			if (etpSessionClosed) {
+				fesapi_log("The other endpoint closed the web socket (and consequently etp) connection in a graceful way.");
+			}
+			else {
+				std::cerr << "The other endpoint closed the web socket(and consequently etp) connection in a graceful way." << std::endl;
+			}
 		}
 #if BOOST_VERSION > 106900
 		else if (ec == boost::beast::error::timeout) {
@@ -57,13 +62,15 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 		}
 #endif
 		else {
-			// This indicates an unexpected error
-			std::cerr << "on_read : error code number " << ec.value() << std::endl;
-			std::cerr << "on_read : error message " << ec.message() << std::endl;
-			std::cerr << "on_read : error category " << ec.category().name() << std::endl;
-			// This error may be a common one to ignore in case of SSL short read : https://github.com/boostorg/beast/issues/824
 			if (etpSessionClosed) {
-				std::cerr << "It looks that the other endpoint has closed the websocket session in a non graceful way" << std::endl;
+				// This error may be a common one to ignore in case of SSL short read : https://github.com/boostorg/beast/issues/824
+				fesapi_log("It looks that the other endpoint has closed the websocket session in a non graceful way.");
+			}
+			else {
+				// This indicates an unexpected error
+				std::cerr << "on_read : error code number " << ec.value() << std::endl;
+				std::cerr << "on_read : error message " << ec.message() << std::endl;
+				std::cerr << "on_read : error category " << ec.category().name() << std::endl;
 			}
 		}
 
@@ -149,7 +156,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 					normalProtocolHandlerIt->second->decodeMessageBody(receivedMh, d);
 				}
 				else {
-					std::cerr << "Received a message with id " << receivedMh.messageId << " for which non protocol handlers is associated. Protocol " << receivedMhProtocol << std::endl;
+					std::cerr << "Received a message with id " << receivedMh.messageId << " for which no protocol handler is associated. Protocol " << receivedMhProtocol << std::endl;
 					send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(4, "The agent does not support the protocol " + std::to_string(receivedMhProtocol) + " identified in a message header."), receivedMh.messageId, 0x02);
 				}
 			}
