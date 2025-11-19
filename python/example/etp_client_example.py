@@ -79,7 +79,7 @@ if repo.getIjkGridRepresentationCount() > 0:
     nb_xyz_points = ijk_grid.getXyzPointCountOfAllPatches()
     print("XYZ points count :", nb_xyz_points)
     xyz_points = fesapi.DoubleArray(nb_xyz_points * 3)
-    ijk_grid.getXyzPointsOfAllPatches(xyz_points)
+    ijk_grid.getXyzPointsOfAllPatches(xyz_points.cast())
 
     ijk_grid.loadSplitInformation()
     origin_index = ijk_grid.getXyzPointIndexFromCellCorner(0, 0, 0, 0)
@@ -94,7 +94,7 @@ if repo.getIjkGridRepresentationCount() > 0:
 
         if isinstance(prop, fesapi.Resqml2_ContinuousProperty):
             prop_values = fesapi.DoubleArray(ijk_grid.getICellCount() * ijk_grid.getJCellCount() * ijk_grid.getKCellCount())
-            prop.getDoubleValuesOfPatch(0, prop_values)
+            prop.getDoubleValuesOfPatch(0, prop_values.cast())
             print("Cell 0,0,0 has prop value ", prop_values.getitem(0))
             print("Cell 1,0,0 has prop value ", prop_values.getitem(1))
             print("Cell 2,0,0 has prop value ", prop_values.getitem(2))
@@ -116,7 +116,7 @@ if repo.getHorizonGrid2dRepresentationCount() > 0:
     nb_z_points = grid2d.getNodeCountAlongIAxis() * grid2d.getNodeCountAlongJAxis()
     print(f"XYZ points count : {nb_z_points}")
     z_points = fesapi.DoubleArray(nb_z_points)
-    grid2d.getZValues(z_points)
+    grid2d.getZValues(z_points.cast())
 
     print("Z value at index 0 : ", z_points.getitem(0))
     print("Z value at index 1 : ", z_points.getitem(1))
