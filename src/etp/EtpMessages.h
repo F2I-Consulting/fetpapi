@@ -14,6 +14,7 @@
 #include <avro/Specific.hh>
 #include <avro/Encoder.hh>
 #include <avro/Decoder.hh>
+#include <avro/Exception.hh>
 
 namespace Energistics {
 	namespace Etp {
@@ -4808,7 +4809,7 @@ namespace avro {
 
 namespace avro {
 	/**
-	 * codec_traits for Avro optional.
+	 * codec_traits for Avro optional assumming that the schema is ["null", T].
 	 */
 	template<typename T>
 	struct codec_traits<std::optional<T>> {
@@ -4831,19 +4832,18 @@ namespace avro {
 		 */
 		static void decode(Decoder& d, std::optional<T>& s) {
 			size_t n = d.decodeUnionIndex();
-			if (n >= 2) { throw avro::Exception("Union index too big"); }
+			if (n >= 2) { throw avro::Exception("Union index too big for optional (expected 0 or 1, got " + std::to_string(n) + ")"); }
 			switch (n) {
 				case 0:
 					{
 						d.decodeNull();
-						s = std::nullopt;
+						s.reset();
 					}
 					break;
 				case 1:
 					{
-						T t;
-						avro::decode(d, t);
-						s.emplace(t);
+						s.emplace();
+						avro::decode(d, *s);
 					}
 					break;
 			}
