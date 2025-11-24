@@ -21,8 +21,6 @@ under the License.
 #include "../AbstractSession.h"
 #include "../EtpHelpers.h"
 
-#include "../../tools/date.h"
-
 using namespace ETP_NS;
 
 void StoreNotificationHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader & mh, avro::DecoderPtr d)
@@ -128,8 +126,7 @@ void StoreNotificationHandlers::on_ObjectChanged(const Energistics::Etp::v12::Pr
 	case Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind::unjoinedSubscription: session->fesapi_log("unjoinedSubscription"); break;
 	}
 
-	auto duration = std::chrono::microseconds(msg.change.changeTime);
-	session->fesapi_log("on", date::format("%FT%TZ", date::floor<std::chrono::microseconds>(duration)));
+	session->fesapi_log("on timestamp ", msg.change.changeTime);
 
 	printDataObject(msg.change.dataObject);
 }
