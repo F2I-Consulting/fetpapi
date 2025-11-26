@@ -60,7 +60,7 @@ bool ETP_NS::EtpHelpers::validateUri(const std::string & uri)
 	return
 		std::regex_match(uri, std::regex("^eml:///(dataspace[(]'.*'[)])?", std::regex::ECMAScript)) ||
 		std::regex_match(uri, std::regex("^eml:///(dataspace[(]'.*'[)]/)?(resqml20|eml20)\.obj_[a-zA-Z0-9]+[(][a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}(,.*)?[)]", std::regex::ECMAScript)) ||
-		std::regex_match(uri, std::regex("^eml:///(dataspace[(]'.*'[)]/)?(witsml|resqml|prodml|eml)([0-9]{2})\[a-zA-Z0-9]+[(][a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}(,.*)?[)]", std::regex::ECMAScript));
+		std::regex_match(uri, std::regex("^eml:///(dataspace[(]'.*'[)]/)?(witsml|resqml|prodml|eml)([0-9]{2})\.[a-zA-Z0-9]+[(][a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}(,.*)?[)]", std::regex::ECMAScript));
 }
 
 bool ETP_NS::EtpHelpers::validateDataObjectUri(const std::string & uri)

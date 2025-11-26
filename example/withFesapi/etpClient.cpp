@@ -724,6 +724,10 @@ int main(int argc, char **argv)
 	std::string authorization;
 	std::getline(std::cin, authorization);
 
+	std::cout << "Give the data partition id you want to direct your requests (or hit enter if no data partition)" << std::endl;
+	std::string dataPartition;
+	std::getline(std::cin, dataPartition);
+
 	COMMON_NS::DataObjectRepository repo;
 	repo.setDefaultStandard(COMMON_NS::DataObjectRepository::EnergisticsStandard::RESQML2_0_1);
 	repo.setDefaultStandard(COMMON_NS::DataObjectRepository::EnergisticsStandard::EML2_0);
@@ -732,7 +736,7 @@ int main(int argc, char **argv)
 	ETP_NS::InitializationParameters initializationParams = argc == 2
 		? ETP_NS::InitializationParameters(gen(), argv[1]) // URL based
 		: ETP_NS::InitializationParameters(gen(), argv[1], std::stoi(argv[2]), argc < 4 ? "/" : argv[3]); // IP Port and target based
-	std::map< std::string, std::string > additionalHeaderField = { {"data-partition-id", "osdu"} }; // Example for OSDU RDDMS
+	std::map< std::string, std::string > additionalHeaderField = { {"data-partition-id", dataPartition} }; // Example for OSDU RDDMS
 	initializationParams.setAdditionalHandshakeHeaderFields(additionalHeaderField);
 
 	std::cout << "Creating a client session..." << std::endl;
