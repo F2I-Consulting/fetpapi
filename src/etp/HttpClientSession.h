@@ -95,11 +95,15 @@ namespace ETP_NS
 				return;
 			}
 
+			// Reality check: IPv6 is unlikely to be available yet
+			std::vector<tcp::endpoint> endpoints(results.begin(), results.end());
+			std::stable_partition(endpoints.begin(), endpoints.end(), [](auto entry) {return entry.protocol() == tcp::v4(); });
+
 			// Make the connection on the IP address we get from a lookup
 			boost::asio::async_connect(
 				socket_,
-				results.begin(),
-				results.end(),
+				endpoints.begin(),
+				endpoints.end(),
 				std::bind(
 					&HttpClientSession::on_connect,
 					shared_from_this(),

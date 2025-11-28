@@ -21,8 +21,6 @@ under the License.
 #include "../AbstractSession.h"
 #include "../EtpHelpers.h"
 
-#include "../../tools/date.h"
-
 using namespace ETP_NS;
 
 void ProtocolHandlers::printDataObject(const Energistics::Etp::v12::Datatypes::Object::DataObject & dataObject)
@@ -37,16 +35,15 @@ void ProtocolHandlers::printDataObject(const Energistics::Etp::v12::Datatypes::O
 	}
 	std::cout << "name : " << dataObject.resource.name << std::endl;
 	if (dataObject.resource.sourceCount) {
-		std::cout << "source count : " << dataObject.resource.sourceCount.get() << std::endl;
+		std::cout << "source count : " << dataObject.resource.sourceCount.value() << std::endl;
 	}
 	if (dataObject.resource.targetCount) {
-		std::cout << "target count : " << dataObject.resource.targetCount.get() << std::endl;
+		std::cout << "target count : " << dataObject.resource.targetCount.value() << std::endl;
 	}
 
-	std::cout << "lastChanged : ";
+	std::cout << "lastChanged timestamp : ";
 	if (dataObject.resource.lastChanged >= 0) {
-		auto duration = std::chrono::microseconds(dataObject.resource.lastChanged);
-		std::cout << date::format("%FT%TZ", date::floor<std::chrono::microseconds>(duration));
+		std::cout << dataObject.resource.lastChanged;
 	}
 	else {
 		std::cout << "unknown";

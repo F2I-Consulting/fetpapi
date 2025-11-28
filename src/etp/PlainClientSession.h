@@ -35,28 +35,61 @@ namespace ETP_NS
 		virtual ~PlainClientSession() = default;
 
 		// Called by the base class
-		FETPAPI_DLL_IMPORT_OR_EXPORT websocket::stream<tcp::socket>& ws() { return ws_; }
+#if BOOST_VERSION < 107000
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::unique_ptr<websocket::stream<tcp::socket>>& ws() { return ws_; }
+#else
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::unique_ptr<websocket::stream<boost::beast::tcp_stream>>& ws() { return ws_; }
+#endif
 
 		bool isTls() const final{ return false; }
 
-		void on_resolve(boost::system::error_code ec, tcp::resolver::results_type results)
+		void asyncConnect(const tcp::resolver::results_type& results)
 		{
-			if (ec) {
-				std::cerr << "on_resolve : " << ec.message() << std::endl;
-			}
+			// Reality check: IPv6 is unlikely to be available yet
+			std::vector<tcp::endpoint> endpoints = std::vector<tcp::endpoint>(results.begin(), results.end());
+			std::stable_partition(endpoints.begin(), endpoints.end(), [](auto entry) {return entry.protocol() == tcp::v4(); });
+
+#if BOOST_VERSION < 107000
+			ws_.reset(new websocket::stream<tcp::socket>(ioc));
+			ws_->write_buffer_size(frameSize_);
+			ws_->binary(true);
 
 			// Make the connection on the IP address we get from a lookup
 			boost::asio::async_connect(
-				ws_.next_layer(),
-				results.begin(),
-				results.end(),
+				ws_->next_layer(),
+				endpoints.begin(),
+				endpoints.end(),
 				std::bind(
-					&AbstractClientSessionCRTP::on_connect,
+					&AbstractClientSessionCRTP::on_ssl_handshake,
 					std::static_pointer_cast<AbstractClientSessionCRTP>(shared_from_this()),
 					std::placeholders::_1));
+#else
+			ws_.reset(new websocket::stream<boost::beast::tcp_stream>(ioc));
+			ws_->write_buffer_bytes(frameSize_);
+			ws_->binary(true);
+
+			// Make the connection on the IP address we get from a lookup
+			boost::beast::get_lowest_layer(*ws_).async_connect(
+				endpoints,
+				boost::beast::bind_front_handler(
+					&PlainClientSession::on_connect,
+					std::static_pointer_cast<PlainClientSession>(shared_from_this())));
+#endif
 		}
 
+#if BOOST_VERSION > 106900
+		void on_connect(boost::beast::error_code ec, tcp::resolver::results_type::endpoint_type)
+		{
+			on_ssl_handshake(ec);
+		}
+#endif
+
 	private:
-		websocket::stream<tcp::socket> ws_;
+#if BOOST_VERSION < 107000
+		std::unique_ptr<websocket::stream<tcp::socket>> ws_;
+#else
+		std::unique_ptr<websocket::stream<boost::beast::tcp_stream>> ws_;
+#endif
+		std::size_t frameSize_;
 	};
 }

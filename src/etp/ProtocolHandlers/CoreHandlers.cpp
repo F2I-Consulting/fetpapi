@@ -46,7 +46,7 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 		auto search = os.endpointCapabilities.find("MaxWebSocketMessagePayloadSize");
 		if (search != os.endpointCapabilities.end() &&
 			search->second.item.idx() == 3) {
-			const int64_t maxWebSocketMessagePayloadSize = search->second.item.get_long();
+			const uint64_t maxWebSocketMessagePayloadSize = search->second.item.get_long();
 			if (maxWebSocketMessagePayloadSize > 0 &&
 				maxWebSocketMessagePayloadSize < session->getMaxWebSocketMessagePayloadSize()) {
 				session->setMaxWebSocketMessagePayloadSize(maxWebSocketMessagePayloadSize);
@@ -54,6 +54,10 @@ void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Mes
 		}
 
 		session->setEtpSessionClosed(false);
+		{
+			std::lock_guard<std::mutex> lock(session->identifierMutex);
+			std::copy(os.sessionId.array.begin(), os.sessionId.array.end(), session->identifier.begin());
+		}
 		on_OpenSession(os, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Core::CloseSession::messageTypeId) {
@@ -104,7 +108,7 @@ void CoreHandlers::on_RequestSession(const Energistics::Etp::v12::Protocol::Core
 
 void CoreHandlers::on_OpenSession(const Energistics::Etp::v12::Protocol::Core::OpenSession &, int64_t)
 {
-	session->fesapi_log("The session has been opened with the default core protocol handlers.");
+	session->fesapi_log("The session", session->getIdentifier(), "has been opened with the default core protocol handlers.");
 }
 
 void CoreHandlers::on_CloseSession(const Energistics::Etp::v12::Protocol::Core::CloseSession &, int64_t)
@@ -117,7 +121,7 @@ void CoreHandlers::on_ProtocolException(const Energistics::Etp::v12::Protocol::C
 {
 	std::cerr << "EXCEPTION received for message_id " << correlationId << std::endl;
 	if (pe.error) {
-		std::cerr << "Single error code " << pe.error.get().code << " : " << pe.error.get().message << std::endl;
+		std::cerr << "Single error code " << pe.error.value().code << " : " << pe.error.value().message << std::endl;
 	}
 	else {
 		std::cerr << "One or more error code : " << std::endl;

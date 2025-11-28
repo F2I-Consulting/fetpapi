@@ -40,7 +40,6 @@ namespace COMMON_NS
 
 namespace ETP_NS
 {
-	class AbstractSession;
 
 	namespace EtpHelpers {
 
@@ -61,14 +60,14 @@ namespace ETP_NS
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::string getDataspaceUri(const std::string& uri);
 
 		/**
-		* @param session Provide this parameter if you want to send a protocol exception in case of non validation.
+		* Validate an ETP URI
 		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::ErrorInfo validateUri(const std::string & uri, AbstractSession* session = nullptr);
+		FETPAPI_DLL_IMPORT_OR_EXPORT bool validateUri(const std::string& uri);
 
 		/**
-		* @param session Provide this parameter if you want to send a protocol exception in case of non validation.
+		* Validate an ETP dataobject URI
 		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Datatypes::ErrorInfo validateDataObjectUri(const std::string & uri, AbstractSession* session = nullptr);
+		FETPAPI_DLL_IMPORT_OR_EXPORT bool validateDataObjectUri(const std::string& uri);
 
 		/**
 		* Build a protocol exception message which only contains a single error message (not a messsage map).

@@ -1,13 +1,13 @@
 name: github-actions
 on: [push, pull_request]
 jobs:
-  windows-2019:
-    runs-on: windows-2019
+  windows-2022:
+    runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Boost install
         run: |
-          (New-Object System.Net.WebClient).DownloadFile("https://archives.boost.io/release/1.87.0/binaries/boost_1_87_0-msvc-14.2-64.exe", "${{ runner.temp }}\boost.exe")
+          (New-Object System.Net.WebClient).DownloadFile("https://archives.boost.io/release/1.88.0/binaries/boost_1_88_0-msvc-14.2-64.exe", "${{ runner.temp }}\boost.exe")
           Start-Process -Wait -FilePath "${{ runner.temp }}\boost.exe" "/SILENT","/SP-","/SUPPRESSMSGBOXES","/DIR=${{ runner.temp }}\boost-install"
       - name: AVRO install
         run: |
@@ -19,7 +19,7 @@ jobs:
           cd ${{ runner.temp }}
           mkdir avro-cpp-build
           cd avro-cpp-build
-          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-install ${{ runner.temp }}/avro-cpp-1.11.3
+          cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-install ${{ runner.temp }}/avro-cpp-1.11.3
           cmake --build . --config Release --target avrocpp_s -j2
           cmake --install .
       - name: CMake build and install
@@ -27,15 +27,15 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
+          cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
           cmake --build . --config Release -j2
-  windows-2019-with-fesapi:
-    runs-on: windows-2019
+  windows-2022-with-fesapi:
+    runs-on: windows-2022
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Boost install
         run: |
-          (New-Object System.Net.WebClient).DownloadFile("https://archives.boost.io/release/1.87.0/binaries/boost_1_87_0-msvc-14.2-64.exe", "${{ runner.temp }}\boost.exe")
+          (New-Object System.Net.WebClient).DownloadFile("https://archives.boost.io/release/1.88.0/binaries/boost_1_88_0-msvc-14.2-64.exe", "${{ runner.temp }}\boost.exe")
           Start-Process -Wait -FilePath "${{ runner.temp }}\boost.exe" "/SILENT","/SP-","/SUPPRESSMSGBOXES","/DIR=${{ runner.temp }}\boost-install"
       - name: AVRO install
         run: |
@@ -47,24 +47,24 @@ jobs:
           cd ${{ runner.temp }}
           mkdir avro-cpp-build
           cd avro-cpp-build
-          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-install ${{ runner.temp }}/avro-cpp-1.11.3
+          cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/avro-cpp-install ${{ runner.temp }}/avro-cpp-1.11.3
           cmake --build . --config Release --target avrocpp_s -j2
           cmake --install .
       - name: FESAPI install
         run: |
-          (New-Object System.Net.WebClient).DownloadFile("https://github.com/F2I-Consulting/fesapi/releases/download/v2.12.1.0/fesapi2_12_1_0-cpp-vs2019-x64.zip", "${{ runner.temp }}\fesapi.zip")
+          (New-Object System.Net.WebClient).DownloadFile("https://github.com/F2I-Consulting/fesapi/releases/download/v2.14.0.0/fesapi2_14_0_0-cpp-vs2019-x64.zip", "${{ runner.temp }}\fesapi.zip")
           7z x ${{ runner.temp }}\fesapi.zip -o${{ runner.temp }}
       - name: CMake build and install
         run: |
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -G"Visual Studio 16 2019" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi2_12_1_0-cpp-vs2019-x64 -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
+          cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi2_14_0_0-cpp-vs2019-x64 -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
           cmake --build . --config Release -j2
   ubuntu-22:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: APT install
         run: |
           sudo apt update
@@ -91,8 +91,8 @@ jobs:
   ubuntu-22-java11:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: '11'
@@ -137,8 +137,8 @@ jobs:
       CC: ${{ matrix.cc }}
       CXX: ${{ matrix.cxx }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: '11'
@@ -148,13 +148,16 @@ jobs:
           sudo apt install -y ${{ matrix.xcc_pkg }} libhdf5-dev libminizip-dev libboost-all-dev
       - name: FESAPI install
         run: |
-          git clone --branch v2.12.1.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
+          git clone --branch v2.14.0.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src
           cd ${{ runner.temp }}
           mkdir fesapi-build
           cd fesapi-build
           cmake -DMINIZIP_INCLUDE_DIR=/usr/include/minizip -DMINIZIP_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libminizip.so.1.0.0 -DCMAKE_BUILD_TYPE=Release -DWITH_JAVA_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fesapi-install -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} ${{ runner.temp }}/fesapi-src
           cmake --build . -j2
           cmake --install .
+          mkdir -p ${{ runner.temp }}/fesapi-install/include/fesapi
+          cd ${{ runner.temp }}/fesapi-src/src
+          find . -name "*.h" -exec cp --parents \{\} ${{ runner.temp }}/fesapi-install/include/fesapi/ \;
       - name: AVRO INSTALL
         run: |
           curl https://archive.apache.org/dist/avro/avro-1.11.3/cpp/avro-cpp-1.11.3.tar.gz -o ${{ runner.temp }}/avro-cpp-1.11.3.tar.gz
@@ -172,31 +175,31 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.12.1.0.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.14.0.0.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
           cmake --build . --config Release -j2
   build_wheels_windows:
     name: Build wheels on windows-latest
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Stub `setup.py` check
         # It will be generated during CMake run
         # https://github.com/pypa/cibuildwheel/issues/1139
         run: touch python/setup.py
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21.3
+        uses: pypa/cibuildwheel@v3.2.1
         env:
           CIBW_BUILD: cp38-win_amd64 cp39-win_amd64 cp310-win_amd64 cp311-win_amd64 cp312-win_amd64 cp313-win_amd64
           CIBW_ARCHS: auto64
           CIBW_BEFORE_ALL: >
             %VCPKG_INSTALLATION_ROOT%\vcpkg install boost-uuid minizip hdf5[zlib] &&
             cd ${{ runner.temp }} &&
-            powershell -Command "(New-Object System.Net.WebClient).DownloadFile('https://github.com/F2I-Consulting/fesapi/archive/refs/tags/v2.12.1.0.tar.gz', '${{ runner.temp }}\fesapi-2.12.1.0.tar.gz')" &&
-            7z x ${{ runner.temp }}\fesapi-2.12.1.0.tar.gz -o${{ runner.temp }} &&
-            7z x ${{ runner.temp }}\fesapi-2.12.1.0.tar -o${{ runner.temp }} &&
+            powershell -Command "(New-Object System.Net.WebClient).DownloadFile('https://github.com/F2I-Consulting/fesapi/archive/refs/tags/v2.14.0.0.tar.gz', '${{ runner.temp }}\fesapi-2.14.0.0.tar.gz')" &&
+            7z x ${{ runner.temp }}\fesapi-2.14.0.0.tar.gz -o${{ runner.temp }} &&
+            7z x ${{ runner.temp }}\fesapi-2.14.0.0.tar -o${{ runner.temp }} &&
             mkdir fesapi-build &&
             cd fesapi-build &&
-            cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fesapi-install ${{ runner.temp }}\fesapi-2.12.1.0 &&
+            cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fesapi-install ${{ runner.temp }}\fesapi-2.14.0.0 &&
             cmake --build . --config Release -j2 &&
             cmake --build . --config Release --target INSTALL &&
             %VCPKG_INSTALLATION_ROOT%\vcpkg install openssl boost-beast avro-cpp &&
@@ -221,13 +224,14 @@ jobs:
     name: Build wheels on ubuntu-latest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Stub `setup.py` check
         # It will be generated during CMake run
         # https://github.com/pypa/cibuildwheel/issues/1139
         run: touch python/setup.py
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21.3
+        # Above cibuildwheel@v2.22.0, GNU 14 is most likely used instead of GNU 12 or 13 which makes AVRO 1.11.3 not compiling
+        uses: pypa/cibuildwheel@v2.22.0
         env:
           CIBW_BUILD: cp38-manylinux_* cp39-manylinux_* cp310-manylinux_* cp311-manylinux_* cp312-manylinux_* cp313-manylinux_*
           CIBW_ARCHS: auto64
@@ -239,11 +243,11 @@ jobs:
             yum install -y epel-release &&
             yum --enablerepo=epel install -y minizip1.2-devel hdf5-devel cmake3 &&
             cd / &&
-            wget https://github.com/F2I-Consulting/fesapi/archive/refs/tags/v2.12.1.0.zip &&
-            unzip v2.12.1.0.zip &&
+            wget https://github.com/F2I-Consulting/fesapi/archive/refs/tags/v2.14.0.0.zip &&
+            unzip v2.14.0.0.zip &&
             mkdir fesapi-build &&
             cd fesapi-build &&
-            cmake3 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:STRING=/fesapi-install /fesapi-2.12.1.0 &&
+            cmake3 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX:STRING=/fesapi-install /fesapi-2.14.0.0 &&
             cmake3 --build . -j2 --config Release &&
             cmake3 --install . &&
             cd / &&
@@ -277,13 +281,13 @@ jobs:
     name: Build wheels on macos-14
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Stub `setup.py` check
         # It will be generated during CMake run
         # https://github.com/pypa/cibuildwheel/issues/1139
         run: touch python/setup.py
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.21.3
+        uses: pypa/cibuildwheel@v3.2.1
         env:
           CIBW_BUILD: cp38-macosx_* cp39-macosx_* cp310-macosx_* cp311-macosx_* cp312-macosx_* cp313-macosx_*
           CIBW_ARCHS: auto64
@@ -312,11 +316,11 @@ jobs:
             cmake --build . -j2 --config Release &&
             cmake --install . &&
             cd ${{ github.workspace }}/.. &&
-            wget --no-verbose https://github.com/F2I-Consulting/fesapi/archive/refs/tags/v2.12.1.0.zip &&
-            unzip v2.12.1.0.zip &&
+            wget --no-verbose https://github.com/F2I-Consulting/fesapi/archive/refs/tags/v2.14.0.0.zip &&
+            unzip v2.14.0.0.zip &&
             mkdir fesapi-build &&
             cd fesapi-build &&
-            cmake -DCMAKE_BUILD_TYPE=Release -DBOOST_ROOT=${{ github.workspace }}/../boost-install -DMINIZIP_ROOT=${{ github.workspace }}/../minizip-install -DHDF5_ROOT=${{ github.workspace }}/../hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/../fesapi-install ${{ github.workspace }}/../fesapi-2.12.1.0 &&
+            cmake -DCMAKE_BUILD_TYPE=Release -DBOOST_ROOT=${{ github.workspace }}/../boost-install -DMINIZIP_ROOT=${{ github.workspace }}/../minizip-install -DHDF5_ROOT=${{ github.workspace }}/../hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/../fesapi-install ${{ github.workspace }}/../fesapi-2.14.0.0 &&
             cmake --build . -j2 --config Release &&
             cmake --install . &&            
             cd ${{ github.workspace }}/.. &&
@@ -329,6 +333,8 @@ jobs:
             cd ${{ github.workspace }}/.. &&
             wget --no-verbose https://archive.apache.org/dist/avro/avro-1.11.3/cpp/avro-cpp-1.11.3.tar.gz &&
             tar xf avro-cpp-1.11.3.tar.gz &&
+            sed -i '' 's/cmake_minimum_required (VERSION 3.1)/cmake_minimum_required (VERSION 3.5)/' avro-cpp-1.11.3/CMakeLists.txt &&
+            sed -i '' 's/if (CMAKE_VERSION VERSION_GREATER_EQUAL 3.0)/if (APPLE)/' avro-cpp-1.11.3/CMakeLists.txt &&
             sed -i '' 's/install (TARGETS avrocpp avrocpp_s/install (TARGETS avrocpp_s/' avro-cpp-1.11.3/CMakeLists.txt &&
             sed -i '' 's/install (TARGETS avrogencpp RUNTIME DESTINATION bin)//' avro-cpp-1.11.3/CMakeLists.txt &&
             mkdir avro-build &&

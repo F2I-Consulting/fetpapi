@@ -21,7 +21,11 @@ under the License.
 
 #include <fesapi/common/EpcDocument.h>
 #include <fesapi/resqml2/BoundaryFeature.h>
+#include <fesapi/resqml2/ContinuousProperty.h>
+#include <fesapi/resqml2/Grid2dRepresentation.h>
+#include <fesapi/resqml2/HorizonInterpretation.h>
 #include <fesapi/resqml2/PointSetRepresentation.h>
+#include <fesapi/resqml2_0_1/ContinuousProperty.h>
 #include <fesapi/resqml2_0_1/LocalDepth3dCrs.h>
 
 #include "etp/ClientSessionLaunchers.h"
@@ -47,6 +51,7 @@ void printHelp()
 	std::cout << "\tBlockingImport" << std::endl << "\t\tList all dataobjects from the project/study named dataspace (or the first dataspace) and get the first one in a blocking way" << std::endl << std::endl;
 	std::cout << "\tBlockingExport" << std::endl << "\t\tPut a dummy horizon feature into a dummy dataspace which is also created" << std::endl << std::endl;
 	std::cout << "\tPing" << std::endl << "\t\tPing the server" << std::endl << std::endl;
+	std::cout << "\tPutDummyHorizon" << std::endl << "\t\tPut a dummy horizon to the store" << std::endl << std::endl;
 	std::cout << "\tList" << std::endl << "\t\tList the objects which have been got from ETP to the in-memory Dataobject repository" << std::endl << std::endl;
 	std::cout << "\tPutXmlAndHdfAtOnce" << std::endl << "\t\tPut a dummy point set representation to the store sending XML and HDF5 points at once." << std::endl << std::endl;
 	std::cout << "\tGetDataspaces" << std::endl << "\t\tGet all store dataspaces" << std::endl << std::endl;
@@ -68,6 +73,7 @@ void printHelp()
 	std::cout << "\tDeleteDataObject URI" << std::endl << "\t\tDelete a dataobject" << std::endl << std::endl;
 	std::cout << "\tDeleteDataspace URI" << std::endl << "\t\tDelete a dataspace" << std::endl << std::endl;
 	std::cout << "\tGetDeletedResources dataspaceURI" << std::endl << "\t\tGet all deleted resources" << std::endl << std::endl;
+	std::cout << "\tGetAllRepsAndProps dataspace" << std::endl << "\t\tGet all the representations and all their properties from a dataspace" << std::endl << std::endl;
 	std::cout << "\tquit" << std::endl << "\t\tQuit the session." << std::endl << std::endl;
 }
 
@@ -80,11 +86,10 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 	while (command != "quit")
 	{
 		if (session->isEtpSessionClosed()) {
-			command = "quit";
+			std::cout << "The ETP session has been lost. You should quit if FETPAPI cannot reconnect by itself" << std::endl;
 		}
-		else {
-			std::getline(std::cin, command);
-		}
+
+		std::getline(std::cin, command);
 		auto commandTokens = tokenize(command, ' ');
 
 		if (commandTokens.empty()) {
@@ -191,8 +196,8 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 			const auto resources = session->getResources(mb.context, mb.scope);
 			for (auto& resource : resources) {
 				std::cout << resource.uri << std::endl;
-				if (resource.has_sourceCount()) std::cout << "Source count: " << resource.sourceCount.get() << std::endl;
-				if (resource.has_targetCount()) std::cout << "Target count: " << resource.targetCount.get() << std::endl;
+				if (resource.has_sourceCount()) std::cout << "Source count: " << resource.sourceCount.value() << std::endl;
+				if (resource.has_targetCount()) std::cout << "Target count: " << resource.targetCount.value() << std::endl;
 			}
 			continue;
 		}
@@ -239,9 +244,9 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				std::cerr << " The UUID " << uuid << " from URI " << commandTokens[1] << " does not correspond to a representation which is on client side. Please get first this dataobject from the store before to call GetXYZPoints on it." << std::endl;
 				continue;
 			}
-			auto xyzPointCount = rep->getXyzPointCountOfPatch(0);
+			auto xyzPointCount = rep->getXyzPointCountOfAllPatches();
 			std::unique_ptr<double[]> xyzPoints(new double[xyzPointCount * 3]);
-			rep->getXyzPointsOfPatch(0, xyzPoints.get());
+			rep->getXyzPointsOfAllPatches(xyzPoints.get());
 			for (auto xyzPointIndex = 0; xyzPointIndex < xyzPointCount && xyzPointIndex < 20; ++xyzPointIndex) {
 				std::cout << "XYZ Point Index " << xyzPointIndex << " : " << xyzPoints[xyzPointIndex * 3] << "," << xyzPoints[xyzPointIndex * 3 + 1] << "," << xyzPoints[xyzPointIndex * 3 + 2] << std::endl;
 			}
@@ -268,6 +273,72 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 			auto dataspaces = session->getDataspaceInfo(dataspaceUris);
 			for (auto& dataspace : dataspaces) {
 				std::cout << dataspace.uri << std::endl;
+			}
+		}
+		else if (commandTokens[0] == "GetAllRepsAndProps") {
+			if (commandTokens.size() == 1) {
+				std::cerr << "Please provide some ETP URIs of a dataspace" << std::endl;
+				continue;
+			}
+			std::map<std::string, std::string> dataspaceUris;
+			dataspaceUris["0"] = commandTokens[1];
+
+			Energistics::Etp::v12::Datatypes::Object::ContextInfo ctxInfo;
+			ctxInfo.uri = dataspaceUris["0"];
+			ctxInfo.depth = 0;
+			ctxInfo.navigableEdges = Energistics::Etp::v12::Datatypes::Object::RelationshipKind::Both;
+			ctxInfo.includeSecondaryTargets = false;
+			ctxInfo.includeSecondarySources = false;
+			const auto resources = session->getResources(ctxInfo, Energistics::Etp::v12::Datatypes::Object::ContextScopeKind::targets);
+			std::cout << "************ GET ALL " << resources.size() << " DATAOBJECTS ************" << std::endl;
+			if (!resources.empty()) {
+				std::map< std::string, std::string > query;
+				size_t index = 0;
+				for (auto& resource : resources) {
+					query[std::to_string(index++)] = resource.uri;
+				}
+				const auto dataobjects = session->getDataObjects(query);
+				for (const auto& dataobjectEntry : dataobjects) {
+					repo.addOrReplaceGsoapProxy(dataobjectEntry.second.data, ETP_NS::EtpHelpers::getDataObjectType(dataobjectEntry.second.resource.uri), ETP_NS::EtpHelpers::getDataspaceUri(dataobjectEntry.second.resource.uri));
+				}
+				// Parse reps
+				auto global_start = std::chrono::high_resolution_clock::now();
+				for (auto* rep : repo.getDataObjects<RESQML2_NS::AbstractRepresentation>()) {
+					std::cout << "Representation " << rep->getTitle() << std::endl;
+					std::unique_ptr<double[]> ijkGridPoints(new double[rep->getXyzPointCountOfAllPatches() * 3]);
+					auto t_start = std::chrono::high_resolution_clock::now();
+					try {
+						rep->getXyzPointsOfAllPatches(ijkGridPoints.get());
+						std::cout << "XYZ POINTS IN  " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " ms" << std::endl;
+					}
+					catch (...) {
+						std::cerr << "Error reading XYZ points." << std::endl;
+					}
+
+					auto allProps = rep->getValuesPropertySet();
+					size_t propIndex = 1;
+					for (auto* prop : allProps) {
+						size_t valuesCount = prop->getValuesCountOfPatch(0);
+						if (dynamic_cast<RESQML2_NS::ContinuousProperty*>(prop) != nullptr) {
+							std::cout << "Continuous Prop " << propIndex++ << "/" << allProps.size() << " : " << prop->getTitle() << std::endl;
+							std::unique_ptr<double[]> propValues(new double[valuesCount]);
+							t_start = std::chrono::high_resolution_clock::now();
+							prop->getDoubleValuesOfPatch(0, propValues.get());
+							std::cout << "Continuous Prop IN  " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " ms" << std::endl;
+						}
+						else {
+							std::cout << "Non Continuous Prop " << propIndex++ << "/" << allProps.size() << " : " << prop->getTitle() << std::endl;
+							std::unique_ptr<int[]> propValues(new int[valuesCount]);
+							t_start = std::chrono::high_resolution_clock::now();
+							prop->getInt32ValuesOfPatch(0, propValues.get());
+							std::cout << "Non Continuous Prop IN  " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " ms" << std::endl;
+						}
+					}
+				}
+				std::cout << "GLOBALLY DONE IN  " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - global_start).count() << " ms" << std::endl;
+			}
+			else {
+				std::cout << "There is no dataobject in this dataspace" << std::endl;
 			}
 		}
 		else if (commandTokens[0] == "PutDataspace") {
@@ -418,6 +489,106 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				std::cout << "PING at " << ping.currentDateTime << std::endl;
 				std::cout << "Please Set Verbosity to 1 if you don't see anything" << std::endl;
 			}
+			else if (commandTokens[0] == "PutDummyHorizon") {
+				Energistics::Etp::v12::Datatypes::Object::Dataspace dataspace;
+				dataspace.path = "demo/PutHorizon3";
+				dataspace.uri = "eml:///dataspace('" + dataspace.path + "')";
+				Energistics::Etp::v12::Datatypes::DataValue dataValue;
+				Energistics::Etp::v12::Datatypes::ArrayOfString aos;
+
+				aos.values.push_back("data.default.viewers@osdu.example.com");
+				//aos.values.push_back("data.default.viewers@opendes.contoso.com");
+				dataValue.item.set_ArrayOfString(aos);
+				dataspace.customData["viewers"] = dataValue;
+
+				aos.values[0] = "data.default.owners@osdu.example.com";
+				//aos.values[0] = "data.default.owners@opendes.contoso.com";
+				dataValue.item.set_ArrayOfString(aos);
+				dataspace.customData["owners"] = dataValue;
+
+				aos.values[0] = "osdu-public-usa-dataset";
+				//aos.values[0] = "opendes-ReservoirDDMS-Legal-Tag";
+				dataValue.item.set_ArrayOfString(aos);
+				dataspace.customData["legaltags"] = dataValue;
+
+				aos.values[0] = "US";
+				dataValue.item.set_ArrayOfString(aos);
+				dataspace.customData["otherRelevantDataCountries"] = dataValue;
+
+				std::map<std::string, std::string> deleteDs;
+				deleteDs["0"] = dataspace.uri;
+				session->deleteDataspaces(deleteDs);
+
+				std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace> dataspaces;
+				dataspaces["0"] = dataspace;
+				auto successKeys = session->putDataspaces(dataspaces);
+				if (successKeys.size() == 1) std::cout << "Dataspace has been put" << std::endl;
+				else std::cout << "Error when putting dataspace" << std::endl;
+				
+				COMMON_NS::DataObjectRepository tmpRepo;
+				tmpRepo.setDefaultStandard(COMMON_NS::DataObjectRepository::EnergisticsStandard::RESQML2_0_1);
+				tmpRepo.setDefaultStandard(COMMON_NS::DataObjectRepository::EnergisticsStandard::EML2_0);
+				auto* local_3d_crs = tmpRepo.createLocalDepth3dCrs("b2129512-b8f9-4721-8a70-1abac53ef406", "Default CRS",
+					0.0, 0.0, 0.0, 0.0,
+					gsoap_resqml2_0_1::eml20__LengthUom::m, 5215,
+					gsoap_resqml2_0_1::eml20__LengthUom::m, "Unknown",
+					false);
+				tmpRepo.setDefaultCrs(local_3d_crs);
+				tmpRepo.setHdfProxyFactory(new ETP_NS::FesapiHdfProxyFactory(session.get()));
+				auto* hdf_proxy = tmpRepo.createHdfProxy("f8160b8f-0517-4c55-ab6e-ed8bcdc87111", "Hdf Proxy",
+					".", "fake.h5",
+					COMMON_NS::DataObjectRepository::openingMode::OVERWRITE);
+				hdf_proxy->setUriSource(dataspace.uri);
+				tmpRepo.setDefaultHdfProxy(hdf_proxy);
+				auto* horizon_feature = tmpRepo.createHorizon("c0f12836-41f4-44a8-a3fd-95ac78f6232d", "My horizon feature");
+				auto* horizon_interpretation = tmpRepo.createHorizonInterpretation(horizon_feature, "dc217b29-8ceb-4b77-bdcc-6bcfd9cd3baf", "My horizon interpretation");
+				auto* horizon_grid_2d_representation = tmpRepo.createGrid2dRepresentation(horizon_interpretation, "7721fb3c-39ba-4d59-ba0b-f9451706a94c", "My horizon representation");
+
+				std::vector< std::string > dataspacesToLock;
+				dataspacesToLock.push_back(dataspace.uri);
+				
+				auto transaction_start = std::chrono::high_resolution_clock::now();
+
+				session->startTransaction(dataspacesToLock);
+
+				const size_t ni = 10000;
+				const size_t nj = 1000;
+				std::unique_ptr<double[]> resqml_points(new double[ni * nj]);
+				for (double i = 0; i < ni * nj; ++i) {
+					resqml_points[(int)i] = i * 100;
+				}
+				horizon_grid_2d_representation->setGeometryAsArray2dOfExplicitZ(resqml_points.get(), ni, nj, hdf_proxy,
+					0.0, 0.0, 0.0,
+					1.0, 0.0, 0.0, 25.0,
+					0.0, 1.0, 0.0, 50.0);
+
+				for (size_t propIndex = 0; propIndex < 1; ++propIndex) {
+					auto t_start = std::chrono::high_resolution_clock::now();
+					auto* prop = tmpRepo.createContinuousProperty(horizon_grid_2d_representation, "", "", 1, gsoap_eml2_3::eml23__IndexableElement::nodes, gsoap_resqml2_0_1::resqml20__ResqmlUom::m,
+						gsoap_resqml2_0_1::resqml20__ResqmlPropertyKind::length);
+					std::unique_ptr<double[]> prop_values(new double[ni * nj]);
+					prop->pushBackDoubleHdf5Array2dOfValues(prop_values.get(), ni, nj, hdf_proxy);
+					std::cout << " Pushed prop " << propIndex << " in " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " ms" << std::endl;
+					std::cout << " Global time  " << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - transaction_start).count() << " s" << std::endl;
+				}
+
+				tmpRepo.setUriSource(dataspace.uri);
+				std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataobjects;
+				auto allUuids = tmpRepo.getUuids();
+				int index = 0;
+				for (auto& uuid : allUuids)
+					dataobjects[std::to_string(index++)] = ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(tmpRepo, uuid);
+				successKeys = session->putDataObjects(dataobjects);
+				for (std::string& str : successKeys)
+					std::cout << "successKey : " << str << std::endl;
+
+				std::cout << "commit : " << session->commitTransaction() << std::endl;
+
+				if (session != nullptr && !session->isWebSocketSessionClosed())
+					horizon_grid_2d_representation->getZValues(resqml_points.get());
+
+				tmpRepo.clear();
+			}
 			else if (commandTokens[0] == "GetDataspaces") {
 				const auto dataspaces = session->getDataspaces();
 				for (auto& dataspace : dataspaces) {
@@ -509,8 +680,9 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				Energistics::Etp::v12::Datatypes::AnyArray data;
 				Energistics::Etp::v12::Datatypes::ArrayOfInt arrayOfInt;
 				arrayOfInt.values = { 0,1,2,3,4,5,6,7,8,9 };
-				data.item.set_ArrayOfInt(arrayOfInt);
+				data.item.set_ArrayOfInt(std::move(arrayOfInt));
 				pda.dataArrays["0"].array.data = data;
+				std::cout << "Start sending the array" << std::endl;
 
 				session->send(pda, 0, 0x02);
 			}
@@ -552,7 +724,9 @@ int main(int argc, char **argv)
 	std::string authorization;
 	std::getline(std::cin, authorization);
 
-	bool successfulConnection = false;
+	std::cout << "Give the data partition id you want to direct your requests (or hit enter if no data partition)" << std::endl;
+	std::string dataPartition;
+	std::getline(std::cin, dataPartition);
 
 	COMMON_NS::DataObjectRepository repo;
 	repo.setDefaultStandard(COMMON_NS::DataObjectRepository::EnergisticsStandard::RESQML2_0_1);
@@ -562,16 +736,16 @@ int main(int argc, char **argv)
 	ETP_NS::InitializationParameters initializationParams = argc == 2
 		? ETP_NS::InitializationParameters(gen(), argv[1]) // URL based
 		: ETP_NS::InitializationParameters(gen(), argv[1], std::stoi(argv[2]), argc < 4 ? "/" : argv[3]); // IP Port and target based
-	std::map< std::string, std::string > additionalHeaderField = { {"data-partition-id", "osdu"} }; // Example for OSDU RDDMS
+	std::map< std::string, std::string > additionalHeaderField = { {"data-partition-id", dataPartition} }; // Example for OSDU RDDMS
 	initializationParams.setAdditionalHandshakeHeaderFields(additionalHeaderField);
 
 	std::cout << "Creating a client session..." << std::endl;
 	auto clientSession = ETP_NS::ClientSessionLaunchers::createClientSession(&initializationParams, authorization);
+	clientSession->setVerbose(false);
 
 	repo.setHdfProxyFactory(new ETP_NS::FesapiHdfProxyFactory(clientSession.get()));
 
 	std::thread sessionThread(&ETP_NS::ClientSession::run, clientSession);
-	sessionThread.detach();
 	
 	// Wait for the ETP session to be opened
 	auto t_start = std::chrono::high_resolution_clock::now();
@@ -584,6 +758,8 @@ int main(int argc, char **argv)
 
 	clientSession->setTimeOut(60000);
 	askUser(clientSession, repo);
+
+	sessionThread.join();
 
 #ifdef _WIN32
 	_CrtDumpMemoryLeaks();

@@ -57,10 +57,7 @@ namespace ETP_NS
 		* If the ETP session is not set up, it returns the nil UUID.
 		*/
 		const boost::uuids::uuid& getIdentifier() {
-			if (isEtpSessionClosed()) {
-				identifier = boost::uuids::nil_uuid();
-			}
-
+			std::lock_guard<std::mutex> lock(identifierMutex);
 			return identifier;
 		}
 
@@ -77,11 +74,6 @@ namespace ETP_NS
 		double getTimeOut() const {
 			return _timeOut;
 		}
-
-		/**
-		* The list of subscriptions recorded by customers on this session.
-		*/
-		std::unordered_map<int64_t, Energistics::Etp::v12::Datatypes::Object::SubscriptionInfo> subscriptions;
 
 		/**
 		 * Set the Core protocol handlers
@@ -169,7 +161,7 @@ namespace ETP_NS
 		* @param messageFlags	The message flags to be sent within the header
 		* @return The ID of the message that has been put in the sending queue.
 		*/
-		template<typename T> void sendAndBlock(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
+		template<typename T> int64_t sendAndBlock(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
 			int64_t msgId = send(mb, correlationId, messageFlags);
 			// The correlationId of the first message MUST be set to 0 and the correlationId of all successive
@@ -184,6 +176,8 @@ namespace ETP_NS
 					throw std::runtime_error("Time out waiting for a response of message id " + std::to_string(msgId));
 				}
 			}
+
+			return msgId;
 		}
 
 		/**
@@ -197,12 +191,22 @@ namespace ETP_NS
 		*/
 		template<typename T> int64_t sendWithSpecificHandler(const T & mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
 		{
+			if (mb.protocolId != 0 || mb.messageTypeId != 1) {
+				// Wait for a reconnection
+				while (isEtpSessionClosed() && !isCloseRequested()) {}
+				// Check if reconnection is successful
+				if (isEtpSessionClosed() && !isCloseRequested()) {
+					throw std::runtime_error("The ETP session could not be opened in order to send the message.");
+				}
+			}
+
 			// Encode the message into AVRO format
 			auto queueItem = encode(mb, correlationId, messageFlags);
 
 			const std::lock_guard<std::mutex> sendingQueueLock(sendingQueueMutex);
 			// Set the handlers which are going to be called for the response to this sent message
 			std::get<2>(queueItem) = specificHandler;
+
 			// Push the message into the queue
 			sendingQueue.push(queueItem);
 			fesapi_log("*************************************************");
@@ -224,6 +228,47 @@ namespace ETP_NS
 		}
 
 		/**
+		* Send a message to the server and register a specific handler for the response and block the thread until the answer of the server has been processed by the handlers
+		* Please look at setTimeOut if you want to set the default timeout value which is 10 000 ms.
+		*
+		* @param mb				The ETP message body to send
+		* @param correlationId	The ID of the message which this message is answering to.
+		* @param messageFlags	The message flags to be sent within the header
+		* @return The ID of the message that has been put in the sending queue.
+		*/
+		template<typename T> int64_t sendWithSpecificHandlerAndBlock(const T& mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
+		{
+			const int64_t msgId = sendWithSpecificHandler(mb, specificHandler, correlationId, messageFlags);
+			// The correlationId of the first message MUST be set to 0 and the correlationId of all successive
+			// messages in the same multipart request or notification MUST be set to the messageId of the first
+			// message of the multipart request or notification.
+			// If the request message is itself multipart, the correlationId of each message of the multipart
+			// response MUST be set to the messageId of the FIRST message in the multipart request.
+
+			const auto t_start = std::chrono::high_resolution_clock::now();
+			while (isMessageStillProcessing(correlationId == 0 ? msgId : correlationId)) {
+				if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > _timeOut) {
+					throw std::runtime_error("Time out waiting for a response of message id " + std::to_string(msgId));
+				}
+			}
+
+			// If the message has not been answered correctly
+			if (isEtpSessionClosed() && !isCloseRequested()) {
+				// Wait for a reconnection
+				while (isEtpSessionClosed() && !isCloseRequested()) {}
+				// Check if reconnection is successfull
+				if (isEtpSessionClosed()) {
+					throw std::runtime_error("The ETP session could not be opened in order to send again the message.");
+				}
+				else {
+					return sendWithSpecificHandlerAndBlock(mb, specificHandler, correlationId, messageFlags);
+				}
+			}
+
+			return msgId;
+		}
+
+		/**
 		 * Close the web socket session (without sending any ETP message)
 		 */
 		virtual void do_close() = 0;
@@ -238,18 +283,6 @@ namespace ETP_NS
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void on_read(boost::system::error_code ec, std::size_t bytes_transferred);
 
-		void on_write(boost::system::error_code ec, std::size_t) {
-			if(ec) {
-				std::cerr << "on_write : " << ec.message() << std::endl;
-			}
-
-			// Remove the sent message from the queue
-			const std::lock_guard<std::mutex> sendingQueueLock(sendingQueueMutex);
-			sendingQueue.pop();
-
-			do_write();
-		}
-
 		void on_close(boost::system::error_code ec) {
 			if(ec) {
 				std::cerr << "on_close : " << ec.message() << std::endl;
@@ -261,6 +294,11 @@ namespace ETP_NS
 			// If we get here then the connection is closed gracefully
 			webSocketSessionClosed = true;
 		}
+
+		/**
+		* Check if the the closing of the session has been requested by this session or not.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT bool isCloseRequested() const { return isCloseRequested_; }
 
 		/**
 		* Check if the websocket session (starting after the HTTP handshake/upgrade) is not opened yet or has been closed.
@@ -275,10 +313,9 @@ namespace ETP_NS
 			const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
 			return (!sendingQueue.empty() && std::get<0>(sendingQueue.front()) <= msgId) || specificProtocolHandlers.count(msgId) > 0;
 		}
-		//FETPAPI_DLL_IMPORT_OR_EXPORT bool isMessageStillProcessing(int64_t msgId) const { return specificProtocolHandlers.count(msgId) > 0; }
 
-		virtual void setMaxWebSocketMessagePayloadSize(int64_t value) = 0;
-		int64_t getMaxWebSocketMessagePayloadSize() const { return maxWebSocketMessagePayloadSize; }
+		virtual void setMaxWebSocketMessagePayloadSize(uint64_t value) = 0;
+		uint64_t getMaxWebSocketMessagePayloadSize() const { return maxWebSocketMessagePayloadSize; }
 
 		/****************
 		***** CORE ******
@@ -290,7 +327,7 @@ namespace ETP_NS
 		* This method does not block.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT void close() {
-			isCloseRequested = true;
+			isCloseRequested_ = true;
 			sendingQueueMutex.lock();
 			specificProtocolHandlersMutex.lock();
 			if (specificProtocolHandlers.empty() && sendingQueue.empty()) {
@@ -313,7 +350,7 @@ namespace ETP_NS
 		FETPAPI_DLL_IMPORT_OR_EXPORT void closeAndBlock() {
 			close();
 			auto t_start = std::chrono::high_resolution_clock::now();
-			while (!isEtpSessionClosed()) {
+			while (!webSocketSessionClosed) {
 				if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > _timeOut) {
 					throw std::runtime_error("Time out waiting for closing");
 				}
@@ -325,8 +362,6 @@ namespace ETP_NS
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT bool isEtpSessionClosed() const { return webSocketSessionClosed || etpSessionClosed; }
 
-		void setEtpSessionClosed(bool etpSessionClosed_) { etpSessionClosed = etpSessionClosed_; }
-
 		/****************
 		*** DATASPACE ***
 		****************/
@@ -334,7 +369,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to discover all dataspaces available on the store.
 		* This function should be used with caution if Dataspace Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		*
 		* @param storeLastWriteFilter	An optional filter to limit the dataspaces returned by date/time last saved to the store.
 		*								The store returns a list of dataspaces whose last changed date/time is greater than the specified date/time.
@@ -346,7 +381,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to create one or more dataspaces.
 		* This function should be used with caution if Dataspace Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		*
 		* @param dataspaces	ETP general map : One each for each dataspace the customer wants to add or update.
 		* @param return		The map keys corresponding to the dataspaces which have been put successfully into the store.
@@ -356,7 +391,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to delete one or more dataspaces.
 		* This function should be used with caution if Dataspace Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		*
 		* @param dataspaceUris	ETP general map where the values must be the URIs for the dataspaces the customer wants to delete.
 		* @param return			The map keys corresponding to the dataspaces which have been deleted successfully.
@@ -370,7 +405,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to discover information of particular dataspaces.
 		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		*
 		* @param dataspaceUris	ETP general map : One each for each dataspace, identified by their URI, the customer wants to get info about.
 		* @param return			The dataspaces the store could return.
@@ -378,20 +413,11 @@ namespace ETP_NS
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> getDataspaceInfo(const std::map<std::string, std::string>& dataspaceUris);
 
 		/**
-		* Copy by reference some dataspaces into another one.
-		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
-		*
-		* @param sourceDataspaceUris	ETP general map : One each for each source dataspace to be copied. They are identified by their URI.
-		* @param targetDataspaceUri		The URI of the ETP dataspace where the sourceDataspaces have to be copied by reference.
-		* @param return					The map keys corresponding to the dataspaces which have been successfully copied into the target dataspace.
-		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> copyDataspacesContent(const std::map<std::string, std::string>& sourceDataspaceUris, const std::string& targetDataspaceUri);
-
-		/**
 		* A customer sends to a store to lock or unlock one or more dataspaces.
 		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
+		* An OSDU locked dataspace will have its custom data "locked" to true. It will also have its custom datm "read-only" to true for all users.
+		* As a reminder, a custom data "read-only" can be true with a custom data "locked" to false in case the dataspace is not locked but in read only for the particular current ETP user.
 		*
 		* @param dataspaceUris	ETP general map where the values must be the URIs for the dataspaces the customer wants to lock or unlock.
 		* @param lock			true for locking the dataspaces, false to unlock the dataspaces
@@ -400,15 +426,26 @@ namespace ETP_NS
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> lockDataspaces(const std::map<std::string, std::string>& dataspaceUris, bool lock);
 
 		/**
+		* Copy by reference some dataspaces into another one.
+		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
+		*
+		* @param sourceDataspaceUris	ETP general map : One each for each source dataspace to be copied. They are identified by their URI.
+		* @param targetDataspaceUri		The URI of the ETP dataspace where the sourceDataspaces have to be copied by reference.
+		* @param return					The map keys corresponding to the dataspaces which have been successfully copied into the target dataspace.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> copyDataspacesContent(const std::map<std::string, std::string>& sourceDataspaceUris, const std::string& targetDataspaceUri);
+
+		/**
 		* Copy by reference some dataobjects into another dataspace.
 		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		*
-		* @param sourceUris			ETP general map : One each for each source dataobject to be copied. They are identified by their URI.
-		* @param targetDataspaceUri	The URI of the ETP dataspace where the source dataobjects have to be copied by reference.
-		* @param return				The map keys corresponding to the dataobjects which have been successfully copied into the target dataspace.
+		* @param sourceDataobjectUris	ETP general map : One for each source dataobject to be copied. They are identified by their URI.
+		* @param targetDataspaceUri		The URI of the ETP dataspace where the source dataobjects have to be copied by reference.
+		* @param return					The map keys corresponding to the dataobjects which have been successfully copied into the target dataspace.
 		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> copyToDataspace(const std::map<std::string, std::string>& sourceUris, const std::string& targetDataspaceUri);
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> copyToDataspace(const std::map<std::string, std::string>& sourceDataobjectUris, const std::string& targetDataspaceUri);
 
 		/****************
 		*** DISCOVERY ***
@@ -417,7 +454,7 @@ namespace ETP_NS
 		/**
 		* A Customer sends this message to a store to discover data objects in the store.
 		* This function should be used with caution if Discovery Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		*
 		* @param context				Includes the URI of the dataspace or data object to begin the discovery, what specific types of data objects are of interest,
 		*								and how many "levels" of relationships in the model to discover, among others. 
@@ -438,7 +475,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to discover data objects that have been deleted (which are sometimes called "tombstones").
 		* This function should be used with caution if Discovery Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		*
 		* @param dataspaceUri			The URI of the dataspace where the objects were deleted.
 		* @param deleteTimeFilter		An optional filter to filter the discovery on a date when the data object was deleted in a particular store.
@@ -459,7 +496,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to get one or more data objects, each identified by a URI.
 		* This function should be used with caution if Store Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		*
 		* @param uris	ETP general map where the values MUST be the URIs of a data object to be retrieved.
 		* @param return	The received dataobjects in a map where the key makes the link between the asked uris and the received dataobjects.
@@ -469,7 +506,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to add or update one or more data objects.
 		* This function should be used with caution if Store Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		*
 		* @param uris	ETP general map where the values MUST be the data for each data object in the request, including each one's URI.
 		* @param return	The map keys corresponding to the dataObjects which have been put successfully.
@@ -479,7 +516,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to delete one or more data objects from the store.  
 		* This function should be used with caution if Store Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		*
 		* @param uris	ETP general map where the values MUST be the URIs of a data object to be deleted.
 		* @param return	The map keys corresponding to the dataObjects which have been deleted successfully.
@@ -491,16 +528,20 @@ namespace ETP_NS
 		**********************/
 
 		/**
-		* A customer sends to a store to copy by value a dataobject with potentially some of its sources based on their datatypes.
+		* A customer sends to a store to copy by value a dataobject in the same dataspace with potentially some of its sources based on their datatypes.
 		* This function should be used with caution if Store OSDU Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		*
-		* @param uri			The URI of the dataobject to be copied.
-		* @param sourcesDepth	The number of level if sources of the dataobject to be copied as well.
-		* @param sourcesDepth	The number of level if sources of the dataobject to be copied as well.
-		* @param return	The received dataobjects in a map where the key makes the link between the asked uris and the received dataobjects.
+		* @param sourceDataobjectUri	The URI of the dataobject to be copied.
+		* @param sourcesDepth			The "depth" or how many "levels" (or "jumps") in the data model (graph) from the starting point (specified by the URI) that you want to copy
+		*								Depth MUST always be greater than zero.
+		* @param dataObjectTypes		Optionally, specify the types of data objects that you want to copy.
+		*								The default is an empty array, which means ALL data types negotiated for the current ETP session.
+		*								They ARE case sensitive. EXAMPLES: "witsml20.Well", "witsml20.Wellbore", "prodml21.WellTest", "resqml20.obj_TectonicBoundaryFeature", "eml21.DataAssuranceRecord"
+		*								To indicate that all data objects within a data schema version are supported, you can use a star (*) as a wildcard, EXAMPLE: "witsml20.*", "prodml21.*", "resqml20.*"
+		* @param return					The received dataobjects in a map where the key makes the link between the asked uris and the received dataobjects.
 		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> copyDataObjectsByValue(const std::string& uri, int32_t sourcesDepth = 0, const std::vector<std::string>& dataObjectTypes = {});
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::vector<std::string> copyDataObjectsByValue(const std::string& sourceDataobjectUri, int32_t sourcesDepth = 0, const std::vector<std::string>& dataObjectTypes = {});
 
 		/****************
 		** TRANSACTION **
@@ -509,7 +550,7 @@ namespace ETP_NS
 		/**
 		* A customer sends to a store to begin a transaction.
 		* This function should be used with caution if Transaction Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		*
 		* @param dataspaceUris  Indicates the dataspaces involved in the transaction. An empty STRING means the default dataspace. An empty LIST means all dataspaces.
 		* @param readOnly		Indicates that the request in the transaction is read-only (i.e., "get" messages).
@@ -521,7 +562,7 @@ namespace ETP_NS
 		* A customer sends to a store to commit and end a transaction. This message implies that the customer 
 		* has received from or sent to the store all the data required for some purpose. The customer asserts that 
 		* the data sent in the scope of this transaction is a consistent unit of work.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		* @return Failure message or empty string if success
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::string rollbackTransaction();
@@ -530,7 +571,7 @@ namespace ETP_NS
 		* A customer sends to a store to cancel a transaction. The store MUST disregard any requests or data sent 
 		* with that transaction. The current transaction (the one being canceled) MUST NOT change the state of 
 		* the store.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		* @return Failure message or empty string if success
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::string commitTransaction();
@@ -570,7 +611,7 @@ namespace ETP_NS
 		/// which should be determined by the limits imposed by the WebSocket library used by each endpoint. 
 		/// See https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/using_websocket/messages.html
 		/// and https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/read_message_max/overload1.html
-		int64_t maxWebSocketMessagePayloadSize{ 16000000 };
+		uint64_t maxWebSocketMessagePayloadSize{ 16000000 };
 		/// Indicates if the websocket session is opened or not. It becomes false after the websocket handshake
 		std::atomic<bool> webSocketSessionClosed{ true };
 		/// Indicates if the ETP1.2 session is opened or not. It becomes false after the requestSession and openSession message
@@ -585,9 +626,11 @@ namespace ETP_NS
 		/// The next available message id.
 		std::atomic<int64_t> messageId;
 		/// The identifier of the session
-		boost::uuids::uuid identifier;
+		boost::uuids::uuid identifier{ boost::uuids::nil_uuid() };
+		std::mutex identifierMutex;
 		/// Indicates that the endpoint request to close the websocket session 
-		bool isCloseRequested{ false };
+		bool isCloseRequested_{ false };
+		size_t reconnectionTryCount_ = 0;
 
 		AbstractSession() = default;
 
@@ -595,6 +638,11 @@ namespace ETP_NS
 
 		void flushReceivingBuffer() {
 			receivedBuffer.consume(receivedBuffer.size());
+		}
+
+		void setEtpSessionClosed(bool etpSessionClosed_) {
+			etpSessionClosed = etpSessionClosed_;
+			reconnectionTryCount_ = 0;
 		}
 
 		/**
@@ -624,7 +672,7 @@ namespace ETP_NS
 			avro::encode(*e, mh);
 			avro::encode(*e, mb);
 			e->flush();
-			const int64_t byteCount = e->byteCount();
+			const uint64_t byteCount = e->byteCount();
 
 			if (byteCount < maxWebSocketMessagePayloadSize) {
 				return std::make_tuple(mh.messageId, *avro::snapshot(*out).get(), nullptr);
@@ -713,5 +761,7 @@ namespace ETP_NS
 
 			protocolHandlers[protocolId] = coreHandlers;
 		}
+
+		friend void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader& mh, avro::DecoderPtr d);
 	};
 }

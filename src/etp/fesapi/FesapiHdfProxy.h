@@ -18,12 +18,13 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
+#include <set>
+#include <type_traits>
+
 #include <fesapi/common/HdfProxyFactory.h>
 
 #include "../AbstractSession.h"
 #include "../ProtocolHandlers/GetFullDataArrayHandlers.h"
-
-#include <type_traits>
 
 namespace ETP_NS
 {
@@ -36,7 +37,7 @@ namespace ETP_NS
 		*/
 		FesapiHdfProxy(AbstractSession* session, COMMON_NS::DataObjectRepository * repo, const std::string & guid, const std::string & title, const std::string & packageDirAbsolutePath, const std::string & externalFilePath, COMMON_NS::DataObjectRepository::openingMode hdfPermissionAccess) :
 			EML2_NS::AbstractHdfProxy(packageDirAbsolutePath, externalFilePath, hdfPermissionAccess), session_(session), compressionLevel(0) {
-			xmlNs_ = repo->getDefaultEmlVersion() == COMMON_NS::DataObjectRepository::EnergisticsStandard::EML2_0 ? "eml20" : "eml23";
+			xmlNs_ = repo->getDefaultEmlVersion() == COMMON_NS::DataObjectRepository::EnergisticsStandard::EML2_3 ? "eml23" : "eml20";
 			initGsoapProxy(repo, guid, title, 20);
 		}
 
@@ -183,6 +184,26 @@ namespace ETP_NS
 			const uint64_t* numValuesInEachDimension,
 			const uint64_t* offsetValuesInEachDimension,
 			unsigned int numDimensions) final;
+
+		/**
+		* Find the array associated with @p groupName and @p name and write to it asynchronously.
+		* @param groupName                      The name of the group associated with the array.
+		* @param name                           The name of the array (potentially with multi dimensions).
+		* @param datatype						The specific datatype of the values to write.
+		* @param values                         1d array of specific datatype ordered firstly by fastest direction.
+		* @param numValuesInEachDimension       Number of values in each dimension of the array to write. They are ordered from fastest index to slowest index.
+		* @param offsetValuesInEachDimension    Offset values in each dimension of the array to write. They are ordered from fastest index to slowest index.
+		* @param numDimensions                  The number of the dimensions of the array to write.
+		* @return								All message ids which have been sent to the ETP server
+		*/
+		std::set<int64_t> async_writeArrayNdSlab(
+			const std::string& groupName,
+			const std::string& name,
+			COMMON_NS::AbstractObject::numericalDatatypeEnum datatype,
+			const void* values,
+			const uint64_t* numValuesInEachDimension,
+			const uint64_t* offsetValuesInEachDimension,
+			unsigned int numDimensions);
 
 		/**
 		* Write some string attributes into a group
@@ -486,18 +507,9 @@ namespace ETP_NS
 
 		template<typename T> void readArrayNdOfValues(const std::string & datasetName, T* values)
 		{
-			if (!isOpened()) {
-				throw std::runtime_error("The ETP session does not look to be opened. Please reconnect.");
-			}
-
 			// First get metadata about the data array
-			std::vector<uint64_t> dimensions;
-
 			const Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata daMetadata = getDataArrayMetadata(datasetName);
-			size_t valueCount = 1;
-			for (int64_t dim : daMetadata.dimensions) {
-				valueCount *= dim;
-			}
+			const size_t valueCount = std::accumulate(daMetadata.dimensions.begin(), daMetadata.dimensions.end(), 1, std::multiplies<int64_t>());
 
 			size_t valueSize = 1;
 			switch (daMetadata.transportArrayType) {
@@ -509,7 +521,7 @@ namespace ETP_NS
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble: valueSize = 8; break;
 			default: throw std::logic_error("Array of strings are not implemented yet");
 			}
-			size_t wholeSize = valueCount * valueSize;
+			const size_t wholeSize = valueCount * valueSize;
 
 			// maxAllowedDataArraySize is the maximum serialized size of the array (including avro extra longs for array blocks)
 			const size_t maxAllowedDataArraySize = session_->getMaxWebSocketMessagePayloadSize()
@@ -520,13 +532,10 @@ namespace ETP_NS
 			auto specializedHandler = std::make_shared<GetFullDataArrayHandlers<T>>(session_, values);
 			if (wholeSize + (valueCount + 1) * 8 <= maxAllowedDataArraySize) { // There can be valueCount array block and there is the length of the last array block
 				// Get all values at once
-				const int64_t msgId = session_->sendWithSpecificHandler(
+				session_->sendWithSpecificHandlerAndBlock(
 					buildGetDataArraysMessage(datasetName),
 					specializedHandler,
 					0, 0x02);
-
-				// Blocking loop
-				while (session_->isMessageStillProcessing(msgId)) {}
 			}
 			else {
 				// Get all values using several data subarrays allowing more granular streaming
@@ -586,13 +595,10 @@ namespace ETP_NS
 				}
 
 				// Send message
-				const int64_t msgId = session_->sendWithSpecificHandler(
+				session_->sendWithSpecificHandlerAndBlock(
 					msg,
 					specializedHandler,
 					0, 0x02);
-
-				// Blocking loop
-				while (session_->isMessageStillProcessing(msgId)) {}
 			}
 		}
 	};

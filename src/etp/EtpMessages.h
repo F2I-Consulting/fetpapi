@@ -1,18 +1,20 @@
 #ifndef ETP_MESSAGES__
 #define ETP_MESSAGES__
 
-#include <chrono>
-#include <map>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <iostream>
 #include <array>
-#include <boost/optional.hpp>
-#include <boost/any.hpp>
+#include <chrono>
+#include <iostream>
+#include <map>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <variant>
+#include <vector>
+
 #include <avro/Specific.hh>
 #include <avro/Encoder.hh>
 #include <avro/Decoder.hh>
+#include <avro/Exception.hh>
 
 namespace Energistics {
 	namespace Etp {
@@ -347,9 +349,9 @@ namespace Energistics {
 			namespace Protocol {
 				namespace Dataspace {
 					struct GetDataspaces {
-						boost::optional<int64_t> storeLastWriteFilter;
-						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.is_initialized(); }
-						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.get(); }
+						std::optional<int64_t> storeLastWriteFilter;
+						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.has_value(); }
+						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.value(); }
 						static constexpr int messageTypeId=1;
 						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
 					};
@@ -400,9 +402,9 @@ namespace Energistics {
 				namespace Discovery {
 					struct GetDeletedResources {
 						std::string dataspaceUri;
-						boost::optional<int64_t> deleteTimeFilter;
-						bool has_deleteTimeFilter() const { return deleteTimeFilter.is_initialized(); }
-						int64_t get_deleteTimeFilter() const { return deleteTimeFilter.get(); }
+						std::optional<int64_t> deleteTimeFilter;
+						bool has_deleteTimeFilter() const { return deleteTimeFilter.has_value(); }
+						int64_t get_deleteTimeFilter() const { return deleteTimeFilter.value(); }
 						std::vector<std::string> dataObjectTypes;
 						static constexpr int messageTypeId=5;
 						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
@@ -737,7 +739,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				struct ArrayOfNullableBoolean {
-					std::vector<boost::optional<bool>> values;
+					std::vector<std::optional<bool>> values;
 				};
 			}
 		}
@@ -758,7 +760,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				struct ArrayOfNullableInt {
-					std::vector<boost::optional<int32_t>> values;
+					std::vector<std::optional<int32_t>> values;
 				};
 			}
 		}
@@ -779,7 +781,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Datatypes {
 				struct ArrayOfNullableLong {
-					std::vector<boost::optional<int64_t>> values;
+					std::vector<std::optional<int64_t>> values;
 				};
 			}
 		}
@@ -847,122 +849,80 @@ namespace Energistics {
 			namespace Datatypes {
 				struct AnyArrayitem_t {
 				private:
-					size_t idx_=0;
-					boost::any value_;
+					std::variant<
+						Energistics::Etp::v12::Datatypes::ArrayOfBoolean,
+						Energistics::Etp::v12::Datatypes::ArrayOfInt,
+						Energistics::Etp::v12::Datatypes::ArrayOfLong,
+						Energistics::Etp::v12::Datatypes::ArrayOfFloat,
+						Energistics::Etp::v12::Datatypes::ArrayOfDouble,
+						Energistics::Etp::v12::Datatypes::ArrayOfString,
+						std::string
+					> value_;
 
 				public:
-					size_t idx() const { return idx_; }
+					size_t idx() const { return value_.index(); }
 					Energistics::Etp::v12::Datatypes::ArrayOfBoolean const & get_ArrayOfBoolean() const {
-						if (idx_ != 0) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfBoolean const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfBoolean& get_ArrayOfBoolean()  {
-						if (idx_ != 0) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfBoolean& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfBoolean>(value_);
 					}
 					void set_ArrayOfBoolean(const Energistics::Etp::v12::Datatypes::ArrayOfBoolean& v) {
-						idx_ = 0;
-						value_ = v;
+						value_.emplace<Energistics::Etp::v12::Datatypes::ArrayOfBoolean>(v);
+					}
+					void set_ArrayOfBoolean(const Energistics::Etp::v12::Datatypes::ArrayOfBoolean&& v) {
+						value_.emplace<Energistics::Etp::v12::Datatypes::ArrayOfBoolean>(std::move(v));
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfInt const & get_ArrayOfInt() const {
-						if (idx_ != 1) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfInt const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfInt& get_ArrayOfInt()  {
-						if (idx_ != 1) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfInt& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfInt>(value_);
 					}
 					void set_ArrayOfInt(const Energistics::Etp::v12::Datatypes::ArrayOfInt& v) {
-						idx_ = 1;
-						value_ = v;
+						value_.emplace<Energistics::Etp::v12::Datatypes::ArrayOfInt>(v);
+					}
+					void set_ArrayOfInt(const Energistics::Etp::v12::Datatypes::ArrayOfInt&& v) {
+						value_.emplace<Energistics::Etp::v12::Datatypes::ArrayOfInt>(std::move(v));
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfLong const & get_ArrayOfLong() const {
-						if (idx_ != 2) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfLong const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfLong& get_ArrayOfLong()  {
-						if (idx_ != 2) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfLong& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfLong>(value_);
 					}
 					void set_ArrayOfLong(const Energistics::Etp::v12::Datatypes::ArrayOfLong& v) {
-						idx_ = 2;
-						value_ = v;
+						value_.emplace<Energistics::Etp::v12::Datatypes::ArrayOfLong>(v);
+					}
+					void set_ArrayOfLong(const Energistics::Etp::v12::Datatypes::ArrayOfLong&& v) {
+						value_.emplace<Energistics::Etp::v12::Datatypes::ArrayOfLong>(std::move(v));
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfFloat const & get_ArrayOfFloat() const {
-						if (idx_ != 3) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfFloat const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfFloat& get_ArrayOfFloat()  {
-						if (idx_ != 3) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfFloat& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfFloat>(value_);
 					}
 					void set_ArrayOfFloat(const Energistics::Etp::v12::Datatypes::ArrayOfFloat& v) {
-						idx_ = 3;
-						value_ = v;
+						value_.emplace<Energistics::Etp::v12::Datatypes::ArrayOfFloat>(v);
+					}
+					void set_ArrayOfFloat(const Energistics::Etp::v12::Datatypes::ArrayOfFloat&& v) {
+						value_.emplace<Energistics::Etp::v12::Datatypes::ArrayOfFloat>(std::move(v));
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfDouble const & get_ArrayOfDouble() const {
-						if (idx_ != 4) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfDouble const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfDouble& get_ArrayOfDouble()  {
-						if (idx_ != 4) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfDouble& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfDouble>(value_);
 					}
 					void set_ArrayOfDouble(const Energistics::Etp::v12::Datatypes::ArrayOfDouble& v) {
-						idx_ = 4;
-						value_ = v;
+						value_.emplace<Energistics::Etp::v12::Datatypes::ArrayOfDouble>(v);
+					}
+					void set_ArrayOfDouble(const Energistics::Etp::v12::Datatypes::ArrayOfDouble&& v) {
+						value_.emplace<Energistics::Etp::v12::Datatypes::ArrayOfDouble>(std::move(v));
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfString const & get_ArrayOfString() const {
-						if (idx_ != 5) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfString const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfString& get_ArrayOfString()  {
-						if (idx_ != 5) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfString& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfString>(value_);
 					}
 					void set_ArrayOfString(const Energistics::Etp::v12::Datatypes::ArrayOfString& v) {
-						idx_ = 5;
-						value_ = v;
+						value_.emplace<Energistics::Etp::v12::Datatypes::ArrayOfString>(v);
+					}
+					void set_ArrayOfString(const Energistics::Etp::v12::Datatypes::ArrayOfString&& v) {
+						value_.emplace<Energistics::Etp::v12::Datatypes::ArrayOfString>(std::move(v));
 					}
 					std::string const & get_bytes() const {
-						if (idx_ != 6) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< std::string const & >(value_);
-					}
-					std::string& get_bytes()  {
-						if (idx_ != 6) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< std::string& >(value_);
+						return std::get<std::string>(value_);
 					}
 					void set_bytes(const std::string& v) {
-						idx_ = 6;
-						value_ = v;
+						value_.emplace<std::string>(v);
+					}
+					void set_bytes(const std::string&& v) {
+						value_.emplace<std::string>(std::move(v));
 					}
 				};
 			}
@@ -1015,42 +975,42 @@ namespace avro {
 					{
 						Energistics::Etp::v12::Datatypes::ArrayOfInt vv;
 						avro::decode(d, vv);
-						v.set_ArrayOfInt(vv);
+						v.set_ArrayOfInt(std::move(vv));
 					}
 					break;
 				case 2:
 					{
 						Energistics::Etp::v12::Datatypes::ArrayOfLong vv;
 						avro::decode(d, vv);
-						v.set_ArrayOfLong(vv);
+						v.set_ArrayOfLong(std::move(vv));
 					}
 					break;
 				case 3:
 					{
 						Energistics::Etp::v12::Datatypes::ArrayOfFloat vv;
 						avro::decode(d, vv);
-						v.set_ArrayOfFloat(vv);
+						v.set_ArrayOfFloat(std::move(vv));
 					}
 					break;
 				case 4:
 					{
 						Energistics::Etp::v12::Datatypes::ArrayOfDouble vv;
 						avro::decode(d, vv);
-						v.set_ArrayOfDouble(vv);
+						v.set_ArrayOfDouble(std::move(vv));
 					}
 					break;
 				case 5:
 					{
 						Energistics::Etp::v12::Datatypes::ArrayOfString vv;
 						avro::decode(d, vv);
-						v.set_ArrayOfString(vv);
+						v.set_ArrayOfString(std::move(vv));
 					}
 					break;
 				case 6:
 					{
 						std::string vv;
 						avro::decode(d, vv);
-						v.set_bytes(vv);
+						v.set_bytes(std::move(vv));
 					}
 					break;
 			}
@@ -1188,299 +1148,140 @@ namespace Energistics {
 			namespace Datatypes {
 				struct DataValueitem_t {
 				private:
-					size_t idx_=0;
-					boost::any value_;
+					std::variant<
+						std::nullptr_t,
+						bool,
+						int32_t,
+						int64_t,
+						float,
+						double,
+						std::string,
+						Energistics::Etp::v12::Datatypes::ArrayOfBoolean,
+						Energistics::Etp::v12::Datatypes::ArrayOfNullableBoolean,
+						Energistics::Etp::v12::Datatypes::ArrayOfInt,
+						Energistics::Etp::v12::Datatypes::ArrayOfNullableInt,
+						Energistics::Etp::v12::Datatypes::ArrayOfLong,
+						Energistics::Etp::v12::Datatypes::ArrayOfNullableLong,
+						Energistics::Etp::v12::Datatypes::ArrayOfFloat,
+						Energistics::Etp::v12::Datatypes::ArrayOfDouble,
+						Energistics::Etp::v12::Datatypes::ArrayOfString,
+						Energistics::Etp::v12::Datatypes::ArrayOfBytes,
+						std::vector<std::byte>,
+						Energistics::Etp::v12::Datatypes::AnySparseArray
+					> value_;
 
 				public:
-					size_t idx() const { return idx_; }
-					bool is_null() const { return idx_==0; }
-					void set_null() { idx_=0; value_ = boost::any(); }
-					bool const & get_boolean() const {
-						if (idx_ != 1) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< bool const & >(value_);
-					}
-					bool& get_boolean()  {
-						if (idx_ != 1) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< bool& >(value_);
+					size_t idx() const { return value_.index(); }
+					bool is_null() const { return idx() == 0; }
+					void set_null() { value_ = nullptr; }
+					bool get_boolean() const {
+						return std::get<bool>(value_);
 					}
 					void set_boolean(const bool& v) {
-						idx_ = 1;
 						value_ = v;
 					}
-					int32_t const & get_int() const {
-						if (idx_ != 2) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< int32_t const & >(value_);
-					}
-					int32_t& get_int()  {
-						if (idx_ != 2) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< int32_t& >(value_);
+					int32_t get_int() const {
+						return std::get<int32_t>(value_);
 					}
 					void set_int(const int32_t& v) {
-						idx_ = 2;
 						value_ = v;
 					}
-					int64_t const & get_long() const {
-						if (idx_ != 3) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< int64_t const & >(value_);
-					}
-					int64_t& get_long()  {
-						if (idx_ != 3) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< int64_t& >(value_);
+					int64_t get_long() const {
+						return std::get<int64_t>(value_);
 					}
 					void set_long(const int64_t& v) {
-						idx_ = 3;
 						value_ = v;
 					}
-					float const & get_float() const {
-						if (idx_ != 4) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< float const & >(value_);
-					}
-					float& get_float()  {
-						if (idx_ != 4) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< float& >(value_);
+					float get_float() const {
+						return std::get<float>(value_);
 					}
 					void set_float(const float& v) {
-						idx_ = 4;
 						value_ = v;
 					}
-					double const & get_double() const {
-						if (idx_ != 5) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< double const & >(value_);
-					}
-					double& get_double()  {
-						if (idx_ != 5) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< double& >(value_);
+					double get_double() const {
+						return std::get<double>(value_);
 					}
 					void set_double(const double& v) {
-						idx_ = 5;
 						value_ = v;
 					}
 					std::string const & get_string() const {
-						if (idx_ != 6) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< std::string const & >(value_);
-					}
-					std::string& get_string()  {
-						if (idx_ != 6) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< std::string& >(value_);
+						return std::get<std::string>(value_);
 					}
 					void set_string(const std::string& v) {
-						idx_ = 6;
 						value_ = v;
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfBoolean const & get_ArrayOfBoolean() const {
-						if (idx_ != 7) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfBoolean const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfBoolean& get_ArrayOfBoolean()  {
-						if (idx_ != 7) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfBoolean& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfBoolean>(value_);
 					}
 					void set_ArrayOfBoolean(const Energistics::Etp::v12::Datatypes::ArrayOfBoolean& v) {
-						idx_ = 7;
 						value_ = v;
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfNullableBoolean const & get_ArrayOfNullableBoolean() const {
-						if (idx_ != 8) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfNullableBoolean const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfNullableBoolean& get_ArrayOfNullableBoolean()  {
-						if (idx_ != 8) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfNullableBoolean& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfNullableBoolean>(value_);
 					}
 					void set_ArrayOfNullableBoolean(const Energistics::Etp::v12::Datatypes::ArrayOfNullableBoolean& v) {
-						idx_ = 8;
 						value_ = v;
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfInt const & get_ArrayOfInt() const {
-						if (idx_ != 9) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfInt const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfInt& get_ArrayOfInt()  {
-						if (idx_ != 9) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfInt& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfInt>(value_);
 					}
 					void set_ArrayOfInt(const Energistics::Etp::v12::Datatypes::ArrayOfInt& v) {
-						idx_ = 9;
 						value_ = v;
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfNullableInt const & get_ArrayOfNullableInt() const {
-						if (idx_ != 10) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfNullableInt const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfNullableInt& get_ArrayOfNullableInt()  {
-						if (idx_ != 10) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfNullableInt& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfNullableInt>(value_);
 					}
 					void set_ArrayOfNullableInt(const Energistics::Etp::v12::Datatypes::ArrayOfNullableInt& v) {
-						idx_ = 10;
 						value_ = v;
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfLong const & get_ArrayOfLong() const {
-						if (idx_ != 11) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfLong const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfLong& get_ArrayOfLong()  {
-						if (idx_ != 11) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfLong& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfLong>(value_);
 					}
 					void set_ArrayOfLong(const Energistics::Etp::v12::Datatypes::ArrayOfLong& v) {
-						idx_ = 11;
 						value_ = v;
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfNullableLong const & get_ArrayOfNullableLong() const {
-						if (idx_ != 12) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfNullableLong const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfNullableLong& get_ArrayOfNullableLong()  {
-						if (idx_ != 12) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfNullableLong& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfNullableLong>(value_);
 					}
 					void set_ArrayOfNullableLong(const Energistics::Etp::v12::Datatypes::ArrayOfNullableLong& v) {
-						idx_ = 12;
 						value_ = v;
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfFloat const & get_ArrayOfFloat() const {
-						if (idx_ != 13) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfFloat const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfFloat& get_ArrayOfFloat()  {
-						if (idx_ != 13) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfFloat& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfFloat>(value_);
 					}
 					void set_ArrayOfFloat(const Energistics::Etp::v12::Datatypes::ArrayOfFloat& v) {
-						idx_ = 13;
 						value_ = v;
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfDouble const & get_ArrayOfDouble() const {
-						if (idx_ != 14) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfDouble const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfDouble& get_ArrayOfDouble()  {
-						if (idx_ != 14) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfDouble& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfDouble>(value_);
 					}
 					void set_ArrayOfDouble(const Energistics::Etp::v12::Datatypes::ArrayOfDouble& v) {
-						idx_ = 14;
 						value_ = v;
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfString const & get_ArrayOfString() const {
-						if (idx_ != 15) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfString const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfString& get_ArrayOfString()  {
-						if (idx_ != 15) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfString& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfString>(value_);
 					}
 					void set_ArrayOfString(const Energistics::Etp::v12::Datatypes::ArrayOfString& v) {
-						idx_ = 15;
 						value_ = v;
 					}
 					Energistics::Etp::v12::Datatypes::ArrayOfBytes const & get_ArrayOfBytes() const {
-						if (idx_ != 16) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfBytes const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ArrayOfBytes& get_ArrayOfBytes()  {
-						if (idx_ != 16) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ArrayOfBytes& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ArrayOfBytes>(value_);
 					}
 					void set_ArrayOfBytes(const Energistics::Etp::v12::Datatypes::ArrayOfBytes& v) {
-						idx_ = 16;
 						value_ = v;
 					}
-					std::string const & get_bytes() const {
-						if (idx_ != 17) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< std::string const & >(value_);
-					}
-					std::string& get_bytes()  {
-						if (idx_ != 17) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< std::string& >(value_);
+					std::string get_bytes() const {
+						const auto& bytes = std::get<std::vector<std::byte>>(value_);
+						return std::string(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+
 					}
 					void set_bytes(const std::string& v) {
-						idx_ = 17;
 						value_ = v;
 					}
 					Energistics::Etp::v12::Datatypes::AnySparseArray const & get_AnySparseArray() const {
-						if (idx_ != 18) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::AnySparseArray const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::AnySparseArray& get_AnySparseArray()  {
-						if (idx_ != 18) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::AnySparseArray& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::AnySparseArray>(value_);
 					}
 					void set_AnySparseArray(const Energistics::Etp::v12::Datatypes::AnySparseArray& v) {
-						idx_ = 18;
 						value_ = v;
 					}
 				};
@@ -1492,7 +1293,6 @@ namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::DataValueitem_t> {
 
 		static void encode(Encoder& e, Energistics::Etp::v12::Datatypes::DataValueitem_t v) {
-
 			e.encodeUnionIndex(v.idx());
 			switch (v.idx()) {
 				case 0:
@@ -1841,9 +1641,9 @@ namespace Energistics {
 			namespace Protocol {
 				namespace Core {
 					struct ProtocolException {
-						boost::optional<Energistics::Etp::v12::Datatypes::ErrorInfo> error;
-						bool has_error() const { return error.is_initialized(); }
-						Energistics::Etp::v12::Datatypes::ErrorInfo get_error() const { return error.get(); }
+						std::optional<Energistics::Etp::v12::Datatypes::ErrorInfo> error;
+						bool has_error() const { return error.has_value(); }
+						Energistics::Etp::v12::Datatypes::ErrorInfo get_error() const { return error.value(); }
 						std::map<std::string, Energistics::Etp::v12::Datatypes::ErrorInfo> errors;
 						static constexpr int messageTypeId=1000;
 						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core);
@@ -2770,59 +2570,33 @@ namespace Energistics {
 			namespace Datatypes {
 				struct IndexValueitem_t {
 				private:
-					size_t idx_=0;
-					boost::any value_;
+					std::variant<
+						std::nullptr_t,
+						int64_t,
+						double,
+						Energistics::Etp::v12::Datatypes::ChannelData::PassIndexedDepth
+					> value_;
 
 				public:
-					size_t idx() const { return idx_; }
-					bool is_null() const { return idx_==0; }
-					void set_null() { idx_=0; value_ = boost::any(); }
-					int64_t const & get_long() const {
-						if (idx_ != 1) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< int64_t const & >(value_);
-					}
-					int64_t& get_long()  {
-						if (idx_ != 1) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< int64_t& >(value_);
+					size_t idx() const { return value_.index(); }
+					bool is_null() const { return idx() == 0; }
+					void set_null() { value_ = nullptr; }
+					int64_t get_long() const {
+						return std::get<int64_t>(value_);
 					}
 					void set_long(const int64_t& v) {
-						idx_ = 1;
 						value_ = v;
 					}
-					double const & get_double() const {
-						if (idx_ != 2) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< double const & >(value_);
-					}
-					double& get_double()  {
-						if (idx_ != 2) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< double& >(value_);
+					double get_double() const {
+						return std::get<double>(value_);
 					}
 					void set_double(const double& v) {
-						idx_ = 2;
 						value_ = v;
 					}
 					Energistics::Etp::v12::Datatypes::ChannelData::PassIndexedDepth const & get_PassIndexedDepth() const {
-						if (idx_ != 3) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ChannelData::PassIndexedDepth const & >(value_);
-					}
-					Energistics::Etp::v12::Datatypes::ChannelData::PassIndexedDepth& get_PassIndexedDepth()  {
-						if (idx_ != 3) {
-							throw avro::Exception("Invalid type for union.");
-						}
-						return boost::any_cast< Energistics::Etp::v12::Datatypes::ChannelData::PassIndexedDepth& >(value_);
+						return std::get<Energistics::Etp::v12::Datatypes::ChannelData::PassIndexedDepth>(value_);
 					}
 					void set_PassIndexedDepth(const Energistics::Etp::v12::Datatypes::ChannelData::PassIndexedDepth& v) {
-						idx_ = 3;
 						value_ = v;
 					}
 				};
@@ -2918,9 +2692,9 @@ namespace Energistics {
 						int64_t channelId = 0;
 						Energistics::Etp::v12::Datatypes::IndexValue startIndex;
 						bool dataChanges=false;
-						boost::optional<int32_t> requestLatestIndexCount;
-						bool has_requestLatestIndexCount() const { return requestLatestIndexCount.is_initialized(); }
-						int32_t get_requestLatestIndexCount() const { return requestLatestIndexCount.get(); }
+						std::optional<int32_t> requestLatestIndexCount;
+						bool has_requestLatestIndexCount() const { return requestLatestIndexCount.has_value(); }
+						int32_t get_requestLatestIndexCount() const { return requestLatestIndexCount.value(); }
 					};
 				}
 			}
@@ -4432,12 +4206,12 @@ namespace Energistics {
 						Energistics::Etp::v12::Datatypes::Object::ContextInfo context;
 						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope = Energistics::Etp::v12::Datatypes::Object::ContextScopeKind::targets;
 						bool countObjects=false;
-						boost::optional<int64_t> storeLastWriteFilter;
-						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.is_initialized(); }
-						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.get(); }
-						boost::optional<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind> activeStatusFilter;
-						bool has_activeStatusFilter() const { return activeStatusFilter.is_initialized(); }
-						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() const { return activeStatusFilter.get(); }
+						std::optional<int64_t> storeLastWriteFilter;
+						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.has_value(); }
+						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.value(); }
+						std::optional<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind> activeStatusFilter;
+						bool has_activeStatusFilter() const { return activeStatusFilter.has_value(); }
+						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() const { return activeStatusFilter.value(); }
 						bool includeEdges=false;
 						static constexpr int messageTypeId=1;
 						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Discovery);
@@ -4475,12 +4249,12 @@ namespace Energistics {
 					struct FindResources {
 						Energistics::Etp::v12::Datatypes::Object::ContextInfo context;
 						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope = Energistics::Etp::v12::Datatypes::Object::ContextScopeKind::targets;
-						boost::optional<int64_t> storeLastWriteFilter;
-						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.is_initialized(); }
-						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.get(); }
-						boost::optional<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind> activeStatusFilter;
-						bool has_activeStatusFilter() const { return activeStatusFilter.is_initialized(); }
-						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() const { return activeStatusFilter.get(); }
+						std::optional<int64_t> storeLastWriteFilter;
+						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.has_value(); }
+						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.value(); }
+						std::optional<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind> activeStatusFilter;
+						bool has_activeStatusFilter() const { return activeStatusFilter.has_value(); }
+						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() const { return activeStatusFilter.value(); }
 						static constexpr int messageTypeId=1;
 						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::DiscoveryQuery);
 					};
@@ -4513,12 +4287,12 @@ namespace Energistics {
 					struct FindDataObjects {
 						Energistics::Etp::v12::Datatypes::Object::ContextInfo context;
 						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope = Energistics::Etp::v12::Datatypes::Object::ContextScopeKind::targets;
-						boost::optional<int64_t> storeLastWriteFilter;
-						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.is_initialized(); }
-						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.get(); }
-						boost::optional<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind> activeStatusFilter;
-						bool has_activeStatusFilter() const { return activeStatusFilter.is_initialized(); }
-						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() const { return activeStatusFilter.get(); }
+						std::optional<int64_t> storeLastWriteFilter;
+						bool has_storeLastWriteFilter() const { return storeLastWriteFilter.has_value(); }
+						int64_t get_storeLastWriteFilter() const { return storeLastWriteFilter.value(); }
+						std::optional<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind> activeStatusFilter;
+						bool has_activeStatusFilter() const { return activeStatusFilter.has_value(); }
+						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind get_activeStatusFilter() const { return activeStatusFilter.value(); }
 						std::string format;
 						static constexpr int messageTypeId=1;
 						static constexpr uint16_t protocolId = static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreQuery);
@@ -4612,12 +4386,12 @@ namespace Energistics {
 						std::string uri;
 						std::vector<std::string> alternateUris;
 						std::string name;
-						boost::optional<int32_t> sourceCount;
-						bool has_sourceCount() const { return sourceCount.is_initialized(); }
-						int32_t get_sourceCount() const { return sourceCount.get(); }
-						boost::optional<int32_t> targetCount;
-						bool has_targetCount() const { return targetCount.is_initialized(); }
-						int32_t get_targetCount() const { return targetCount.get(); }
+						std::optional<int32_t> sourceCount;
+						bool has_sourceCount() const { return sourceCount.has_value(); }
+						int32_t get_sourceCount() const { return sourceCount.value(); }
+						std::optional<int32_t> targetCount;
+						bool has_targetCount() const { return targetCount.has_value(); }
+						int32_t get_targetCount() const { return targetCount.value(); }
 						int64_t lastChanged = 0;
 						int64_t storeLastWrite = 0;
 						int64_t storeCreated = 0;
@@ -4752,9 +4526,9 @@ namespace Energistics {
 					struct DataObject {
 						Energistics::Etp::v12::Datatypes::Object::Resource resource;
 						std::string format;
-						boost::optional<Energistics::Etp::v12::Datatypes::Uuid> blobId;
-						bool has_blobId() const { return blobId.is_initialized(); }
-						Energistics::Etp::v12::Datatypes::Uuid get_blobId() const { return blobId.get(); }
+						std::optional<Energistics::Etp::v12::Datatypes::Uuid> blobId;
+						bool has_blobId() const { return blobId.has_value(); }
+						Energistics::Etp::v12::Datatypes::Uuid get_blobId() const { return blobId.value(); }
 						std::string data;
 					};
 				}
@@ -5008,9 +4782,9 @@ namespace Energistics {
 				namespace Object {
 					struct SupportedType {
 						std::string dataObjectType;
-						boost::optional<int32_t> objectCount;
-						bool has_objectCount() const { return objectCount.is_initialized(); }
-						int32_t get_objectCount() const { return objectCount.get(); }
+						std::optional<int32_t> objectCount;
+						bool has_objectCount() const { return objectCount.has_value(); }
+						int32_t get_objectCount() const { return objectCount.value(); }
 						Energistics::Etp::v12::Datatypes::Object::RelationshipKind relationshipKind = Energistics::Etp::v12::Datatypes::Object::RelationshipKind::Primary;
 					};
 				}
@@ -5032,203 +4806,44 @@ namespace avro {
 		}
 	};
 }
-namespace avro {
-	template<> struct codec_traits<boost::optional<bool>> {
-		static void encode(Encoder& e, boost::optional<bool> v) {
-			if (v) {
-				e.encodeUnionIndex(1);
-				avro::encode(e, v.get());
-			}
-			else {
-				e.encodeUnionIndex(0);
-				e.encodeNull();
-			}
-		}
-		static void decode(Decoder& d, boost::optional<bool>& v) {
-			size_t n = d.decodeUnionIndex();
-			if (n >= 2) { throw avro::Exception("Union index too big"); }
-			switch (n) {
-				case 0:
-					{
-						d.decodeNull();
-						v = boost::none;
-					}
-					break;
-				case 1:
-					{
-						bool vv;
-						avro::decode(d, vv);
-						v.emplace(vv);
-					}
-					break;
-			}
-		}
-	};
-}
 
 namespace avro {
-	template<> struct codec_traits<boost::optional<int32_t>> {
-		static void encode(Encoder& e, boost::optional<int32_t> v) {
-			if (v) {
+	/**
+	 * codec_traits for Avro optional assumming that the schema is ["null", T].
+	 */
+	template<typename T>
+	struct codec_traits<std::optional<T>> {
+		/**
+		 * Encodes a given value.
+		 */
+		static void encode(Encoder& e, const std::optional<T>& b) {
+			if (b) {
 				e.encodeUnionIndex(1);
-				avro::encode(e, v.get());
+				avro::encode(e, b.value());
 			}
 			else {
 				e.encodeUnionIndex(0);
 				e.encodeNull();
 			}
 		}
-		static void decode(Decoder& d, boost::optional<int32_t>& v) {
-			size_t n = d.decodeUnionIndex();
-			if (n >= 2) { throw avro::Exception("Union index too big"); }
-			switch (n) {
-				case 0:
-					{
-						d.decodeNull();
-						v = boost::none;
-					}
-					break;
-				case 1:
-					{
-						int32_t vv;
-						avro::decode(d, vv);
-						v.emplace(vv);
-					}
-					break;
-			}
-		}
-	};
-}
 
-namespace avro {
-	template<> struct codec_traits<boost::optional<int64_t>> {
-		static void encode(Encoder& e, boost::optional<int64_t> v) {
-			if (v) {
-				e.encodeUnionIndex(1);
-				avro::encode(e, v.get());
-			}
-			else {
-				e.encodeUnionIndex(0);
-				e.encodeNull();
-			}
-		}
-		static void decode(Decoder& d, boost::optional<int64_t>& v) {
+		/**
+		 * Decodes into a given value.
+		 */
+		static void decode(Decoder& d, std::optional<T>& s) {
 			size_t n = d.decodeUnionIndex();
-			if (n >= 2) { throw avro::Exception("Union index too big"); }
+			if (n >= 2) { throw avro::Exception("Union index too big for optional (expected 0 or 1, got " + std::to_string(n) + ")"); }
 			switch (n) {
 				case 0:
 					{
 						d.decodeNull();
-						v = boost::none;
+						s.reset();
 					}
 					break;
 				case 1:
 					{
-						int64_t vv;
-						avro::decode(d, vv);
-						v.emplace(vv);
-					}
-					break;
-			}
-		}
-	};
-}
-
-namespace avro {
-	template<> struct codec_traits<boost::optional<Energistics::Etp::v12::Datatypes::Uuid>> {
-		static void encode(Encoder& e, boost::optional<Energistics::Etp::v12::Datatypes::Uuid> v) {
-			if (v) {
-				e.encodeUnionIndex(1);
-				avro::encode(e, v.get());
-			}
-			else {
-				e.encodeUnionIndex(0);
-				e.encodeNull();
-			}
-		}
-		static void decode(Decoder& d, boost::optional<Energistics::Etp::v12::Datatypes::Uuid>& v) {
-			size_t n = d.decodeUnionIndex();
-			if (n >= 2) { throw avro::Exception("Union index too big"); }
-			switch (n) {
-				case 0:
-					{
-						d.decodeNull();
-						v = boost::none;
-					}
-					break;
-				case 1:
-					{
-						Energistics::Etp::v12::Datatypes::Uuid vv;
-						avro::decode(d, vv);
-						v.emplace(vv);
-					}
-					break;
-			}
-		}
-	};
-}
-
-namespace avro {
-	template<> struct codec_traits<boost::optional<Energistics::Etp::v12::Datatypes::ErrorInfo>> {
-		static void encode(Encoder& e, boost::optional<Energistics::Etp::v12::Datatypes::ErrorInfo> v) {
-			if (v) {
-				e.encodeUnionIndex(1);
-				avro::encode(e, v.get());
-			}
-			else {
-				e.encodeUnionIndex(0);
-				e.encodeNull();
-			}
-		}
-		static void decode(Decoder& d, boost::optional<Energistics::Etp::v12::Datatypes::ErrorInfo>& v) {
-			size_t n = d.decodeUnionIndex();
-			if (n >= 2) { throw avro::Exception("Union index too big"); }
-			switch (n) {
-				case 0:
-					{
-						d.decodeNull();
-						v = boost::none;
-					}
-					break;
-				case 1:
-					{
-						Energistics::Etp::v12::Datatypes::ErrorInfo vv;
-						avro::decode(d, vv);
-						v.emplace(vv);
-					}
-					break;
-			}
-		}
-	};
-}
-
-namespace avro {
-	template<> struct codec_traits<boost::optional<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind>> {
-		static void encode(Encoder& e, boost::optional<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind> v) {
-			if (v) {
-				e.encodeUnionIndex(1);
-				avro::encode(e, v.get());
-			}
-			else {
-				e.encodeUnionIndex(0);
-				e.encodeNull();
-			}
-		}
-		static void decode(Decoder& d, boost::optional<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind>& v) {
-			size_t n = d.decodeUnionIndex();
-			if (n >= 2) { throw avro::Exception("Union index too big"); }
-			switch (n) {
-				case 0:
-					{
-						d.decodeNull();
-						v = boost::none;
-					}
-					break;
-				case 1:
-					{
-						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind vv;
-						avro::decode(d, vv);
-						v.emplace(vv);
+						s.emplace();
+						avro::decode(d, *s);
 					}
 					break;
 			}

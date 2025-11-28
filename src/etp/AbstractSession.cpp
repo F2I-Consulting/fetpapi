@@ -42,17 +42,45 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 	boost::ignore_unused(bytes_transferred);
 
 	if (ec) {
+		// If read completes with an error, it indicates there is an issue with the connection, so async_close would also complete with an error.
+		// Therefore, there is no need to call async_close; the destructor of websocket::stream will forcefully close the underlying socket.
+		flushReceivingBuffer();
 
 		if (ec == websocket::error::closed) {
 			// This indicates that the web socket (and consequently etp) session was closed
-			fesapi_log("The other endpoint closed the web socket (and consequently etp) connection.");
-			webSocketSessionClosed = true;
-			flushReceivingBuffer();
+			if (etpSessionClosed) {
+				fesapi_log("The other endpoint closed the web socket (and consequently etp) connection in a graceful way.");
+			}
+			else {
+				std::cerr << "The other endpoint closed the web socket(and consequently etp) connection in a graceful way." << std::endl;
+			}
 		}
+#if BOOST_VERSION > 106900
+		else if (ec == boost::beast::error::timeout) {
+			// This indicates that the web socket (and consequently etp) session was closed
+			std::cerr << "Beast timeout has been reached" << std::endl;
+		}
+#endif
 		else {
-			// This indicates an unexpected error
-			fesapi_log("on_read : error code number", ec.value(), "->", ec.message());
+			if (etpSessionClosed) {
+				// This error may be a common one to ignore in case of SSL short read : https://github.com/boostorg/beast/issues/824
+				fesapi_log("It looks that the other endpoint has closed the websocket session in a non graceful way.");
+			}
+			else {
+				// This indicates an unexpected error
+				std::cerr << "on_read : error code number " << ec.value() << std::endl;
+				std::cerr << "on_read : error message " << ec.message() << std::endl;
+				std::cerr << "on_read : error category " << ec.category().name() << std::endl;
+			}
 		}
+
+		const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
+		specificProtocolHandlers.clear();
+		const std::lock_guard<std::mutex> sendingQueueLock(sendingQueueMutex);
+		std::queue< std::tuple<int64_t, std::vector<uint8_t>, std::shared_ptr<ETP_NS::ProtocolHandlers>> > empty;
+		std::swap(sendingQueue, empty);
+		webSocketSessionClosed = true;
+		etpSessionClosed = true;
 
 		return;
 	}
@@ -128,7 +156,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 					normalProtocolHandlerIt->second->decodeMessageBody(receivedMh, d);
 				}
 				else {
-					std::cerr << "Received a message with id " << receivedMh.messageId << " for which non protocol handlers is associated. Protocol " << receivedMhProtocol << std::endl;
+					std::cerr << "Received a message with id " << receivedMh.messageId << " for which no protocol handler is associated. Protocol " << receivedMhProtocol << std::endl;
 					send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(4, "The agent does not support the protocol " + std::to_string(receivedMhProtocol) + " identified in a message header."), receivedMh.messageId, 0x02);
 				}
 			}
@@ -141,7 +169,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 		send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(19, "The agent is unable to de-serialize the body of the message id " + std::to_string(receivedMh.messageId) + " : " + std::string(e.what())), 0, 0x02);
 	}
 
-	if (specificProtocolHandlers.empty() && isCloseRequested)
+	if (specificProtocolHandlers.empty() && isCloseRequested_)
 	{
 		etpSessionClosed = true;
 		send(Energistics::Etp::v12::Protocol::Core::CloseSession(), 0, 0x02);
@@ -255,7 +283,7 @@ std::vector<std::string> AbstractSession::lockDataspaces(const std::map<std::str
 	return result;
 }
 
-std::vector<std::string> AbstractSession::copyToDataspace(const std::map<std::string, std::string>& sourceUris, const std::string& targetDataspaceUri)
+std::vector<std::string> AbstractSession::copyToDataspace(const std::map<std::string, std::string>& sourceDataobjectUris, const std::string& targetDataspaceUri)
 {
 	std::shared_ptr<DataspaceOSDUHandlers> handlers = getDataspaceOSDUProtocolHandlers();
 	if (handlers == nullptr) {
@@ -263,7 +291,7 @@ std::vector<std::string> AbstractSession::copyToDataspace(const std::map<std::st
 	}
 
 	Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace msg;
-	msg.uris = sourceUris;
+	msg.uris = sourceDataobjectUris;
 	msg.dataspaceUri = targetDataspaceUri;
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<std::string> result = handlers->getSuccessKeys();
@@ -420,7 +448,7 @@ std::vector<std::string> AbstractSession::deleteDataObjects(const std::map<std::
 ***** STORE OSDU ****
 *********************/
 
-std::vector<std::string> AbstractSession::copyDataObjectsByValue(const std::string& uri, int32_t sourcesDepth, const std::vector<std::string>& dataObjectTypes)
+std::vector<std::string> AbstractSession::copyDataObjectsByValue(const std::string& sourceDataobjectUri, int32_t sourcesDepth, const std::vector<std::string>& dataObjectTypes)
 {
 	std::shared_ptr<StoreOSDUHandlers> handlers = getStoreOSDUProtocolHandlers();
 	if (handlers == nullptr) {
@@ -428,7 +456,7 @@ std::vector<std::string> AbstractSession::copyDataObjectsByValue(const std::stri
 	}
 
 	Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue msg;
-	msg.uri = uri;
+	msg.uri = sourceDataobjectUri;
 	msg.sourcesDepth = sourcesDepth;
 	msg.dataObjectTypes = dataObjectTypes;
 	sendAndBlock(msg, 0, 0x02);

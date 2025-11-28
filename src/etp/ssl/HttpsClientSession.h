@@ -70,18 +70,13 @@ namespace ETP_NS
 				uint16_t proxyPort = 80,
 				const std::string& proxyAuthorization = "")
 		{
-			size_t hostSizeWithNullTermChar = etpServerHost.size() + 1;
-			char* copyHost = new char[hostSizeWithNullTermChar];
-			std::memcpy(copyHost, etpServerHost.c_str(), hostSizeWithNullTermChar); // Copy host because it must be non const in SSL_set_tlsext_host_name
 			// Set SNI Hostname (many hosts need this to handshake successfully)
-			if (!SSL_set_tlsext_host_name(stream_.native_handle(), copyHost))
+			if (!SSL_set_tlsext_host_name(stream_.native_handle(), etpServerHost.data()))
 			{
 				boost::system::error_code ec{ static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category() };
-				std::cerr << ec.message() << "\n";
-				delete[] copyHost;
+				std::cerr << "HTTPS on connect (SNI): " << ec.message() << "\n";
 				return;
 			}
-			delete[] copyHost;
 
 			// Set up an HTTP GET request message
 			req_.version(version);
@@ -123,15 +118,19 @@ namespace ETP_NS
 				tcp::resolver::results_type results)
 		{
 			if (ec) {
-				std::cerr << "resolve : " << ec.message() << std::endl;
+				std::cerr << "HTTP over SSL resolve : " << ec.message() << std::endl;
 				return;
 			}
+
+			// Reality check: IPv6 is unlikely to be available yet
+			std::vector<tcp::endpoint> endpoints(results.begin(), results.end());
+			std::stable_partition(endpoints.begin(), endpoints.end(), [](auto entry) {return entry.protocol() == tcp::v4();});
 
 			// Make the connection on the IP address we get from a lookup
 			boost::asio::async_connect(
 				stream_.next_layer(),
-				results.begin(),
-				results.end(),
+				endpoints.begin(),
+				endpoints.end(),
 				std::bind(
 					&HttpsClientSession::on_connect,
 					shared_from_this(),
@@ -142,7 +141,7 @@ namespace ETP_NS
 			on_connect(boost::system::error_code ec)
 		{
 			if (ec) {
-				std::cerr << "connect : " << ec.message() << std::endl;
+				std::cerr << "HTTP over SSL connect : " << ec.message() << std::endl;
 				return;
 			}
 
@@ -174,7 +173,7 @@ namespace ETP_NS
 			boost::ignore_unused(bytes_transferred);
 
 			if (ec) {
-				std::cerr << "Proxy handshake write : " << ec.message() << std::endl;
+				std::cerr << "HTTP over SSL Proxy handshake write : " << ec.message() << std::endl;
 				return;
 			}
 
@@ -208,7 +207,7 @@ namespace ETP_NS
 		{
 			boost::ignore_unused(bytes_transferred);
 			if (ec) {
-				std::cerr << "read : " << ec.message() << std::endl;
+				std::cerr << "HTTP over SSL read : " << ec.message() << std::endl;
 				return;
 			}
 
@@ -225,7 +224,7 @@ namespace ETP_NS
 			on_handshake(boost::system::error_code ec)
 		{
 			if (ec) {
-				std::cerr << "handshake : " << ec.message() << std::endl;
+				std::cerr << "HTTP over SSL handshake : " << ec.message() << std::endl;
 				return;
 			}
 
@@ -246,7 +245,7 @@ namespace ETP_NS
 			boost::ignore_unused(bytes_transferred);
 
 			if (ec) {
-				std::cerr << "write : " << ec.message() << std::endl;
+				std::cerr << "HTTP over SSL write : " << ec.message() << std::endl;
 				return;
 			}
 
@@ -267,21 +266,16 @@ namespace ETP_NS
 			boost::ignore_unused(bytes_transferred);
 
 			if (ec) {
-				std::cerr << "read : " << ec.message() << std::endl;
+				std::cerr << "HTTP over SSL read : " << ec.message() << std::endl;
 				return;
 			}
 
-			// Force close
-			boost::system::error_code closeEc;
-			stream_.next_layer().close(closeEc);
-			/*
 			// Gracefully close the stream_
 			stream_.async_shutdown(
 				std::bind(
 					&HttpsClientSession::on_shutdown,
 					shared_from_this(),
 					std::placeholders::_1));
-					*/
 		}
 
 		void

@@ -53,20 +53,10 @@ Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata FesapiHdfPro
 	// We don't care about the template parameter in this particular case
 	auto handlers = std::make_shared<GetFullDataArrayHandlers<int64_t>>(session_, nullptr);
 
-	const int64_t msgId = session_->sendWithSpecificHandler(
+	session_->sendWithSpecificHandlerAndBlock(
 		buildGetDataArrayMetadataMessage(datasetName),
 		handlers,
 		0, 0x02);
-
-	// Blocking loop
-	auto t_start = std::chrono::high_resolution_clock::now();
-	// Use timeOut value for session.
-	auto timeOut = session_->getTimeOut();
-	while (session_->isMessageStillProcessing(msgId)) {
-		if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > timeOut) {
-			throw std::runtime_error("Time out waiting for a response of GetDataArrayMetadata message id " + std::to_string(msgId));
-		}
-	}
 
 	return handlers->getDataArrayMetadata();
 }
@@ -128,7 +118,7 @@ namespace {
 				static_cast<const double*>(values),
 				static_cast<const double*>(values) + totalCount);
 
-			data.item.set_ArrayOfDouble(avroArray);
+			data.item.set_ArrayOfDouble(std::move(avroArray));
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT) {
 			Energistics::Etp::v12::Datatypes::ArrayOfFloat avroArray;
@@ -137,7 +127,7 @@ namespace {
 				static_cast<const float*>(values),
 				static_cast<const float*>(values) + totalCount);
 
-			data.item.set_ArrayOfFloat(avroArray);
+			data.item.set_ArrayOfFloat(std::move(avroArray));
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64 ||
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64) {
@@ -147,7 +137,7 @@ namespace {
 				static_cast<const int64_t*>(values),
 				static_cast<const int64_t*>(values) + totalCount);
 
-			data.item.set_ArrayOfLong(avroArray);
+			data.item.set_ArrayOfLong(std::move(avroArray));
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32 ||
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32) {
@@ -157,7 +147,7 @@ namespace {
 				static_cast<const int32_t*>(values),
 				static_cast<const int32_t*>(values) + totalCount);
 
-			data.item.set_ArrayOfInt(avroArray);
+			data.item.set_ArrayOfInt(std::move(avroArray));
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16 ||
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16) {
@@ -167,7 +157,7 @@ namespace {
 				avroArray.values.push_back(static_cast<const short*>(values)[i]);
 			}
 
-			data.item.set_ArrayOfInt(avroArray);
+			data.item.set_ArrayOfInt(std::move(avroArray));
 		}
 		else if (datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8 ||
 			datatype == COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8) {
@@ -177,7 +167,7 @@ namespace {
 				avroArray.push_back(static_cast<const char*>(values)[i]);
 			}
 
-			data.item.set_bytes(avroArray);
+			data.item.set_bytes(std::move(avroArray));
 		}
 		else {
 			throw logic_error(
@@ -337,17 +327,47 @@ void FesapiHdfProxy::writeArrayNdSlab(
 	const uint64_t* offsetInEachDimension,
 	unsigned int numDimensions)
 {
+	std::set<int64_t>stillProcessingMsgIds = async_writeArrayNdSlab(groupName, datasetName,
+		datatype, values, numValuesInEachDimension,
+		offsetInEachDimension, numDimensions);
+
+	auto t_start = std::chrono::high_resolution_clock::now();
+	while (!stillProcessingMsgIds.empty()) {
+		std::vector<int64_t> idsToErase;
+		for (int64_t msgId : stillProcessingMsgIds) {
+			if (!session_->isMessageStillProcessing(msgId)) {
+				idsToErase.push_back(msgId);
+			}
+		}
+		for (int64_t msgId : idsToErase) {
+			stillProcessingMsgIds.erase(msgId);
+		}
+		if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > session_->getTimeOut()) {
+			throw std::runtime_error("Time out waiting for a writeArrayNdSlab response");
+		}
+	}
+}
+
+std::set<int64_t> FesapiHdfProxy::async_writeArrayNdSlab(
+	const string& groupName,
+	const string& datasetName,
+	COMMON_NS::AbstractObject::numericalDatatypeEnum datatype,
+	const void* values,
+	const uint64_t* numValuesInEachDimension,
+	const uint64_t* offsetInEachDimension,
+	unsigned int numDimensions)
+{
 	if (!isOpened())
 		open();
 
 	// URI AND PATH
-	std::string uri{ buildEtp12Uri() };
+	const std::string uri{ buildEtp12Uri() };
 
-	std::string pathInResource{ (groupName.back() == '/' ?
+	const std::string pathInResource{ (groupName.back() == '/' ?
 		groupName : groupName + '/') + datasetName };
 
 	// Create Total Count
-	size_t totalCount = std::accumulate(numValuesInEachDimension, numValuesInEachDimension + numDimensions, 1, std::multiplies<size_t>());
+	const size_t totalCount = std::accumulate(numValuesInEachDimension, numValuesInEachDimension + numDimensions, 1, std::multiplies<size_t>());
 
 	// Determine Value Size (bytes) and Any Array Type
 	size_t valueSize{ 1 };
@@ -380,6 +400,7 @@ void FesapiHdfProxy::writeArrayNdSlab(
 			"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
 	}
 
+	std::set<int64_t> sentMessageIds;
 	if (totalCount * valueSize <= maxArraySize_) {
 		std::vector<int64_t> counts;
 		std::vector<int64_t> starts;
@@ -399,7 +420,7 @@ void FesapiHdfProxy::writeArrayNdSlab(
 		pdsa.dataSubarrays["0"].data = convertVoidArrayIntoAvroAnyArray(datatype, values, totalCount);
 
 		// Send putDataSubarrays Message
-		session_->sendAndBlock(pdsa, 0, 0x02);
+		sentMessageIds.insert(session_->send(pdsa, 0, 0x02));
 	}
 	else {
 		std::unique_ptr<uint64_t[]> counts(new uint64_t[numDimensions]);
@@ -415,10 +436,11 @@ void FesapiHdfProxy::writeArrayNdSlab(
 			if (numValuesInEachDimension[dimIdx] > 1) {
 				uint64_t previousCount = counts[dimIdx];
 				counts[dimIdx] /= 2;
-				
-				writeArrayNdSlab(groupName, datasetName,
+
+				std::set<int64_t> intermediateResult = async_writeArrayNdSlab(groupName, datasetName,
 					datatype, values, counts.get(),
 					starts.get(), numDimensions);
+				sentMessageIds.insert(intermediateResult.begin(), intermediateResult.end());
 
 				writtenTotalCount = std::accumulate(counts.get(), counts.get() + numDimensions, 1, std::multiplies<size_t>());
 
@@ -434,10 +456,13 @@ void FesapiHdfProxy::writeArrayNdSlab(
 				+ std::to_string(maxArraySize_) + " bytes.");
 		}
 
-		writeArrayNdSlab(groupName, datasetName, datatype,
-			(int8_t*)values + (writtenTotalCount * valueSize), counts.get(),
+		std::set<int64_t> intermediateResult = async_writeArrayNdSlab(groupName, datasetName, datatype,
+			(const int8_t*)values + (writtenTotalCount * valueSize), counts.get(),
 			starts.get(), numDimensions);
+		sentMessageIds.insert(intermediateResult.begin(), intermediateResult.end());
 	}
+
+	return sentMessageIds;
 }
 
 void FesapiHdfProxy::readArrayNdOfDoubleValues(

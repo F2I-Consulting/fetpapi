@@ -32,6 +32,7 @@ under the License.
 #ifdef WITH_FESAPI
 %include "${FESAPI_INCLUDE_DIR}/fesapi/nsDefinitions.h"
 %import(module="fesapi") "${FESAPI_INCLUDE_DIR}/fesapi/common/DataObjectReference.h"
+%import(module="fesapi") "${FESAPI_INCLUDE_DIR}/fesapi/common/DataObjectRepository.h"
 %import(module="fesapi") "${FESAPI_INCLUDE_DIR}/fesapi/common/HdfProxyFactory.h"
 %import(module="fesapi") "${FESAPI_INCLUDE_DIR}/fesapi/common/AbstractObject.h"
 #endif
@@ -298,7 +299,7 @@ typedef long long 				time_t;
 %include "std_array.i"
 
 %typemap(javaimports) SWIGTYPE %{
-	import com.f2i_consulting.fetpapi.*;
+import com.f2i_consulting.fetpapi.*;
 %}
 				
 namespace Energistics {
@@ -376,22 +377,22 @@ namespace Energistics {
 					std::string get_string();
 					void set_string(const std::string& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfBoolean get_ArrayOfBoolean();
+					Energistics::Etp::v12::Datatypes::ArrayOfBoolean const& get_ArrayOfBoolean() const;
 					void set_ArrayOfBoolean(const Energistics::Etp::v12::Datatypes::ArrayOfBoolean& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfInt get_ArrayOfInt();
+					Energistics::Etp::v12::Datatypes::ArrayOfInt const& get_ArrayOfInt() const;
 					void set_ArrayOfInt(const Energistics::Etp::v12::Datatypes::ArrayOfInt& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfLong get_ArrayOfLong();
+					Energistics::Etp::v12::Datatypes::ArrayOfLong const& get_ArrayOfLong() const;
 					void set_ArrayOfLong(const Energistics::Etp::v12::Datatypes::ArrayOfLong& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfFloat get_ArrayOfFloat();
+					Energistics::Etp::v12::Datatypes::ArrayOfFloat const& get_ArrayOfFloat() const;
 					void set_ArrayOfFloat(const Energistics::Etp::v12::Datatypes::ArrayOfFloat& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfDouble get_ArrayOfDouble();
+					Energistics::Etp::v12::Datatypes::ArrayOfDouble const& get_ArrayOfDouble() const;
 					void set_ArrayOfDouble(const Energistics::Etp::v12::Datatypes::ArrayOfDouble& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfString get_ArrayOfString();
+					Energistics::Etp::v12::Datatypes::ArrayOfString const& get_ArrayOfString() const;
 					void set_ArrayOfString(const Energistics::Etp::v12::Datatypes::ArrayOfString& v);
 					
 					std::string get_bytes();
@@ -411,25 +412,25 @@ namespace Energistics {
 				public:
 					size_t idx() const;
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfBoolean get_ArrayOfBoolean();
+					Energistics::Etp::v12::Datatypes::ArrayOfBoolean const& get_ArrayOfBoolean() const;
 					void set_ArrayOfBoolean(const Energistics::Etp::v12::Datatypes::ArrayOfBoolean& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfInt get_ArrayOfInt();
+					Energistics::Etp::v12::Datatypes::ArrayOfInt const& get_ArrayOfInt() const;
 					void set_ArrayOfInt(const Energistics::Etp::v12::Datatypes::ArrayOfInt& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfLong get_ArrayOfLong();
+					Energistics::Etp::v12::Datatypes::ArrayOfLong const& get_ArrayOfLong() const;
 					void set_ArrayOfLong(const Energistics::Etp::v12::Datatypes::ArrayOfLong& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfFloat get_ArrayOfFloat();
+					Energistics::Etp::v12::Datatypes::ArrayOfFloat const& get_ArrayOfFloat() const;
 					void set_ArrayOfFloat(const Energistics::Etp::v12::Datatypes::ArrayOfFloat& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfDouble get_ArrayOfDouble();
+					Energistics::Etp::v12::Datatypes::ArrayOfDouble const& get_ArrayOfDouble() const;
 					void set_ArrayOfDouble(const Energistics::Etp::v12::Datatypes::ArrayOfDouble& v);
 					
-					Energistics::Etp::v12::Datatypes::ArrayOfString get_ArrayOfString();
+					Energistics::Etp::v12::Datatypes::ArrayOfString const& get_ArrayOfString() const;
 					void set_ArrayOfString(const Energistics::Etp::v12::Datatypes::ArrayOfString& v);
 					
-					std::string get_bytes();
+					std::string const& get_bytes() const;
 					void set_bytes(const std::string& v);
 				};
 				
@@ -1267,10 +1268,9 @@ namespace Energistics {
 	}
 
 	%fragment("data_array_handler_reference_function", "header", fragment="data_array_handler_reference_init") {
-
-	static PyObject *data_array_handler_reference() {
-		static PyObject *data_array_handler_reference_string = SWIG_Python_str_FromChar("__data_array_handler_reference");
-		return data_array_handler_reference_string;
+		static PyObject *data_array_handler_reference() {
+		  static PyObject *data_array_handler_reference_string = SWIG_Python_str_FromChar("__data_array_handler_reference");
+		  return data_array_handler_reference_string;
 		}
 	}
 
@@ -1639,17 +1639,7 @@ namespace ETP_NS
 		void setDataspaceProtocolHandlers(std::shared_ptr<DataspaceHandlers> dataspaceHandlers);
 		void setDataspaceOSDUProtocolHandlers(std::shared_ptr<DataspaceOSDUHandlers> dataspaceOSDUHandlers);
 
-		template<typename T> int64_t sendWithSpecificHandler(const T & mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
-		{
-			int64_t msgId = encode(mb, correlationId, messageFlags); // put the message to write in the queue
-
-			if (sendingQueue.size() == 1) {
-				do_write();
-			}
-			specificProtocolHandlers[msgId] = specificHandler;
-
-			return msgId;
-		}		
+		template<typename T> int64_t sendWithSpecificHandler(const T & mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0) {}		
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::RequestSession>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::OpenSession>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::CloseSession>;
@@ -1724,15 +1714,7 @@ namespace ETP_NS
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications>;
 		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications>;
 		
-		template<typename T> int64_t send(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
-		{
-			if (protocolHandlers.size() > mb.protocolId) {
-				return sendWithSpecificHandler(mb, protocolHandlers[mb.protocolId], correlationId, messageFlags);
-			}
-			else {
-				throw std::logic_error("The agent has no registered handler at all for the protocol " + std::to_string(mb.protocolId));
-			}
-		}
+		template<typename T> int64_t send(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0) {}
 		%template(send) send<Energistics::Etp::v12::Protocol::Core::RequestSession>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Core::OpenSession>;
 		%template(send) send<Energistics::Etp::v12::Protocol::Core::CloseSession>;
@@ -1807,12 +1789,7 @@ namespace ETP_NS
 		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications>;
 		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications>;
 		
-		template<typename T> void sendAndBlock(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
-		{
-			int64_t msgId = send(mb, correlationId, messageFlags);
-			while (isMessageStillProcessing(msgId)) {}
-		}
-		
+		template<typename T> int64_t sendAndBlock(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0) {}
 		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::RequestSession>;
 		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::OpenSession>;
 		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::CloseSession>;
@@ -1966,37 +1943,38 @@ namespace ETP_NS
 		std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> getDataspaceInfo(const std::map<std::string, std::string>& dataspaceUris);
 
 		/**
-		* Copy by reference some dataspaces into another one.
-		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
-		*
-		* @param sourceDataspaceUris  ETP general map : One each for each source dataspace to be copied. They are identified by their URI.
-		* @param targetDataspaceUri  The URI of the ETP dataspace where the sourceDataspaces have to be copied by reference.
-		* @param return	The map keys corresponding to the dataspaces which have been successfully copied into the target dataspace.
-		*/
-		std::vector<std::string> copyDataspacesContent(const std::map<std::string, std::string>& sourceDataspaceUris, const std::string& targetDataspaceUri);
-
-		/**
 		* A customer sends to a store to lock or unlock one or more dataspaces.
 		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
+		* An OSDU locked dataspace will have its custom data "locked" to true. It will also have its custom datm "read-only" to true for all users.
+		* As a reminder, a custom data "read-only" can be true with a custom data "locked" to false in case the dataspace is not locked but in read only for the particular current ETP user.
 		*
-		* @param dataspaceUris  ETP general map where the values must be the URIs for the dataspaces the customer wants to lock or unlock.
-		* @param lock true for locking the dataspaces, false to unlock the dataspaces
-		* @param return	The map keys corresponding to the dataspaces which have been successfully locked or unlocked.
+		* @param dataspaceUris	ETP general map where the values must be the URIs for the dataspaces the customer wants to lock or unlock.
+		* @param lock			true for locking the dataspaces, false to unlock the dataspaces
 		*/
 		std::vector<std::string> lockDataspaces(const std::map<std::string, std::string>& dataspaceUris, bool lock);
 
 		/**
+		* Copy by reference some dataspaces into another one.
+		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
+		*
+		* @param sourceDataspaceUris	ETP general map : One each for each source dataspace to be copied. They are identified by their URI.
+		* @param targetDataspaceUri		The URI of the ETP dataspace where the sourceDataspaces have to be copied by reference.
+		* @param return					The map keys corresponding to the dataspaces which have been successfully copied into the target dataspace.
+		*/
+		std::vector<std::string> copyDataspacesContent(const std::map<std::string, std::string>& sourceDataspaceUris, const std::string& targetDataspaceUri);
+
+		/**
 		* Copy by reference some dataobjects into another dataspace.
 		* This function should be used with caution if Dataspace OSDU Handlers have been overidden.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		*
-		* @param sourceUris  ETP general map : One each for each source dataobject to be copied. They are identified by their URI.
-		* @param targetDataspaceUri  The URI of the ETP dataspace where the source dataobjects have to be copied by reference.
-		* @param return	The map keys corresponding to the dataobjects which have been successfully copied into the target dataspace.
+		* @param sourceDataobjectUris	ETP general map : One for each source dataobject to be copied. They are identified by their URI.
+		* @param targetDataspaceUri		The URI of the ETP dataspace where the source dataobjects have to be copied by reference.
+		* @param return					The map keys corresponding to the dataobjects which have been successfully copied into the target dataspace.
 		*/
-		std::vector<std::string> copyToDataspace(const std::map<std::string, std::string>& sourceUris, const std::string& targetDataspaceUri);
+		std::vector<std::string> copyToDataspace(const std::map<std::string, std::string>& sourceDataobjectUris, const std::string& targetDataspaceUri);
 
 		/****************
 		*** DISCOVERY ***
@@ -2074,6 +2052,26 @@ namespace ETP_NS
 		*/
 		std::vector<std::string> deleteDataObjects(const std::map<std::string, std::string>& uris);
 
+		/*********************
+		***** STORE OSDU *****
+		**********************/
+
+		/**
+		* A customer sends to a store to copy by value a dataobject in the same dataspace with potentially some of its sources based on their datatypes.
+		* This function should be used with caution if Store OSDU Handlers have been overidden.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
+		*
+		* @param sourceDataobjectUri	The URI of the dataobject to be copied.
+		* @param sourcesDepth			The "depth" or how many "levels" (or "jumps") in the data model (graph) from the starting point (specified by the URI) that you want to copy
+		*								Depth MUST always be greater than zero.
+		* @param dataObjectTypes		Optionally, specify the types of data objects that you want to copy.
+		*								The default is an empty array, which means ALL data types negotiated for the current ETP session.
+		*								They ARE case sensitive. EXAMPLES: "witsml20.Well", "witsml20.Wellbore", "prodml21.WellTest", "resqml20.obj_TectonicBoundaryFeature", "eml21.DataAssuranceRecord"
+		*								To indicate that all data objects within a data schema version are supported, you can use a star (*) as a wildcard, EXAMPLE: "witsml20.*", "prodml21.*", "resqml20.*"
+		* @param return					The received dataobjects in a map where the key makes the link between the asked uris and the received dataobjects.
+		*/
+		std::vector<std::string> copyDataObjectsByValue(const std::string& sourceDataobjectUri, int32_t sourcesDepth = 0, const std::vector<std::string>& dataObjectTypes = {});
+
 		/****************
 		** TRANSACTION **
 		****************/
@@ -2131,19 +2129,14 @@ namespace ETP_NS
 		std::string getDataspaceUri(const std::string& uri);
 
 		/**
-		* @param session Provide this parameter if you want to send a protocol exception in case of non validation.
+		* Validate an ETP URI
 		*/
-		Energistics::Etp::v12::Datatypes::ErrorInfo validateUri(const std::string & uri, ETP_NS::AbstractSession* session = nullptr);
+		bool validateUri(const std::string& uri);
 
 		/**
-		* @param session Provide this parameter if you want to send a protocol exception in case of non validation.
+		* Validate an ETP dataobject URI
 		*/
-		Energistics::Etp::v12::Datatypes::ErrorInfo validateDataObjectUri(const std::string & uri, ETP_NS::AbstractSession* session = nullptr);
-
-		/**
-		* Build a protocol exception message which only contains a single error message (not a messsage map).
-		*/
-		Energistics::Etp::v12::Protocol::Core::ProtocolException buildSingleMessageProtocolException(int32_t m_code, const std::string & m_message);
+		bool validateDataObjectUri(const std::string& uri);
 	}
 
 	/******************* CLIENT ***************************/
@@ -2156,7 +2149,7 @@ namespace ETP_NS
 		* Run the websocket and then the ETP session.
 		* Everything related to this session (including the completion handlers) will operate on the same unique thread in a single event loop.
 		*/
-		bool run();
+		void run();
 	};
 
 	class InitializationParameters
@@ -2175,7 +2168,7 @@ namespace ETP_NS
 		InitializationParameters(const std::string& instanceUuid, const std::string & host, unsigned short port, const std::string & urlPath = "");
 		virtual ~InitializationParameters();
 
-		void setMaxWebSocketMessagePayloadSize(int64_t value);
+		void setMaxWebSocketMessagePayloadSize(uint64_t value);
 		uint64_t getMaxWebSocketMessagePayloadSize() const;
 
 		void setPreferredMaxFrameSize(uint64_t value);
@@ -2224,7 +2217,7 @@ namespace ETP_NS
 	
 #ifdef WITH_FESAPI
 %typemap(javaimports) FesapiHdfProxyFactory %{
-	import com.f2i_consulting.fesapi.common.HdfProxyFactory;
+import com.f2i_consulting.fesapi.common.HdfProxyFactory;
 %}
 %typemap(csimports) FesapiHdfProxyFactory %{
 	using F2iConsulting.Fesapi.common;
@@ -2281,7 +2274,9 @@ namespace ETP_NS
 }
 
 #ifdef WITH_FESAPI
-%pragma(java) moduleimports="import com.f2i_consulting.fesapi.common.AbstractObject;"
-%pragma(java) jniclassimports="import com.f2i_consulting.fesapi.common.AbstractObject;"
+%pragma(java) moduleimports="import com.f2i_consulting.fesapi.common.AbstractObject;
+import com.f2i_consulting.fesapi.common.DataObjectRepository;"
+%pragma(java) jniclassimports="import com.f2i_consulting.fesapi.common.AbstractObject;
+import com.f2i_consulting.fesapi.common.DataObjectRepository;"
 %pragma(csharp) moduleimports="using F2iConsulting.Fesapi.common;"
 #endif

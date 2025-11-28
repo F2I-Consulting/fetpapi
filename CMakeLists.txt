@@ -15,8 +15,8 @@ set (FETPAPI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # version mechanism
 set (Fetpapi_VERSION_MAJOR 0)
-set (Fetpapi_VERSION_MINOR 3)
-set (Fetpapi_VERSION_PATCH 1)
+set (Fetpapi_VERSION_MINOR 4)
+set (Fetpapi_VERSION_PATCH 0)
 set (Fetpapi_VERSION_TWEAK 0)
 
 set (Fetpapi_VERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR}.${Fetpapi_VERSION_PATCH}.${Fetpapi_VERSION_TWEAK})
@@ -200,7 +200,6 @@ set (ALL_SOURCES_AND_HEADERS
 	${FETPAPI_HEADERS}
 	${FETPAPI_PROTOCOL_SOURCES}
 	${FETPAPI_PROTOCOL_HEADERS}
-	${FETPAPI_TOOLS_HEADERS}
 	${FETPAPI_FESAPI_SOURCES}
 	${FETPAPI_FESAPI_HEADERS}
 	${FETPAPI_SSL_SOURCES}
@@ -224,8 +223,6 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 
 # organizing sources and headers in the Visual Studio Project
 if (WIN32)
-	source_group ("tools" FILES ${FETPAPI_TOOLS_HEADERS})
-
 	set (ETP_PREFIX "etp")
 	source_group ("${ETP_PREFIX}" FILES ${FETPAPI_SOURCES} ${FETPAPI_HEADERS})
 	source_group ("${ETP_PREFIX}\\ProtocolHandlers" FILES ${FETPAPI_PROTOCOL_SOURCES} ${FETPAPI_PROTOCOL_HEADERS})
@@ -304,12 +301,6 @@ INSTALL (
 INSTALL (
 	FILES ${FETPAPI_PROTOCOL_HEADERS}
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fetpapi/etp/ProtocolHandlers
-	COMPONENT fetpapi_headers
-)
-
-INSTALL (
-	FILES ${FETPAPI_TOOLS_HEADERS}
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fetpapi/tools
 	COMPONENT fetpapi_headers
 )
 
