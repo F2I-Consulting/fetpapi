@@ -53,17 +53,15 @@ std::string ETP_NS::EtpHelpers::getDataspaceUri(const std::string& uri)
 	return uri.substr(0, closingParenthesisPos+1);
 }
 
-bool ETP_NS::EtpHelpers::validateUri(const std::string & uri)
+bool ETP_NS::EtpHelpers::validateUri(const std::string& uri)
 {
 	// Regular expressions are not handled before GCC 4.9
 	// https://stackoverflow.com/questions/12530406/is-gcc-4-8-or-earlier-buggy-about-regular-expressions
-	return
-		std::regex_match(uri, std::regex("^eml:///(dataspace[(]'.*'[)])?", std::regex::ECMAScript)) ||
-		std::regex_match(uri, std::regex("^eml:///(dataspace[(]'.*'[)]/)?(resqml20|eml20)\.obj_[a-zA-Z0-9]+[(][a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}(,.*)?[)]", std::regex::ECMAScript)) ||
-		std::regex_match(uri, std::regex("^eml:///(dataspace[(]'.*'[)]/)?(witsml|resqml|prodml|eml)([0-9]{2})\.[a-zA-Z0-9]+[(][a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}(,.*)?[)]", std::regex::ECMAScript));
+	return std::regex_match(uri, std::regex("^eml:///(dataspace[(]'.*'[)])?", std::regex::ECMAScript)) ||
+		validateDataObjectUri(uri);
 }
 
-bool ETP_NS::EtpHelpers::validateDataObjectUri(const std::string & uri)
+bool ETP_NS::EtpHelpers::validateDataObjectUri(const std::string& uri)
 {
 	// Regular expressions are not handled before GCC 4.9
 	// https://stackoverflow.com/questions/12530406/is-gcc-4-8-or-earlier-buggy-about-regular-expressions
