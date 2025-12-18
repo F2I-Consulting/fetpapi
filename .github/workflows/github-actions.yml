@@ -202,7 +202,7 @@ jobs:
             cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fesapi-install ${{ runner.temp }}\fesapi-2.14.0.0 &&
             cmake --build . --config Release -j2 &&
             cmake --build . --config Release --target INSTALL &&
-            %VCPKG_INSTALLATION_ROOT%\vcpkg install openssl boost-beast avro-cpp &&
+            %VCPKG_INSTALLATION_ROOT%\vcpkg install bext-wintls boost-beast avro-cpp &&
             cd ${{ runner.temp }} &&
             mkdir fetpapi-build &&
             cd fetpapi-build &&

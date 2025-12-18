@@ -20,7 +20,12 @@ under the License.
 
 using namespace ETP_NS;
 
-SslClientSession::SslClientSession(boost::asio::ssl::context&& ctx,
+SslClientSession::SslClientSession(
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+	wintls::context&& ctx,
+#else
+	ssl::context&& ctx,
+#endif
 	InitializationParameters const* initializationParams, const std::string& target, const std::string& authorization, const std::string& proxyAuthorization,
 	const std::map<std::string, std::string>& additionalHandshakeHeaderFields, std::size_t frameSize)
 	: AbstractClientSessionCRTP<SslClientSession>(initializationParams, target, authorization, proxyAuthorization), sslContext_(std::move(ctx)), frameSize_(frameSize)

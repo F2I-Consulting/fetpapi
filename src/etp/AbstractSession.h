@@ -31,18 +31,19 @@ under the License.
 #include <boost/uuid/nil_generator.hpp>
 
 #include "EtpHelpers.h"
-#include "ProtocolHandlers/CoreHandlers.h"
-#include "ProtocolHandlers/DiscoveryHandlers.h"
-#include "ProtocolHandlers/StoreHandlers.h"
-#include "ProtocolHandlers/StoreNotificationHandlers.h"
-#include "ProtocolHandlers/DataArrayHandlers.h"
-#include "ProtocolHandlers/TransactionHandlers.h"
-#include "ProtocolHandlers/DataspaceHandlers.h"
-#include "ProtocolHandlers/StoreOSDUHandlers.h"
-#include "ProtocolHandlers/DataspaceOSDUHandlers.h"
+#include "protocolHandlers/CoreHandlers.h"
+#include "protocolHandlers/DiscoveryHandlers.h"
+#include "protocolHandlers/StoreHandlers.h"
+#include "protocolHandlers/StoreNotificationHandlers.h"
+#include "protocolHandlers/DataArrayHandlers.h"
+#include "protocolHandlers/TransactionHandlers.h"
+#include "protocolHandlers/DataspaceHandlers.h"
+#include "protocolHandlers/StoreOSDUHandlers.h"
+#include "protocolHandlers/DataspaceOSDUHandlers.h"
 
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace websocket = beast::websocket;  // from <boost/beast/websocket.hpp>
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
-namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
 
 namespace ETP_NS
 {
@@ -600,7 +601,7 @@ namespace ETP_NS
 		}
 
 	protected:
-		boost::beast::flat_buffer receivedBuffer;
+		beast::flat_buffer receivedBuffer;
 		/// The default handlers for each subprotocol. Default handlers are at the index of the corresponding subprotocol id.
 		std::unordered_map<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type, std::shared_ptr<ETP_NS::ProtocolHandlers>> protocolHandlers;
 		/// A map indicating which handlers must be used for responding to which message id.

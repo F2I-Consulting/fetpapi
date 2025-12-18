@@ -23,7 +23,7 @@ under the License.
 #include "HttpClientSession.h"
 #include "PlainClientSession.h"
 
-#ifdef WITH_ETP_SSL
+#if WITH_ETP_SSL
 #include "ssl/HttpsClientSession.h"
 #include "ssl/SslClientSession.h"
 #endif
@@ -64,12 +64,28 @@ std::shared_ptr<ETP_NS::ClientSession> ETP_NS::ClientSessionLaunchers::createCli
 			: ".well-known/etp-server-capabilities?GetVersion=etp12.energistics.org");
 
 	std::shared_ptr<ETP_NS::ClientSession> result;
-#ifdef WITH_ETP_SSL
+#if WITH_ETP_SSL
 	if (initializationParams->getEtpServerPort() == 443 || initializationParams->isTlsForced()) {
 		// The SSL context is required, and holds certificates
 		// From official ETP documentation : If the ETP server is supporting TLS, it MUST support v1.2 or greater
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+		wintls::context ctx{ wintls::method::tlsv12_client };
+		// Use the operating systems default certificates for verification
+		ctx.use_default_certificates(true);
+		// Verify the remote server's certificate
+		ctx.verify_server_certificate(true);
+#else
 		boost::asio::ssl::context ctx{ boost::asio::ssl::context::tlsv12_client };
-		ctx.set_default_verify_paths();
+		// Use the operating systems default certificates for verification
+		boost::system::error_code ec;
+		ctx.set_default_verify_paths(ec);
+		if (ec) {
+			std::cerr << "Default verify paths failed: " << ec.message() << std::endl;
+			// Fallback: provide explicit CA bundle
+			// ctx.load_verify_file("cacert.pem");
+		}
+		// Verify the remote server's certificate
+		ctx.set_verify_mode(ssl::context::verify_peer);
 		ctx.set_options(
 			boost::asio::ssl::context::default_workarounds
 			| boost::asio::ssl::context::no_sslv2
@@ -78,15 +94,19 @@ std::shared_ptr<ETP_NS::ClientSession> ETP_NS::ClientSessionLaunchers::createCli
 			| boost::asio::ssl::context::no_tlsv1_1
 			| boost::asio::ssl::context::single_dh_use
 		);
+#endif
 
 		const std::string& additionalCertificates = initializationParams->getAdditionalCertificates();
 		if (!additionalCertificates.empty()) {
-			boost::system::error_code ec;
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+			wintls::error_code ec;
+			std::cerr << "Cannot add certificates using wintls for now" << std::endl;
+#else
 			ctx.add_certificate_authority(
 				boost::asio::buffer(additionalCertificates.data(), additionalCertificates.size()), ec);
+#endif
 			if (ec) {
 				std::cerr << "Cannot add certificates : " << additionalCertificates << std::endl;
-				return nullptr;
 			}
 		}
 		auto restClientSession = std::make_shared<HttpsClientSession>(ioc, ctx);
@@ -116,7 +136,7 @@ std::shared_ptr<ETP_NS::ClientSession> ETP_NS::ClientSessionLaunchers::createCli
 		result = std::make_shared<PlainClientSession>(initializationParams, "/" + initializationParams->getEtpServerUrlPath(),
 			authorization, proxyAuthorization,
 			initializationParams->getAdditionalHandshakeHeaderFields(), preferredMaxFrameSize);
-#ifdef WITH_ETP_SSL
+#if WITH_ETP_SSL
 	}
 #endif
 

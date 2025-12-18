@@ -24,7 +24,7 @@ under the License.
 #include <fesapi/common/HdfProxyFactory.h>
 
 #include "../AbstractSession.h"
-#include "../ProtocolHandlers/GetFullDataArrayHandlers.h"
+#include "../protocolHandlers/GetFullDataArrayHandlers.h"
 
 namespace ETP_NS
 {

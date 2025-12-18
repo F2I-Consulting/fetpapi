@@ -25,12 +25,29 @@ under the License.
 #include <boost/beast/version.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/ssl/error.hpp>
-#include <boost/asio/ssl/stream.hpp>
 
-using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
-namespace ssl = boost::asio::ssl;       // from <boost/asio/ssl.hpp>
-namespace http = boost::beast::http;    // from <boost/beast/http.hpp>
+#include <boost/version.hpp>
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+#include <wintls.hpp>
+#elif BOOST_VERSION < 107000
+#include <boost/asio/ssl/error.hpp>
+#include <boost/asio/ssl/rfc2818_verification.hpp>
+#include <boost/asio/ssl/stream.hpp>
+#elif BOOST_VERSION < 108600
+#if BOOST_VERSION < 107300
+#include <boost/asio/ssl/rfc2818_verification.hpp>
+#else
+#include <boost/asio/ssl/host_name_verification.hpp>
+#endif
+#include <boost/beast/ssl.hpp>
+#else
+#include <boost/asio/ssl.hpp>
+#endif
+
+namespace beast = boost::beast;     // from <boost/beast.hpp>
+namespace http = beast::http;		// from <boost/beast/http.hpp>
+namespace ssl = boost::asio::ssl;   // from <boost/asio/ssl.hpp>
+using tcp = boost::asio::ip::tcp;   // from <boost/asio/ip/tcp.hpp>
 
 namespace ETP_NS
 {
@@ -38,7 +55,15 @@ namespace ETP_NS
 	class HttpsClientSession : public std::enable_shared_from_this<HttpsClientSession>
 	{
 		tcp::resolver resolver_;
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+		wintls::stream<beast::tcp_stream> stream_;
+#elif BOOST_VERSION < 107000
 		ssl::stream<tcp::socket> stream_;
+#elif BOOST_VERSION < 108600
+		beast::ssl_stream<beast::tcp_stream> stream_;
+#else
+		ssl::stream<beast::tcp_stream> stream_;
+#endif		
 		boost::beast::flat_buffer buffer_; // (Must persist between reads)
 		http::request<http::empty_body> req_;
 		http::request<http::empty_body> proxyHandshake;
@@ -51,7 +76,13 @@ namespace ETP_NS
 	public:
 		// Resolver and stream require an io_context
 		explicit
-			HttpsClientSession(boost::asio::io_context& ioc, ssl::context& ctx)
+			HttpsClientSession(boost::asio::io_context& ioc,
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+				wintls::context& ctx
+#else
+				ssl::context& ctx
+#endif
+			)
 			: resolver_(ioc)
 			, stream_(ioc, ctx)
 			, http_proxy_handshake_parser(proxyHandshakeResponse)
@@ -70,6 +101,13 @@ namespace ETP_NS
 				uint16_t proxyPort = 80,
 				const std::string& proxyAuthorization = "")
 		{
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+			// Set SNI hostname (many hosts need this to handshake successfully)
+			stream_.set_server_hostname(etpServerHost);
+			
+			// Enable Check whether the Server Certificate was revoked
+			stream_.set_certificate_revocation_check(true);
+#else
 			// Set SNI Hostname (many hosts need this to handshake successfully)
 			if (!SSL_set_tlsext_host_name(stream_.native_handle(), etpServerHost.data()))
 			{
@@ -77,6 +115,14 @@ namespace ETP_NS
 				std::cerr << "HTTPS on connect (SNI): " << ec.message() << "\n";
 				return;
 			}
+
+			// Set the expected hostname in the peer certificate for verification
+#if BOOST_VERSION < 107300
+			stream_.set_verify_callback(ssl::rfc2818_verification(etpServerHost));
+#else
+			stream_.set_verify_callback(ssl::host_name_verification(etpServerHost));
+#endif
+#endif
 
 			// Set up an HTTP GET request message
 			req_.version(version);
@@ -123,10 +169,11 @@ namespace ETP_NS
 			}
 
 			// Reality check: IPv6 is unlikely to be available yet
-			std::vector<tcp::endpoint> endpoints(results.begin(), results.end());
-			std::stable_partition(endpoints.begin(), endpoints.end(), [](auto entry) {return entry.protocol() == tcp::v4();});
+			std::vector<tcp::endpoint> endpoints = std::vector<tcp::endpoint>(results.begin(), results.end());
+			std::stable_partition(endpoints.begin(), endpoints.end(), [](auto entry) {return entry.protocol() == tcp::v4(); });
 
 			// Make the connection on the IP address we get from a lookup
+#if BOOST_VERSION < 107000
 			boost::asio::async_connect(
 				stream_.next_layer(),
 				endpoints.begin(),
@@ -135,10 +182,20 @@ namespace ETP_NS
 					&HttpsClientSession::on_connect,
 					shared_from_this(),
 					std::placeholders::_1));
+#else
+			beast::get_lowest_layer(stream_).async_connect(
+				endpoints,
+				beast::bind_front_handler(
+					&HttpsClientSession::on_connect,
+					std::static_pointer_cast<HttpsClientSession>(shared_from_this())));
+#endif
 		}
 
-		void
-			on_connect(boost::system::error_code ec)
+#if BOOST_VERSION < 107000
+		void on_connect(boost::system::error_code ec)
+#else
+		void on_connect(boost::beast::error_code ec, tcp::resolver::results_type::endpoint_type)
+#endif
 		{
 			if (ec) {
 				std::cerr << "HTTP over SSL connect : " << ec.message() << std::endl;
@@ -157,7 +214,11 @@ namespace ETP_NS
 			else {
 				// Perform the SSL handshake
 				stream_.async_handshake(
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+					wintls::handshake_type::client,
+#else
 					ssl::stream_base::client,
+#endif
 					std::bind(
 						&HttpsClientSession::on_handshake,
 						shared_from_this(),
@@ -213,7 +274,11 @@ namespace ETP_NS
 
 			// Perform the SSL handshake
 			stream_.async_handshake(
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+				wintls::handshake_type::client,
+#else
 				ssl::stream_base::client,
+#endif
 				std::bind(
 					&HttpsClientSession::on_handshake,
 					shared_from_this(),

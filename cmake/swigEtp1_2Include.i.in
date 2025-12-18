@@ -40,7 +40,7 @@ under the License.
 %include "stdint.i"
 %include "std_string.i"
 
-%include "../src/nsDefinitions.h"
+%include "../src/macroDefinitions.h"
 
 //************************/
 // JAVA

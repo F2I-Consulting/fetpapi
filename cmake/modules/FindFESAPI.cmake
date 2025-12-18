@@ -31,8 +31,6 @@ Hints
 A user may set ``FESAPI_ROOT`` to a fesapi installation root to tell this
 module where to look.
 #]=======================================================================]
-include(SelectLibraryConfigurations)
-
 set(_FESAPI_SEARCHES)
 
 # Search FESAPI_ROOT first if it is set.
@@ -70,6 +68,7 @@ if(NOT FESAPI_LIBRARY)
     find_library(FESAPI_LIBRARY_DEBUG NAMES ${FESAPI_NAMES_DEBUG} NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
   endforeach()
 
+  include(SelectLibraryConfigurations)
   select_library_configurations(FESAPI)
 endif()
 
@@ -78,7 +77,7 @@ unset(FESAPI_NAMES_DEBUG)
 
 mark_as_advanced(FESAPI_INCLUDE_DIR)
 
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(FESAPI REQUIRED_VARS FESAPI_LIBRARY FESAPI_INCLUDE_DIR)
+find_package_handle_standard_args(FESAPI REQUIRED_VARS FESAPI_LIBRARY FESAPI_INCLUDE_DIR)
 
 if(FESAPI_FOUND)
     set(FESAPI_INCLUDE_DIRS ${FESAPI_INCLUDE_DIR})

@@ -31,8 +31,6 @@ Hints
 A user may set ``AVRO_ROOT`` to a avro installation root to tell this
 module where to look.
 #]=======================================================================]
-include(SelectLibraryConfigurations)
-
 set(_AVRO_SEARCHES)
 
 # Search AVRO_ROOT first if it is set.
@@ -69,6 +67,7 @@ if(NOT AVRO_LIBRARY)
     find_library(AVRO_LIBRARY_DEBUG NAMES ${AVRO_NAMES_DEBUG} NAMES_PER_DIR ${${search}} PATH_SUFFIXES lib)
   endforeach()
 
+  include(SelectLibraryConfigurations)
   select_library_configurations(AVRO)
 endif()
 
@@ -77,7 +76,7 @@ unset(AVRO_NAMES_DEBUG)
 
 mark_as_advanced(AVRO_INCLUDE_DIR)
 
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(AVRO REQUIRED_VARS AVRO_LIBRARY AVRO_INCLUDE_DIR)
+find_package_handle_standard_args(AVRO REQUIRED_VARS AVRO_LIBRARY AVRO_INCLUDE_DIR)
 
 if(AVRO_FOUND)
     set(AVRO_INCLUDE_DIRS ${AVRO_INCLUDE_DIR})

@@ -2,7 +2,7 @@
 /cs/fetpapiCs.csproj
 /swig/setup.py
 /swig/swigEtp1_2Include.i
-/src/nsDefinitions.h
+/src/macroDefinitions.h
 
 ## Ignore csharp swig generated files
 /swig/swigGeneratedCsWrapper.cpp
