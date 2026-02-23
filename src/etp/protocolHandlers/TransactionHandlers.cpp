@@ -31,33 +31,33 @@ void TransactionHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatyp
 	}
 
 	if (mh.messageType == Energistics::Etp::v12::Protocol::Transaction::StartTransaction::messageTypeId) {
-		Energistics::Etp::v12::Protocol::Transaction::StartTransaction getO;
-		avro::decode(*d, getO);
-		on_StartTransaction(getO, mh.messageId);
+		Energistics::Etp::v12::Protocol::Transaction::StartTransaction msg;
+		msg.decode(*d);
+		on_StartTransaction(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse::messageTypeId) {
-		Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse obj;
-		avro::decode(*d, obj);
-		on_StartTransactionResponse(obj, mh.correlationId);
+		Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse msg;
+		msg.decode(*d);
+		on_StartTransactionResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Transaction::CommitTransaction::messageTypeId) {
-		Energistics::Etp::v12::Protocol::Transaction::CommitTransaction putO;
-		avro::decode(*d, putO);
-		on_CommitTransaction(putO, mh.messageId);
+		Energistics::Etp::v12::Protocol::Transaction::CommitTransaction msg;
+		msg.decode(*d);
+		on_CommitTransaction(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_CommitTransactionResponse(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction::messageTypeId) {
-		Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction deleteO;
-		avro::decode(*d, deleteO);
-		on_RollbackTransaction(deleteO, mh.messageId);
+		Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction msg;
+		msg.decode(*d);
+		on_RollbackTransaction(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_RollbackTransactionResponse(msg, mh.messageId);
 	}
 	else {
@@ -78,8 +78,10 @@ void TransactionHandlers::on_StartTransactionResponse(const Energistics::Etp::v1
 
 	if (msg.successful) {
 		transactionUuid = msg.transactionUuid;
+		lastTransactionFailure = "";
 	}
 	else {
+		transactionUuid = { {} };
 		lastTransactionFailure = msg.failureReason;
 	}
 }

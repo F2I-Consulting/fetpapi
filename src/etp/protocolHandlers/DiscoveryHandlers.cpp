@@ -31,27 +31,27 @@ void DiscoveryHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 	}
 	if (mh.messageType == Energistics::Etp::v12::Protocol::Discovery::GetResources::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Discovery::GetResources msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_GetResources(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_GetResourcesResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_GetResourcesEdgesResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_GetDeletedResources(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Discovery::GetDeletedResourcesResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Discovery::GetDeletedResourcesResponse msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_GetDeletedResourcesResponse(msg, mh.correlationId);
 	}
 	else {

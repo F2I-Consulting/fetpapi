@@ -70,13 +70,13 @@ bool ETP_NS::EtpHelpers::validateDataObjectUri(const std::string& uri)
 		: std::regex_match(uri, std::regex("^eml:///(dataspace[(]'.*'[)]/)?(witsml|resqml|prodml|eml)([0-9]{2})\.[a-zA-Z0-9]+[(][a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}(,.*)?[)]", std::regex::ECMAScript));
 }
 
-Energistics::Etp::v12::Protocol::Core::ProtocolException ETP_NS::EtpHelpers::buildSingleMessageProtocolException(int32_t m_code, const std::string & m_message)
+std::shared_ptr<Energistics::Etp::v12::Protocol::Core::ProtocolException> ETP_NS::EtpHelpers::buildSingleMessageProtocolException(int32_t m_code, const std::string & m_message)
 {
 	Energistics::Etp::v12::Datatypes::ErrorInfo errorInfo;
 	errorInfo.code = m_code;
 	errorInfo.message = m_message;
-	Energistics::Etp::v12::Protocol::Core::ProtocolException peMessage;
-	peMessage.error.emplace(errorInfo);
+	auto peMessage = std::make_shared<Energistics::Etp::v12::Protocol::Core::ProtocolException>();
+	peMessage->error.emplace(errorInfo);
 
 	return peMessage;
 }

@@ -23,6 +23,7 @@ under the License.
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 
 #include <boost/lexical_cast.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 
 #include <fesapi/common/HdfProxyFactory.h>
 #include <fesapi/resqml2/PointSetRepresentation.h>
@@ -38,52 +39,25 @@ boost::uuids::random_generator gen;
 
 std::shared_ptr<ETP_NS::AbstractSession> connect()
 {
-	std::shared_ptr<ETP_NS::AbstractSession> session = nullptr;
+	//ETP_NS::InitializationParameters initializationParams(gen(), "ws://etp.f2i-consulting.com:9002/");
+	ETP_NS::InitializationParameters initializationParams(gen(), "ws://127.0.0.1:9002/");
+	std::map< std::string, std::string > additionalHeaderField = { {"data-partition-id", ""} };
+	auto clientSession = ETP_NS::ClientSessionLaunchers::createClientSession(&initializationParams, "Basic Zm9vOmJhcg==");
+	clientSession->setVerbose(false);
 
-	ETP_NS::InitializationParameters initializationParams(gen(), ETP_SERVER_URL);
-	std::map< std::string, std::string > additionalHeaderField = { {"data-partition-id", OSDU_PARTITION} };
-
-#ifdef WITH_ETP_SSL
-	if (std::string(ETP_SERVER_URL).find("wss://") == 0) {
-		session = ETP_NS::ClientSessionLaunchers::createWssClientSession(&initializationParams, OSDU_AUTH, additionalHeaderField);
-	}
-	else {
-#endif
-		session = ETP_NS::ClientSessionLaunchers::createWsClientSession(&initializationParams, OSDU_AUTH);
-#ifdef WITH_ETP_SSL
-	}
-#endif
-
-	session->setStoreProtocolHandlers(std::make_shared<ETP_NS::StoreHandlers>(session.get()));
-	session->setDataArrayProtocolHandlers(std::make_shared<ETP_NS::DataArrayHandlers>(session.get()));
-	session->setDataspaceProtocolHandlers(std::make_shared<ETP_NS::DataspaceHandlers>(session.get()));
-	session->setTransactionProtocolHandlers(std::make_shared<ETP_NS::TransactionHandlers>(session.get()));
-
-#ifdef WITH_ETP_SSL
-	if (std::string(ETP_SERVER_URL).find("wss://") == 0) {
-		auto sslSession = std::dynamic_pointer_cast<ETP_NS::SslClientSession>(session);
-		std::thread sessionThread(&ETP_NS::SslClientSession::run, sslSession);
-		sessionThread.detach();
-	}
-	else {
-#endif
-		auto plainSession = std::dynamic_pointer_cast<ETP_NS::PlainClientSession>(session);
-		std::thread sessionThread(&ETP_NS::PlainClientSession::run, plainSession);
-		sessionThread.detach();
-#ifdef WITH_ETP_SSL
-	}
-#endif
+	std::thread sessionThread(&ETP_NS::ClientSession::run, clientSession);
+	sessionThread.detach();
 
 	// Wait for the ETP session to be opened
 	auto t_start = std::chrono::high_resolution_clock::now();
-	while (session->isEtpSessionClosed()) {
+	while (clientSession->isEtpSessionClosed()) {
 		auto timeOut = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count();
 		if (timeOut > 5000) {
 			throw std::invalid_argument("Time out : " + std::to_string(timeOut) + " ms.\n");
 		}
 	}
 
-	return session;
+	return clientSession;
 }
 
 std::string putDataspace(std::shared_ptr<ETP_NS::AbstractSession> session)
@@ -92,8 +66,6 @@ std::string putDataspace(std::shared_ptr<ETP_NS::AbstractSession> session)
 	Energistics::Etp::v12::Datatypes::Object::Dataspace dataspace;
 	dataspace.uri = "eml:///dataspace('testF2I/" + dataspaceUuid + "')";
 	dataspace.path = "testF2I/" + dataspaceUuid;
-	dataspace.storeCreated = 0;
-	dataspace.storeLastWrite = 0;
 	std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace> query = { {"0", dataspace} };
 	std::vector<std::string> successKeys = session->putDataspaces(query);
 
@@ -109,7 +81,7 @@ void deleteDataspace(std::shared_ptr<ETP_NS::AbstractSession> session, const std
 TEST_CASE("Put a DataArray", "[DataArray]")
 {
 	std::shared_ptr<ETP_NS::AbstractSession> session = connect();
-	//session->setVerbose(true);
+	session->setVerbose(true);
 	const std::string dataspaceUri = putDataspace(session);
 	REQUIRE(dataspaceUri.size() > 0);
 
@@ -122,15 +94,16 @@ TEST_CASE("Put a DataArray", "[DataArray]")
 	// Create the point set representation, an ETP HDF proxy if necessary and a partial crs
 	RESQML2_NS::PointSetRepresentation* h1i1PointSetRep = repo.createPointSetRepresentation("d95dcb6c-96df-4749-a481-5981390067f4", "Horizon1 Interp1 PointSetRep");
 	h1i1PointSetRep->setUriSource(dataspaceUri);
-	auto* crs = repo.createPartial<RESQML2_0_1_NS::LocalDepth3dCrs>("", "");
+	auto* crs = repo.createLocalDepth3dCrs("", "Testing local depth Crs",
+		.0, .0, .0, .0, gsoap_resqml2_0_1::eml20__LengthUom::m, "Only for testing purpose", gsoap_resqml2_0_1::eml20__LengthUom::m, "Only for testing purpose", false);
 	auto* etpHdfProxy = repo.createHdfProxy("f31fcc59-b8c4-4fc6-a524-973569b4cca5", "", "", "", COMMON_NS::DataObjectRepository::openingMode::READ_WRITE);
 	etpHdfProxy->setUriSource(dataspaceUri);
 	repo.setDefaultHdfProxy(etpHdfProxy);
 
 	// Create and push the numerical values to the store
 	// Internally it uses the ETP Hdf proxy set as the default HDF proxy of the repository in main.cpp.
-	// pushBackGeometryPatch is a blocking method. If you want non blocking method, you need to use PutDataArray directly.
-	const size_t xyzPointCount = 333000;
+	// pushBackXyzGeometryPatch is a blocking method. If you want non blocking method, you need to use PutDataArray directly.
+	const size_t xyzPointCount = 1000000;
 	std::unique_ptr<double[]> xyzPoints(new double[xyzPointCount * 3]);
 	for (size_t ptIdx = 0; ptIdx < xyzPointCount; ptIdx++) {
 		xyzPoints[ptIdx * 3] = (double)ptIdx;
@@ -139,16 +112,24 @@ TEST_CASE("Put a DataArray", "[DataArray]")
 	}
 	std::cout << "size of the array : " << xyzPointCount * 3 * 8 << " bytes." << std::endl;
 	auto t_start = std::chrono::high_resolution_clock::now();
-	h1i1PointSetRep->pushBackGeometryPatch(xyzPointCount, xyzPoints.get(), nullptr, crs);
+	std::vector<std::string> dataspaceUris;
+	dataspaceUris.push_back(dataspaceUri);
+	std::string transactionFailure = session->startTransaction(dataspaceUris, false);
+	REQUIRE(transactionFailure.empty());
+	h1i1PointSetRep->pushBackXyzGeometryPatch(xyzPointCount, xyzPoints.get(), nullptr, crs);
 	std::cout << "Put DataArray in : " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " milliseconds." << std::endl;
 	
 	// send the XML part
-	// std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataObjects = {
-	// 	{"0", ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(h1i1PointSetRep)},
-	// 	{"1", ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(etpHdfProxy)},
-	// };
-	// session->putDataObjects(dataObjects);
-	
+	repo.setUriSource(dataspaceUri);
+	std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataObjects;
+	int index = 0;
+	for (auto uuid : repo.getUuids()) {
+		dataObjects[std::to_string(index++)] = ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(repo, uuid);
+	}
+	session->putDataObjects(dataObjects);
+	transactionFailure = session->commitTransaction();
+	REQUIRE(transactionFailure.empty());
+
 	//Reading back
 	std::unique_ptr<double[]> receivedXyzPoints(new double[xyzPointCount * 3]);
 	t_start = std::chrono::high_resolution_clock::now();
@@ -159,35 +140,9 @@ TEST_CASE("Put a DataArray", "[DataArray]")
 	deleteDataspace(session, dataspaceUri);
 	session->close();
 
-	for (size_t xyzPointIndex = 0; xyzPointIndex < xyzPointCount && xyzPointIndex < 20; ++xyzPointIndex) {
+	for (size_t xyzPointIndex = 0; xyzPointIndex < xyzPointCount; ++xyzPointIndex) {
 		REQUIRE(receivedXyzPoints[xyzPointIndex * 3] == xyzPointIndex);
 		REQUIRE(receivedXyzPoints[xyzPointIndex * 3 + 1] == xyzPointIndex);
 		REQUIRE(receivedXyzPoints[xyzPointIndex * 3 + 2] == xyzPointIndex);
 	}
-	for (int64_t xyzPointIndex = xyzPointCount - 1; xyzPointIndex >= 0 && xyzPointIndex > xyzPointCount - 20; --xyzPointIndex) {
-		REQUIRE(receivedXyzPoints[xyzPointIndex * 3] == xyzPointIndex);
-		REQUIRE(receivedXyzPoints[xyzPointIndex * 3 + 1] == xyzPointIndex);
-		REQUIRE(receivedXyzPoints[xyzPointIndex * 3 + 2] == xyzPointIndex);
-	}
-}
-
-TEST_CASE("Start and Commit a transaction", "[DataArray]")
-{
-	std::shared_ptr<ETP_NS::AbstractSession> session = connect();
-	//session->setVerbose(true);
-	const std::string dataspaceUri = putDataspace(session);
-	REQUIRE(dataspaceUri.size() > 0);
-
-	// Start an ETP transaction to not pollute server if an error occurs during transfer
-	std::vector<std::string> dataspaceUris;
-	dataspaceUris.push_back(dataspaceUri);
-	std::string transactionFailure = session->startTransaction(dataspaceUris, false);
-	REQUIRE(transactionFailure.empty());
-
-	transactionFailure = session->commitTransaction();
-	REQUIRE(transactionFailure.empty());
-
-	// Cleaning
-	deleteDataspace(session, dataspaceUri);
-	session->close();
 }

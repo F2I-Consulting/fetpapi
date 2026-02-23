@@ -74,11 +74,6 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 			}
 		}
 
-		const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
-		specificProtocolHandlers.clear();
-		const std::lock_guard<std::mutex> sendingQueueLock(sendingQueueMutex);
-		std::queue< std::tuple<int64_t, std::vector<uint8_t>, std::shared_ptr<ETP_NS::ProtocolHandlers>> > empty;
-		std::swap(sendingQueue, empty);
 		webSocketSessionClosed = true;
 		etpSessionClosed = true;
 
@@ -108,8 +103,8 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 
 	// Request for Acknowledge
 	if ((receivedMh.messageFlags & 0x10) != 0) {
-		Energistics::Etp::v12::Protocol::Core::Acknowledge acknowledge;
-		acknowledge.protocolId = receivedMh.protocol;
+		std::shared_ptr < Energistics::Etp::v12::Protocol::Core::Acknowledge> acknowledge;
+		acknowledge->messageHeader.protocol = receivedMh.protocol;
 		send(acknowledge, receivedMh.messageId, 0x02);
 	}
 
@@ -124,6 +119,12 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 			if ((receivedMh.messageFlags & 0x02) != 0) {
 				const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
 				auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
+				for (int64_t idAlias : std::get<2>(specificProtocolHandlerIt->second)) {
+					auto specificProtocolHandlerIt2 = specificProtocolHandlers.find(idAlias);
+					if (specificProtocolHandlerIt2 != specificProtocolHandlers.end()) {
+						specificProtocolHandlers.erase(specificProtocolHandlerIt2);
+					}
+				}
 				if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
 					specificProtocolHandlers.erase(specificProtocolHandlerIt);
 				}
@@ -135,7 +136,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 				const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
 				auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
 				if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
-					specificProtocolHandler = specificProtocolHandlerIt->second;
+					specificProtocolHandler = std::get<1>(specificProtocolHandlerIt->second);
 				}
 			} // Scope for specificProtocolHandlersLock
 
@@ -146,6 +147,12 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 				if ((receivedMh.messageFlags & 0x02) != 0) {
 					const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
 					auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
+					for (int64_t idAlias : std::get<2>(specificProtocolHandlerIt->second)) {
+						auto specificProtocolHandlerIt2 = specificProtocolHandlers.find(idAlias);
+						if (specificProtocolHandlerIt2 != specificProtocolHandlers.end()) {
+							specificProtocolHandlers.erase(specificProtocolHandlerIt2);
+						}
+					}
 					specificProtocolHandlers.erase(specificProtocolHandlerIt);
 				}
 			}
@@ -172,7 +179,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 	if (specificProtocolHandlers.empty() && isCloseRequested_)
 	{
 		etpSessionClosed = true;
-		send(Energistics::Etp::v12::Protocol::Core::CloseSession(), 0, 0x02);
+		send(std::make_shared<Energistics::Etp::v12::Protocol::Core::CloseSession>(), 0, 0x02);
 	}
 
 	do_read();
@@ -189,9 +196,9 @@ std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> AbstractSession
 		throw std::logic_error("You did not register any dataspace protocol handlers.");
 	}
 
-	Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces msg;
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces>();
 	if (storeLastWriteFilter >= 0) {
-		msg.storeLastWriteFilter = storeLastWriteFilter;
+		msg->storeLastWriteFilter = storeLastWriteFilter;
 	}
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> result = handlers->getDataspaces();
@@ -206,8 +213,8 @@ std::vector<std::string> AbstractSession::putDataspaces(const std::map<std::stri
 		throw std::logic_error("You did not register any dataspace protocol handlers.");
 	}
 
-	Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces msg;
-	msg.dataspaces = dataspaces;
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces>();
+	msg->dataspaces = dataspaces;
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<std::string> result = handlers->getSuccessKeys();
 	handlers->clearSuccessKeys();
@@ -221,8 +228,8 @@ std::vector<std::string> AbstractSession::deleteDataspaces(const std::map<std::s
 		throw std::logic_error("You did not register any dataspace protocol handlers.");
 	}
 
-	Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces msg;
-	msg.uris = dataspaceUris;
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces>();
+	msg->uris = dataspaceUris;
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<std::string> result = handlers->getSuccessKeys();
 	handlers->clearSuccessKeys();
@@ -242,8 +249,8 @@ std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> AbstractSession
 		throw std::logic_error("You did not register any dataspace OSDU protocol handlers.");
 	}
 
-	Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo msg;
-	msg.uris = dataspaceUris;
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo>();
+	msg->uris = dataspaceUris;
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> result = handlers->getDataspaces();
 	handlers->clearDataspaces();
@@ -258,9 +265,9 @@ std::vector<std::string> AbstractSession::copyDataspacesContent(const std::map<s
 		throw std::logic_error("You did not register any dataspace OSDU protocol handlers.");
 	}
 
-	Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent msg;
-	msg.dataspaces = sourceDataspaceUris;
-	msg.targetDataspace = targetDataspaceUri;
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent>();
+	msg->dataspaces = sourceDataspaceUris;
+	msg->targetDataspace = targetDataspaceUri;
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<std::string> result = handlers->getSuccessKeys();
 	handlers->clearSuccessKeys();
@@ -274,9 +281,9 @@ std::vector<std::string> AbstractSession::lockDataspaces(const std::map<std::str
 		throw std::logic_error("You did not register any dataspace OSDU protocol handlers.");
 	}
 
-	Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces msg;
-	msg.uris = dataspaceUris;
-	msg.lock = lock;
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces>();
+	msg->uris = dataspaceUris;
+	msg->lock = lock;
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<std::string> result = handlers->getSuccessKeys();
 	handlers->clearSuccessKeys();
@@ -290,9 +297,9 @@ std::vector<std::string> AbstractSession::copyToDataspace(const std::map<std::st
 		throw std::logic_error("You did not register any dataspace OSDU protocol handlers.");
 	}
 
-	Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace msg;
-	msg.uris = sourceDataobjectUris;
-	msg.dataspaceUri = targetDataspaceUri;
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace>();
+	msg->uris = sourceDataobjectUris;
+	msg->dataspaceUri = targetDataspaceUri;
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<std::string> result = handlers->getSuccessKeys();
 	handlers->clearSuccessKeys();
@@ -314,13 +321,13 @@ std::vector<Energistics::Etp::v12::Datatypes::Object::Resource> AbstractSession:
 		throw std::logic_error("You did not register any discovery protocol handlers.");
 	}
 
-	Energistics::Etp::v12::Protocol::Discovery::GetResources msg;
-	msg.context = context;
-	msg.scope = scope;
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::Discovery::GetResources>();
+	msg->context = context;
+	msg->scope = scope;
 	if (storeLastWriteFilter >= 0) {
-		msg.storeLastWriteFilter = storeLastWriteFilter;
+		msg->storeLastWriteFilter = storeLastWriteFilter;
 	}
-	msg.countObjects = countObjects;
+	msg->countObjects = countObjects;
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<Energistics::Etp::v12::Datatypes::Object::Resource> result = handlers->getResources();
 	handlers->clearResources();
@@ -337,12 +344,12 @@ std::vector<Energistics::Etp::v12::Datatypes::Object::DeletedResource> AbstractS
 		throw std::logic_error("You did not register any discovery protocol handlers.");
 	}
 
-	Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources msg;
-	msg.dataspaceUri = dataspaceUri;
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources>();
+	msg->dataspaceUri = dataspaceUri;
 	if (deleteTimeFilter >= 0) {
-		msg.deleteTimeFilter = deleteTimeFilter;
+		msg->deleteTimeFilter = deleteTimeFilter;
 	}
-	msg.dataObjectTypes = dataObjectTypes;
+	msg->dataObjectTypes = dataObjectTypes;
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<Energistics::Etp::v12::Datatypes::Object::DeletedResource> result = handlers->getDeletedResources();
 	handlers->clearDeletedResources();
@@ -360,9 +367,9 @@ std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> Abst
 		throw std::logic_error("You did not register any store protocol handlers.");
 	}
 
-	Energistics::Etp::v12::Protocol::Store::GetDataObjects msg;
-	msg.uris = uris;
-	msg.format = "xml";
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::Store::GetDataObjects>();
+	msg->uris = uris;
+	msg->format = "xml";
 	sendAndBlock(msg, 0, 0x02);
 	std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> result = handlers->getDataObjects();
 	handlers->clearDataObjects();
@@ -384,8 +391,8 @@ std::vector<std::string> AbstractSession::putDataObjects(const std::map<std::str
 	size_t messageSize = 62;
 
 	std::vector<std::string> result;
-	Energistics::Etp::v12::Protocol::Store::PutDataObjects msg;
-	msg.pruneContainedObjects = false;
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::Store::PutDataObjects>();
+	msg->pruneContainedObjects = false;
 
 	auto it = dataObjects.cbegin();
 	int64_t correlationId = 0;
@@ -411,13 +418,13 @@ std::vector<std::string> AbstractSession::putDataObjects(const std::map<std::str
 			result.insert(result.end(), successKeys.begin(), successKeys.end());
 			handlers->clearSuccessKeys();
 
-			msg.dataObjects.clear();
+			msg->dataObjects.clear();
 			messageSize = 62;
 			if (correlationId == 0) {
 				correlationId = sentMessageId;
 			}
 		}
-		msg.dataObjects.emplace(it->first, it->second);
+		msg->dataObjects.emplace(it->first, it->second);
 		messageSize += dataObjectSize;
 		++it;
 	}
@@ -435,9 +442,9 @@ std::vector<std::string> AbstractSession::deleteDataObjects(const std::map<std::
 		throw std::logic_error("You did not register any store protocol handlers.");
 	}
 
-	Energistics::Etp::v12::Protocol::Store::DeleteDataObjects msg;
-	msg.uris = uris;
-	msg.pruneContainedObjects = false;
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::Store::DeleteDataObjects>();
+	msg->uris = uris;
+	msg->pruneContainedObjects = false;
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<std::string> result = handlers->getSuccessKeys();
 	handlers->clearSuccessKeys();
@@ -455,10 +462,10 @@ std::vector<std::string> AbstractSession::copyDataObjectsByValue(const std::stri
 		throw std::logic_error("You did not register any store OSDU protocol handlers.");
 	}
 
-	Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue msg;
-	msg.uri = sourceDataobjectUri;
-	msg.sourcesDepth = sourcesDepth;
-	msg.dataObjectTypes = dataObjectTypes;
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue>();
+	msg->uri = sourceDataobjectUri;
+	msg->sourcesDepth = sourcesDepth;
+	msg->dataObjectTypes = dataObjectTypes;
 	sendAndBlock(msg, 0, 0x02);
 	std::vector<std::string> result = handlers->getCopiedDataobjects();
 	handlers->clearCopiedDataobjects();
@@ -479,10 +486,10 @@ std::string AbstractSession::startTransaction(std::vector<std::string> dataspace
 		throw std::logic_error("You cannot start a transaction before the current transaction is rolled back or committed. ETP1.2 intentionally supports a single opened transaction on a session.");
 	}
 
-	Energistics::Etp::v12::Protocol::Transaction::StartTransaction startTransactionMsg;
-	startTransactionMsg.dataspaceUris = dataspaceUris;
-	startTransactionMsg.readOnly = readOnly;
-	sendAndBlock(startTransactionMsg, 0, 0x02);
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::Transaction::StartTransaction>();
+	msg->dataspaceUris = dataspaceUris;
+	msg->readOnly = readOnly;
+	sendAndBlock(msg, 0, 0x02);
 	return handlers->isInAnActiveTransaction()
 		? ""
 		: handlers->getLastTransactionFailure();
@@ -498,9 +505,9 @@ std::string AbstractSession::rollbackTransaction()
 		throw std::logic_error("You cannot roll back a transaction which has not been started.");
 	}
 
-	Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction rollbackTransactionMsg;
-	rollbackTransactionMsg.transactionUuid = handlers->getTransactionUuid();
-	sendAndBlock(rollbackTransactionMsg, 0, 0x02);
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction>();
+	msg->transactionUuid = handlers->getTransactionUuid();
+	sendAndBlock(msg, 0, 0x02);
 
 	return !handlers->isInAnActiveTransaction()
 		? ""
@@ -517,9 +524,9 @@ std::string AbstractSession::commitTransaction()
 		throw std::logic_error("You cannot commit a transaction which has not been started.");
 	}
 
-	Energistics::Etp::v12::Protocol::Transaction::CommitTransaction commitTransactionMsg;
-	commitTransactionMsg.transactionUuid = handlers->getTransactionUuid();
-	sendAndBlock(commitTransactionMsg, 0, 0x02);
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::Transaction::CommitTransaction>();
+	msg->transactionUuid = handlers->getTransactionUuid();
+	sendAndBlock(msg, 0, 0x02);
 
 	return !handlers->isInAnActiveTransaction()
 		? ""

@@ -31,33 +31,33 @@ void DataspaceHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 	}
 
 	if (mh.messageType == Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces::messageTypeId) {
-		Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces getO;
-		avro::decode(*d, getO);
-		on_GetDataspaces(getO, mh.messageId);
+		Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces msg;
+		msg.decode(*d);
+		on_GetDataspaces(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse::messageTypeId) {
-		Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse obj;
-		avro::decode(*d, obj);
-		on_GetDataspacesResponse(obj, mh.correlationId);
+		Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse msg;
+		msg.decode(*d);
+		on_GetDataspacesResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces::messageTypeId) {
-		Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces putO;
-		avro::decode(*d, putO);
-		on_PutDataspaces(putO, mh.messageId);
+		Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces msg;
+		msg.decode(*d);
+		on_PutDataspaces(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_PutDataspacesResponse(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces::messageTypeId) {
-		Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces deleteO;
-		avro::decode(*d, deleteO);
-		on_DeleteDataspaces(deleteO, mh.messageId);
+		Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces msg;
+		msg.decode(*d);
+		on_DeleteDataspaces(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_DeleteDataspacesResponse(msg, mh.messageId);
 	}
 	else {

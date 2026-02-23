@@ -31,38 +31,38 @@ void StoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::Me
 	}
 
 	if (mh.messageType == Energistics::Etp::v12::Protocol::Store::GetDataObjects::messageTypeId) {
-		Energistics::Etp::v12::Protocol::Store::GetDataObjects getO;
-		avro::decode(*d, getO);
-		on_GetDataObjects(getO, mh.messageId);
+		Energistics::Etp::v12::Protocol::Store::GetDataObjects msg;
+		msg.decode(*d);
+		on_GetDataObjects(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse::messageTypeId) {
-		Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse obj;
-		avro::decode(*d, obj);
-		on_GetDataObjectsResponse(obj, mh.correlationId);
+		Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse msg;
+		msg.decode(*d);
+		on_GetDataObjectsResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Store::PutDataObjects::messageTypeId) {
-		Energistics::Etp::v12::Protocol::Store::PutDataObjects putO;
-		avro::decode(*d, putO);
-		on_PutDataObjects(putO, mh.messageId);
+		Energistics::Etp::v12::Protocol::Store::PutDataObjects msg;
+		msg.decode(*d);
+		on_PutDataObjects(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_PutDataObjectsResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Store::DeleteDataObjects::messageTypeId) {
-		Energistics::Etp::v12::Protocol::Store::DeleteDataObjects deleteO;
-		avro::decode(*d, deleteO);
-		on_DeleteDataObjects(deleteO, mh.messageId);
+		Energistics::Etp::v12::Protocol::Store::DeleteDataObjects msg;
+		msg.decode(*d);
+		on_DeleteDataObjects(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_DeleteDataObjectsResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::Store::Chunk::messageTypeId) {
 		Energistics::Etp::v12::Protocol::Store::Chunk msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_Chunk(msg, mh.messageId);
 	}
 	else {

@@ -127,35 +127,48 @@ namespace ETP_NS
 				return;
 			}
 
+			auto& front = sendingQueue.front();
 			const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
-			bool previousSentMessageCompleted = specificProtocolHandlers.find(std::get<0>(sendingQueue.front())) == specificProtocolHandlers.end();
+			bool previousSentMessageCompleted = specificProtocolHandlers.find(std::get<0>(front)->messageHeader.messageId) == specificProtocolHandlers.end();
 
 			if (!previousSentMessageCompleted) {
-				fesapi_log("Cannot send Message id :", std::to_string(std::get<0>(sendingQueue.front())), "because the previous message has not finished to be sent.");
+				fesapi_log("Cannot send Message id :", std::to_string(std::get<0>(front)->messageHeader.messageId), "because the previous message has not finished to be sent.");
 			}
 			else {
-				fesapi_log("Sending Message id :", std::to_string(std::get<0>(sendingQueue.front())));
+				fesapi_log("Sending Message id :", std::to_string(std::get<0>(front)->messageHeader.messageId));
 
-				derived().ws()->async_write(
-					boost::asio::buffer(std::get<1>(sendingQueue.front())),
-					[this, self{ this->shared_from_this() }](boost::system::error_code ec, std::size_t)
-					->void
-				{
-					if (ec) {
-						std::cerr << "on_write : " << ec.message() << std::endl;
-					}
-					else {
-						// Register the handler to respond to the sent message
-						const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
-						specificProtocolHandlers[std::get<0>(sendingQueue.front())] = std::get<2>(sendingQueue.front());
-					}
+				auto avroBytes = std::get<0>(front)->encodeHeaderAndBody();
 
-					// Remove the sent message from the queue
-					const std::lock_guard<std::mutex> sendingQueueLock(sendingQueueMutex);
-					sendingQueue.pop();
+				//asio::buffer is a non-owning view. We must keep the underlying storage alive until the I/O completes.
+				if (avroBytes->size() < maxWebSocketMessagePayloadSize) {
+					derived().ws()->async_write(
+						boost::asio::buffer(*avroBytes),
+						[this, self{ this->shared_from_this() }, avroBytes](boost::system::error_code ec, std::size_t)
+						->void
+					{
 
-					do_write();
-				});
+						if (ec) {
+							std::cerr << "on_write : " << ec.message() << std::endl;
+						}
+						else {
+							// Register the handler to respond to the sent message
+							const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
+							auto& front = sendingQueue.front();
+							auto nextMessage = std::get<0>(front);
+							specificProtocolHandlers[nextMessage->messageHeader.messageId] =
+								std::make_tuple(nextMessage, std::get<1>(front), std::get<2>(front));
+						}
+
+						// Remove the sent message from the queue
+						const std::lock_guard<std::mutex> sendingQueueLock(sendingQueueMutex);
+						sendingQueue.pop();
+
+						do_write();
+					});
+				}
+				else {
+					throw std::invalid_argument("You cannot send a message which is too big. Please use message part or chunk or whatever else.");
+				}
 			}
 		}
 	};

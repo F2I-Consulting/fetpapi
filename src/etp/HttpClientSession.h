@@ -23,11 +23,18 @@ under the License.
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
+
+#include <boost/version.hpp>
+#if BOOST_VERSION < 107000
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#else
+#include <boost/asio/strand.hpp>
+#endif
 
-using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 namespace http = boost::beast::http;    // from <boost/beast/http.hpp>
+namespace net = boost::asio;            // from <boost/asio.hpp>
+using tcp = boost::asio::ip::tcp;       // from <boost/asio/ip/tcp.hpp>
 
 namespace ETP_NS
 {
@@ -35,7 +42,11 @@ namespace ETP_NS
 	class HttpClientSession : public std::enable_shared_from_this<HttpClientSession>
 	{
 		tcp::resolver resolver_;
-		tcp::socket socket_;
+#if BOOST_VERSION < 107000
+		tcp::socket stream_;
+#else
+		beast::tcp_stream stream_;
+#endif
 		boost::beast::flat_buffer buffer_; // (Must persist between reads)
 		http::request<http::empty_body> req_;
 		http::response<http::string_body> res_;
@@ -44,8 +55,8 @@ namespace ETP_NS
 		// Resolver and socket require an io_context
 		explicit
 			HttpClientSession(boost::asio::io_context& ioc)
-			: resolver_(ioc)
-			, socket_(ioc)
+			: resolver_(net::make_strand(ioc))
+			, stream_(net::make_strand(ioc))
 		{
 		}
 
@@ -100,18 +111,30 @@ namespace ETP_NS
 			std::stable_partition(endpoints.begin(), endpoints.end(), [](auto entry) {return entry.protocol() == tcp::v4(); });
 
 			// Make the connection on the IP address we get from a lookup
+#if BOOST_VERSION < 107000
 			boost::asio::async_connect(
-				socket_,
+				stream_,
 				endpoints.begin(),
 				endpoints.end(),
 				std::bind(
 					&HttpClientSession::on_connect,
 					shared_from_this(),
 					std::placeholders::_1));
+#else
+			stream_.expires_after(std::chrono::seconds(3));
+			stream_.async_connect(
+				endpoints,
+				beast::bind_front_handler(
+					&HttpClientSession::on_connect,
+					shared_from_this()));
+#endif
 		}
 
-		void
-			on_connect(boost::system::error_code ec)
+#if BOOST_VERSION < 107000
+		void on_connect(boost::system::error_code ec)
+#else
+		void on_connect(boost::beast::error_code ec, tcp::resolver::results_type::endpoint_type)
+#endif
 		{
 			if (ec) {
 				std::cerr << "connect : " << ec.message() << std::endl;
@@ -119,7 +142,7 @@ namespace ETP_NS
 			}
 
 			// Send the HTTP request to the remote host
-			http::async_write(socket_, req_,
+			http::async_write(stream_, req_,
 				std::bind(
 					&HttpClientSession::on_write,
 					shared_from_this(),
@@ -140,7 +163,7 @@ namespace ETP_NS
 			}
 
 			// Receive the HTTP response
-			http::async_read(socket_, buffer_, res_,
+			http::async_read(stream_, buffer_, res_,
 				std::bind(
 					&HttpClientSession::on_read,
 					shared_from_this(),
@@ -156,12 +179,16 @@ namespace ETP_NS
 			boost::ignore_unused(bytes_transferred);
 
 			if (ec) {
-				std::cerr << "read : " << ec.message() << std::endl;
+				std::cerr << "HTTP read : " << ec.message() << std::endl;
 				return;
 			}
 
 			// Gracefully close the socket
-			socket_.shutdown(tcp::socket::shutdown_both, ec);
+#if BOOST_VERSION < 107000
+			stream_.shutdown(tcp::socket::shutdown_both, ec);
+#else
+			stream_.socket().shutdown(tcp::socket::shutdown_both, ec);
+#endif
 
 			// not_connected happens sometimes so don't bother reporting it.
 			if (ec && ec != boost::system::errc::not_connected) {

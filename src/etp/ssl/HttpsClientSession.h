@@ -169,7 +169,7 @@ namespace ETP_NS
 			}
 
 			// Reality check: IPv6 is unlikely to be available yet
-			std::vector<tcp::endpoint> endpoints = std::vector<tcp::endpoint>(results.begin(), results.end());
+			std::vector<tcp::endpoint> endpoints(results.begin(), results.end());;
 			std::stable_partition(endpoints.begin(), endpoints.end(), [](auto entry) {return entry.protocol() == tcp::v4(); });
 
 			// Make the connection on the IP address we get from a lookup
@@ -183,6 +183,7 @@ namespace ETP_NS
 					shared_from_this(),
 					std::placeholders::_1));
 #else
+			beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(3));
 			beast::get_lowest_layer(stream_).async_connect(
 				endpoints,
 				beast::bind_front_handler(

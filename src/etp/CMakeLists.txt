@@ -9,6 +9,7 @@ set(FETPAPI_ETP_HEADERS	${CMAKE_CURRENT_LIST_DIR}/AbstractClientSessionCRTP.h
 						${CMAKE_CURRENT_LIST_DIR}/ClientSessionLaunchers.h
 						${CMAKE_CURRENT_LIST_DIR}/EtpException.h
 						${CMAKE_CURRENT_LIST_DIR}/EtpHelpers.h
+						${CMAKE_CURRENT_LIST_DIR}/EtpMessage.h
 						${CMAKE_CURRENT_LIST_DIR}/EtpMessages.h
 						${CMAKE_CURRENT_LIST_DIR}/HttpClientSession.h
 						${CMAKE_CURRENT_LIST_DIR}/InitializationParameters.h

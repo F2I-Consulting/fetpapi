@@ -21,6 +21,10 @@ if (WITH_ETP_SSL)
 	target_include_directories(unitTest SYSTEM PRIVATE ${OPENSSL_INCLUDE_DIR})
 endif ()
 
+target_compile_options(unitTest	PRIVATE
+	$<$<CXX_COMPILER_ID:MSVC>:/utf-8> # Necessary for fmt library which AVRO depends on
+)
+
 if (WIN32)
 	#FROM https://stackoverflow.com/a/40217291
 	macro(get_WIN32_WINNT version)
