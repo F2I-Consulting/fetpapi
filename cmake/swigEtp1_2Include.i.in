@@ -172,10 +172,12 @@ typedef long long 				time_t;
 	%nspace ETP_NS::AbstractSession;
 	%nspace ETP_NS::ClientSession;
 	%nspace ETP_NS::InitializationParameters;
+	%nspace ETP_NS::EtpMessage;
 #ifdef WITH_FESAPI
 	%nspace ETP_NS::FesapiHdfProxyFactory;
 #endif
-
+	
+	%nspace Energistics::Etp::v12::Datatypes::MessageHeader;
 	%nspace Energistics::Etp::v12::Datatypes::SupportedDataObject;
 	%nspace Energistics::Etp::v12::Datatypes::Uuid;
 	%nspace Energistics::Etp::v12::Datatypes::Version;
@@ -305,7 +307,15 @@ import com.f2i_consulting.fetpapi.*;
 namespace Energistics {
 	namespace Etp {	
 		namespace v12 {		
-			namespace Datatypes {				
+			namespace Datatypes {	
+				struct MessageHeader {
+					int32_t protocol;
+					int32_t messageType;
+					int64_t correlationId;
+					int64_t messageId;
+					int32_t messageFlags;
+				};
+				
 				struct SupportedDataObject{				
 					std::string qualifiedType;
 					std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> dataObjectCapabilities;
@@ -660,6 +670,17 @@ namespace Energistics {
 %template(MapStringPutDataSubarraysType) std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::PutDataSubarraysType>;
 %template(MapStringPutUninitializedDataArrayType) std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::PutUninitializedDataArrayType>;
 
+%nodefaultctor ETP_NS::EtpMessage;
+namespace ETP_NS
+{
+	class EtpMessage
+	{
+	public:
+		std::string to_string() const;
+		Energistics::Etp::v12::Datatypes::MessageHeader messageHeader;
+	};
+}
+
 /**************** CORE PROTOCOL  *****************/
 
 namespace Energistics {
@@ -667,7 +688,7 @@ namespace Energistics {
 		namespace v12 {		
 			namespace Protocol {			
 				namespace Core {				
-					struct RequestSession{					
+					struct RequestSession : public ETP_NS::EtpMessage {					
 						std::string applicationName;
 						std::string applicationVersion;
 						Energistics::Etp::v12::Datatypes::Uuid clientInstanceId;
@@ -680,7 +701,7 @@ namespace Energistics {
 						static const int messageTypeId=1;
 					};
 					
-					struct OpenSession{					
+					struct OpenSession : public ETP_NS::EtpMessage {					
 						std::string applicationName;
 						std::string applicationVersion;
 						Energistics::Etp::v12::Datatypes::Uuid serverInstanceId;
@@ -694,43 +715,42 @@ namespace Energistics {
 						static const int messageTypeId=2;
 					};
 					
-					struct CloseSession{					
+					struct CloseSession : public ETP_NS::EtpMessage {					
 						std::string reason;
 						static const int messageTypeId=5;
 					};
 					
-					struct Authorize{
+					struct Authorize : public ETP_NS::EtpMessage {
 						std::string authorization;
 						std::map<std::string, std::string> supplementalAuthorization;
 						static const int messageTypeId=6;
 					};
 					
-					struct AuthorizeResponse{
+					struct AuthorizeResponse : public ETP_NS::EtpMessage {
 						bool success=false;
 						std::vector<std::string> challenges;
 						static const int messageTypeId=7;
 					};
 					
-					struct Ping{					
+					struct Ping : public ETP_NS::EtpMessage {					
 						int64_t currentDateTime;
 						static const int messageTypeId=8;
 					};
 					
-					struct Pong{					
+					struct Pong : public ETP_NS::EtpMessage {					
 						int64_t currentDateTime;
 						static const int messageTypeId=9;
 					};
 					
-					struct ProtocolException{
+					struct ProtocolException : public ETP_NS::EtpMessage {
 						bool has_error();
 						Energistics::Etp::v12::Datatypes::ErrorInfo get_error();
 						std::map<std::string, Energistics::Etp::v12::Datatypes::ErrorInfo> errors;
 						static const int messageTypeId=1000;
 					};
 					
-					struct Acknowledge{					
+					struct Acknowledge : public ETP_NS::EtpMessage {					
 						static const int messageTypeId=1001;
-						int protocolId;
 					};
 				}
 			}
@@ -745,7 +765,7 @@ namespace Energistics {
 		namespace v12 {		
 			namespace Protocol {			
 				namespace Discovery {				
-					struct GetResources{					
+					struct GetResources : public ETP_NS::EtpMessage {					
 						Energistics::Etp::v12::Datatypes::Object::ContextInfo context;
 						Energistics::Etp::v12::Datatypes::Object::ContextScopeKind scope;
 						bool countObjects=false;
@@ -756,12 +776,12 @@ namespace Energistics {
 						static const int messageTypeId=1;
 					};
 					
-					struct GetResourcesResponse{					
+					struct GetResourcesResponse : public ETP_NS::EtpMessage {					
 						std::vector<Energistics::Etp::v12::Datatypes::Object::Resource> resources;
 						static const int messageTypeId=4;
 					};
 					
-					struct GetDeletedResources{
+					struct GetDeletedResources : public ETP_NS::EtpMessage {
 						std::string dataspaceUri;
 						bool has_deleteTimeFilter();
 						int64_t get_deleteTimeFilter();
@@ -769,12 +789,12 @@ namespace Energistics {
 						static const int messageTypeId=5;
 					};
 					
-					struct GetDeletedResourcesResponse{					
+					struct GetDeletedResourcesResponse : public ETP_NS::EtpMessage {					
 						std::vector<Energistics::Etp::v12::Datatypes::Object::DeletedResource> deletedResources;
 						static const int messageTypeId=6;
 					};
 					
-					struct GetResourcesEdgesResponse{					
+					struct GetResourcesEdgesResponse : public ETP_NS::EtpMessage {					
 						std::vector<Energistics::Etp::v12::Datatypes::Object::Edge> edges;
 						static const int messageTypeId=7;
 					};
@@ -791,25 +811,25 @@ namespace Energistics {
 		namespace v12 {		
 			namespace Protocol {			
 				namespace Store {				
-					struct GetDataObjects{					
+					struct GetDataObjects : public ETP_NS::EtpMessage {					
 						std::map<std::string, std::string> uris;
 						std::string format;
 						static const int messageTypeId=1;
 					};
 					
-					struct PutDataObjects{					
+					struct PutDataObjects : public ETP_NS::EtpMessage {					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataObjects;
 						bool pruneContainedObjects=false;
 						static const int messageTypeId=2;
 					};
 					
-					struct DeleteDataObjects{					
+					struct DeleteDataObjects : public ETP_NS::EtpMessage {					
 						std::map<std::string, std::string> uris;
 						bool pruneContainedObjects=false;
 						static const int messageTypeId=3;
 					};
 					
-					struct GetDataObjectsResponse{					
+					struct GetDataObjectsResponse : public ETP_NS::EtpMessage {					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataObjects;
 						static const int messageTypeId=4;
 					};
@@ -817,19 +837,19 @@ namespace Energistics {
 #if defined(SWIGPYTHON)
 					%rename(Store_Chunk) Chunk;
 #endif
-					struct Chunk{					
+					struct Chunk : public ETP_NS::EtpMessage {					
 						Energistics::Etp::v12::Datatypes::Uuid blobId;
 						std::string data;
 						bool final=false;
 						static const int messageTypeId=8;
 					};
 					
-					struct PutDataObjectsResponse{					
+					struct PutDataObjectsResponse : public ETP_NS::EtpMessage {					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::PutResponse> success;
 						static const int messageTypeId=9;
 					};
 					
-					struct DeleteDataObjectsResponse{					
+					struct DeleteDataObjectsResponse : public ETP_NS::EtpMessage {					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::ArrayOfString> deletedUris;
 						static const int messageTypeId=10;
 					};
@@ -846,14 +866,14 @@ namespace Energistics {
 		namespace v12 {		
 			namespace Protocol {			
 				namespace StoreOSDU {				
-					struct CopyDataObjectsByValue{					
+					struct CopyDataObjectsByValue : public ETP_NS::EtpMessage {					
 						std::string uri;
 						int32_t sourcesDepth = 0;
 						std::vector<std::string> dataObjectTypes;
 						static constexpr int messageTypeId = 1;
 					};
 					
-					struct CopyDataObjectsByValueResponse {
+					struct CopyDataObjectsByValueResponse : public ETP_NS::EtpMessage {
 						std::vector<std::string> copiedDataObjects;
 						static constexpr int messageTypeId = 2;
 					};
@@ -870,62 +890,62 @@ namespace Energistics {
 		namespace v12 {		
 			namespace Protocol {			
 				namespace DataArray {				
-					struct GetDataArrays{					
+					struct GetDataArrays : public ETP_NS::EtpMessage {					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier> dataArrays;
 						static const int messageTypeId=2;
 					};
 					
-					struct GetDataArraysResponse{					
+					struct GetDataArraysResponse : public ETP_NS::EtpMessage {					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray> dataArrays;
 						static const int messageTypeId=1;
 					};
 					
-					struct GetDataSubarrays{					
+					struct GetDataSubarrays : public ETP_NS::EtpMessage {					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::GetDataSubarraysType> dataSubarrays;
 						static const int messageTypeId=3;
 					};
 					
-					struct GetDataSubarraysResponse{					
+					struct GetDataSubarraysResponse : public ETP_NS::EtpMessage {					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArray> dataSubarrays;
 						static const int messageTypeId=8;
 					};
 					
-					struct PutDataArrays{					
+					struct PutDataArrays : public ETP_NS::EtpMessage {					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::PutDataArraysType> dataArrays;
 						static const int messageTypeId=4;
 					};
 					
-					struct PutDataArraysResponse{					
+					struct PutDataArraysResponse : public ETP_NS::EtpMessage {					
 						std::map<std::string, std::string> success;
 						static const int messageTypeId=10;
 					};
 					
-					struct PutDataSubarrays{					
+					struct PutDataSubarrays : public ETP_NS::EtpMessage {					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::PutDataSubarraysType> dataSubarrays;
 						static const int messageTypeId=5;
 					};
 					
-					struct PutDataSubarraysResponse{					
+					struct PutDataSubarraysResponse : public ETP_NS::EtpMessage {					
 						std::map<std::string, std::string> success;
 						static const int messageTypeId=11;
 					};
 					
-					struct PutUninitializedDataArrays{					
+					struct PutUninitializedDataArrays : public ETP_NS::EtpMessage {					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::PutUninitializedDataArrayType> dataArrays;
 						static const int messageTypeId=9;
 					};
 					
-					struct PutUninitializedDataArraysResponse{					
+					struct PutUninitializedDataArraysResponse : public ETP_NS::EtpMessage {					
 						std::map<std::string, std::string> success;
 						static const int messageTypeId=12;
 					};
 					
-					struct GetDataArrayMetadata{					
+					struct GetDataArrayMetadata : public ETP_NS::EtpMessage {					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier> dataArrays;
 						static const int messageTypeId=6;
 					};
 					
-					struct GetDataArrayMetadataResponse{					
+					struct GetDataArrayMetadataResponse : public ETP_NS::EtpMessage {					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata> arrayMetadata;
 						static const int messageTypeId=7;
 					};
@@ -942,38 +962,38 @@ namespace Energistics {
 		namespace v12 {		
 			namespace Protocol {			
 				namespace Transaction {				
-					struct StartTransaction{					
+					struct StartTransaction : public ETP_NS::EtpMessage {					
 						bool readOnly=false;
 						std::string message;
 						std::vector<std::string> dataspaceUris;
 						static const int messageTypeId=1;
 					};
 					
-					struct StartTransactionResponse{					
+					struct StartTransactionResponse : public ETP_NS::EtpMessage {					
 						Energistics::Etp::v12::Datatypes::Uuid transactionUuid;
 						bool successful=false;
 						std::string failureReason;
 						static const int messageTypeId=2;
 					};
 					
-					struct CommitTransaction{					
+					struct CommitTransaction : public ETP_NS::EtpMessage {					
 						Energistics::Etp::v12::Datatypes::Uuid transactionUuid;
 						static const int messageTypeId=3;
 					};
 					
-					struct RollbackTransaction{					
+					struct RollbackTransaction : public ETP_NS::EtpMessage {					
 						Energistics::Etp::v12::Datatypes::Uuid transactionUuid;
 						static const int messageTypeId=4;
 					};
 					
-					struct CommitTransactionResponse{					
+					struct CommitTransactionResponse : public ETP_NS::EtpMessage {					
 						Energistics::Etp::v12::Datatypes::Uuid transactionUuid;
 						bool successful=false;
 						std::string failureReason;
 						static const int messageTypeId=5;
 					};
 					
-					struct RollbackTransactionResponse{					
+					struct RollbackTransactionResponse : public ETP_NS::EtpMessage {					
 						Energistics::Etp::v12::Datatypes::Uuid transactionUuid;
 						bool successful=false;
 						std::string failureReason;
@@ -992,33 +1012,33 @@ namespace Energistics {
 		namespace v12 {
 			namespace Protocol {
 				namespace Dataspace {
-					struct GetDataspaces{
+					struct GetDataspaces : public ETP_NS::EtpMessage {
 						bool has_storeLastWriteFilter();
 						int64_t get_storeLastWriteFilter();
 						static const int messageTypeId=1;
 					};
 					
-					struct GetDataspacesResponse{					
+					struct GetDataspacesResponse : public ETP_NS::EtpMessage {					
 						std::vector<Energistics::Etp::v12::Datatypes::Object::Dataspace> dataspaces;
 						static const int messageTypeId=2;
 					};
 					
-					struct PutDataspaces{					
+					struct PutDataspaces : public ETP_NS::EtpMessage {					
 						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace> dataspaces;
 						static const int messageTypeId=3;
 					};
 					
-					struct PutDataspacesResponse{					
+					struct PutDataspacesResponse : public ETP_NS::EtpMessage {					
 						std::map<std::string, std::string> success;
 						static const int messageTypeId=6;
 					};
 					
-					struct DeleteDataspaces{					
+					struct DeleteDataspaces : public ETP_NS::EtpMessage {					
 						std::map<std::string, std::string> uris;
 						static const int messageTypeId=4;
 					};
 					
-					struct DeleteDataspacesResponse{					
+					struct DeleteDataspacesResponse : public ETP_NS::EtpMessage {					
 						std::map<std::string, std::string> success;
 						static const int messageTypeId=5;
 					};
@@ -1035,45 +1055,45 @@ namespace Energistics {
 		namespace v12 {
 			namespace Protocol {
 				namespace DataspaceOSDU {
-					struct GetDataspaceInfo {
+					struct GetDataspaceInfo : public ETP_NS::EtpMessage {
 						std::map<std::string, std::string> uris;
 						static constexpr int messageTypeId = 1;
 					};
 					
-					struct GetDataspaceInfoResponse {
+					struct GetDataspaceInfoResponse : public ETP_NS::EtpMessage {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace> dataspaces;
 						static constexpr int messageTypeId = 2;
 					};
 					
-					struct CopyDataspacesContent {
+					struct CopyDataspacesContent : public ETP_NS::EtpMessage {
 						std::map<std::string, std::string> dataspaces;
 						std::string targetDataspace;
 						static constexpr int messageTypeId = 3;
 					};
 					
-					struct CopyDataspacesContentResponse {
+					struct CopyDataspacesContentResponse : public ETP_NS::EtpMessage {
 						std::map<std::string, std::string> success;
 						static constexpr int messageTypeId = 4;
 					};
 					
-					struct LockDataspaces {
+					struct LockDataspaces : public ETP_NS::EtpMessage {
 						std::map<std::string, std::string> uris;
 						bool lock;
 						static constexpr int messageTypeId = 5;
 					};
 					
-					struct LockDataspacesResponse {
+					struct LockDataspacesResponse : public ETP_NS::EtpMessage {
 						std::map<std::string, std::string> success;
 						static constexpr int messageTypeId = 6;
 					};
 					
-					struct CopyToDataspace {
+					struct CopyToDataspace : public ETP_NS::EtpMessage {
 						std::map<std::string, std::string> uris;
 						std::string dataspaceUri;
 						static constexpr int messageTypeId = 7;
 					};
 					
-					struct CopyToDataspaceResponse {
+					struct CopyToDataspaceResponse : public ETP_NS::EtpMessage {
 						std::map<std::string, std::string> success;
 						static constexpr int messageTypeId = 8;
 					};
@@ -1090,7 +1110,7 @@ namespace Energistics {
 		namespace v12 {
 			namespace Protocol {
 				namespace StoreNotification {
-					struct SubscribeNotificationsResponse{
+					struct SubscribeNotificationsResponse : public ETP_NS::EtpMessage {
 						std::map<std::string, std::string> success;
 						static const int messageTypeId=10;
 					};
@@ -1098,50 +1118,50 @@ namespace Energistics {
 #if defined(SWIGPYTHON)
 					%rename(StoreNotification_Chunk) Chunk;
 #endif
-					struct Chunk{
+					struct Chunk : public ETP_NS::EtpMessage {
 						Energistics::Etp::v12::Datatypes::Uuid blobId;
 						std::string data;
 						bool final=false;
 						static const int messageTypeId=9;
 					};
-					struct ObjectAccessRevoked{
+					struct ObjectAccessRevoked : public ETP_NS::EtpMessage {
 						std::string uri;
 						int64_t changeTime;
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						static const int messageTypeId=5;
 					};
-					struct ObjectDeleted{
+					struct ObjectDeleted : public ETP_NS::EtpMessage {
 						std::string uri;
 						int64_t changeTime;
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						static const int messageTypeId=3;
 					};
-					struct SubscriptionEnded{
+					struct SubscriptionEnded : public ETP_NS::EtpMessage {
 						std::string reason;
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						static const int messageTypeId=7;
 					};
-					struct UnsubscribeNotifications{
+					struct UnsubscribeNotifications : public ETP_NS::EtpMessage {
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						static const int messageTypeId=4;
 					};
-					struct ObjectActiveStatusChanged{
+					struct ObjectActiveStatusChanged : public ETP_NS::EtpMessage {
 						Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind activeStatus;
 						int64_t changeTime;
 						Energistics::Etp::v12::Datatypes::Object::Resource resource;
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						static const int messageTypeId=11;
 					};
-					struct ObjectChanged{
+					struct ObjectChanged : public ETP_NS::EtpMessage {
 						Energistics::Etp::v12::Datatypes::Object::ObjectChange change;
 						Energistics::Etp::v12::Datatypes::Uuid requestUuid;
 						static const int messageTypeId=2;
 					};
-					struct SubscribeNotifications{
+					struct SubscribeNotifications : public ETP_NS::EtpMessage {
 						std::map<std::string, Energistics::Etp::v12::Datatypes::Object::SubscriptionInfo> request;
 						static const int messageTypeId=6;
 					};
-					struct UnsolicitedStoreNotifications{
+					struct UnsolicitedStoreNotifications : public ETP_NS::EtpMessage {
 						std::vector<Energistics::Etp::v12::Datatypes::Object::SubscriptionInfo> subscriptions;
 						static const int messageTypeId=8;
 					};
@@ -1164,6 +1184,7 @@ namespace Energistics {
 %shared_ptr(ETP_NS::DataspaceOSDUHandlers)
 %shared_ptr(ETP_NS::AbstractSession)
 %shared_ptr(ETP_NS::ClientSession)
+%shared_ptr(ETP_NS::EtpMessage)
 
 %feature("director") ETP_NS::CoreHandlers;
 %feature("director") ETP_NS::DiscoveryHandlers;
@@ -1639,230 +1660,59 @@ namespace ETP_NS
 		void setDataspaceProtocolHandlers(std::shared_ptr<DataspaceHandlers> dataspaceHandlers);
 		void setDataspaceOSDUProtocolHandlers(std::shared_ptr<DataspaceOSDUHandlers> dataspaceOSDUHandlers);
 
-		template<typename T> int64_t sendWithSpecificHandler(const T & mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0) {}		
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::RequestSession>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::OpenSession>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::CloseSession>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::ProtocolException>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::Acknowledge>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::Ping>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::Pong>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::Authorize>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Core::AuthorizeResponse>;
-		
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Discovery::GetResources>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Discovery::GetDeletedResourcesResponse>;
-		
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::GetDataObjects>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::PutDataObjects>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::DeleteDataObjects>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Store::Chunk>;
+		/**
+		* Create a default ETP message header from the ETP message body.
+		* Encode this created default ETP message header + the ETP message body and put the result in the sending queue.
+		*
+		* @param message		The ETP message to send
+		* @param correlationId The ID of the message which this message is answering to.
+		* @param messageFlags The message flags to be sent within the header
+		* @param msgIdAliases		The other msg ids which correspond to this same message.
+		*							It occurs when we resume a session because we can resent a same message twice with a different id.
+		* @return The ID of the message that has been put in the sending queue.
+		*/
+		int64_t send(std::shared_ptr<EtpMessage> message, int64_t correlationId = 0, int32_t messageFlags = 0, const std::vector<int64_t>& msgIdAliases = {});
+
+		/**
+		* Send a message to the server and block the thread until the answer of the server has been processed by the handlers
+		* Please look at setTimeOut if you want to set the default timeout value which is 10 000 ms.
+		*
+		* @param message		The ETP message to send
+		* @param correlationId	The ID of the message which this message is answering to.
+		* @param messageFlags	The message flags to be sent within the header
+		* @param msgIdAliases		The other msg ids which correspond to this same message.
+		*							It occurs when we resume a session because we can resent a same message twice with a different id.
+		* @return The ID of the message that has been put in the sending queue.
+		*/
+		int64_t sendAndBlock(std::shared_ptr<EtpMessage> message, int64_t correlationId = 0, int32_t messageFlags = 0, const std::vector<int64_t>& msgIdAliases = {});
+
+		/**
+		* Send a message and register a specific handler for the response.
+		*
+		* @param message		The ETP message to send
+		* @param specificHandler The handlers which are going to be called for the response to this sent message
+		* @param correlationId The ID of the message which this message is answering to.
+		* @param messageFlags The message flags to be sent within the header
+		* @param msgIdAliases		The other msg ids which correspond to this same message.
+		*							It occurs when we resume a session because we can resent a same message twice with a different id.
+		* @return The ID of the message that has been put in the sending queue.
+		*/
+		int64_t sendWithSpecificHandler(std::shared_ptr<ETP_NS::EtpMessage> message, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler,
+			int64_t correlationId = 0, int32_t messageFlags = 0, const std::vector<int64_t>& msgIdAliases = {});
 			
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse>;
-		
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataArrays>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutDataArrays>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutDataArraysResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataSubarraysResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutDataSubarraysResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse>;
-		
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Transaction::StartTransaction>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Transaction::CommitTransaction>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse>;
-		
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse>;
-		
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse>;
-		
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::Chunk>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::SubscriptionEnded>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications>;
-		%template(sendWithSpecificHandler) sendWithSpecificHandler<Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications>;
-		
-		template<typename T> int64_t send(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0) {}
-		%template(send) send<Energistics::Etp::v12::Protocol::Core::RequestSession>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Core::OpenSession>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Core::CloseSession>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Core::ProtocolException>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Core::Acknowledge>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Core::Ping>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Core::Pong>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Core::Authorize>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Core::AuthorizeResponse>;
-		
-		%template(send) send<Energistics::Etp::v12::Protocol::Discovery::GetResources>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Discovery::GetDeletedResourcesResponse>;
-		
-		%template(send) send<Energistics::Etp::v12::Protocol::Store::GetDataObjects>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Store::PutDataObjects>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Store::DeleteDataObjects>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Store::Chunk>;
-			
-		%template(send) send<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue>;
-		%template(send) send<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse>;
-		
-		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::GetDataArrays>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::PutDataArrays>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::PutDataArraysResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::GetDataSubarraysResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::PutDataSubarraysResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse>;
-		
-		%template(send) send<Energistics::Etp::v12::Protocol::Transaction::StartTransaction>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Transaction::CommitTransaction>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse>;
-		
-		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces>;
-		%template(send) send<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse>;
-		
-		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace>;
-		%template(send) send<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse>;
-		
-		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse>;
-		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::Chunk>;
-		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked>;
-		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted>;
-		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::SubscriptionEnded>;
-		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications>;
-		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged>;
-		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged>;
-		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications>;
-		%template(send) send<Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications>;
-		
-		template<typename T> int64_t sendAndBlock(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0) {}
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::RequestSession>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::OpenSession>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::CloseSession>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::ProtocolException>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::Acknowledge>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::Ping>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::Pong>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::Authorize>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Core::AuthorizeResponse>;
-		
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Discovery::GetResources>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Discovery::GetDeletedResourcesResponse>;
-		
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::GetDataObjects>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::PutDataObjects>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::DeleteDataObjects>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Store::Chunk>;
-			
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse>;
-		
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::GetDataArrays>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::PutDataArrays>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::PutDataArraysResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::GetDataSubarraysResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::PutDataSubarraysResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse>;
-		
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Transaction::StartTransaction>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Transaction::CommitTransaction>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse>;
-		
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse>;
-		
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse>;
-		
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::Chunk>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::SubscriptionEnded>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications>;
-		%template(sendAndBlock) sendAndBlock<Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications>;
+		/**
+		* Send a message to the server and register a specific handler for the response and block the thread until the answer of the server has been processed by the handlers
+		* Please look at setTimeOut if you want to set the default timeout value which is 10 000 ms.
+		*
+		* @param message		The ETP message to send
+		* @param correlationId	The ID of the message which this message is answering to.
+		* @param messageFlags	The message flags to be sent within the header
+		* @param msgIdAliases		The other msg ids which correspond to this same message.
+		*							It occurs when we resume a session because we can resent a same message twice with a different id.
+		* @return The ID of the message that has been put in the sending queue.
+		*/
+		int64_t sendWithSpecificHandlerAndBlock(std::shared_ptr<EtpMessage> message, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler,
+			int64_t correlationId = 0, int32_t messageFlags = 0, const std::vector<int64_t>& msgIdAliases = {});
 		
 		/**
 		* Check wether a particular ETP message has been responded or not by the other agent.

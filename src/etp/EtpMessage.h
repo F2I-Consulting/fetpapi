@@ -58,7 +58,6 @@ namespace avro {
 
 namespace ETP_NS
 {
-
 	class EtpMessage
 	{
 	public:
@@ -80,7 +79,7 @@ namespace ETP_NS
 		virtual void encode(avro::Encoder&) const = 0;
 		virtual void decode(avro::Decoder&) = 0;
 
-		std::string to_string() {
+		std::string to_string() const {
 			std::ostringstream oss;
 			oss << "*************************************************\n"
 				<< "Message Header put in the queue :\n"
@@ -99,5 +98,4 @@ namespace ETP_NS
 	protected :
 		virtual std::string body_to_string() const { return ""; }
 	};
-
 }

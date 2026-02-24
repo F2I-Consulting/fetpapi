@@ -55,8 +55,13 @@ namespace ETP_NS
 		// Resolver and socket require an io_context
 		explicit
 			HttpClientSession(boost::asio::io_context& ioc)
+#if BOOST_VERSION < 107000
+			: resolver_(ioc)
+			, stream_(ioc)
+#else
 			: resolver_(net::make_strand(ioc))
 			, stream_(net::make_strand(ioc))
+#endif
 		{
 		}
 
