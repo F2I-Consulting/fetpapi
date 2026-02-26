@@ -21,11 +21,21 @@ under the License.
 #include "../AbstractClientSessionCRTP.h"
 
 #include <boost/version.hpp>
-#if BOOST_VERSION < 106800
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+#include <wintls.hpp>
+#include <wintls/beast.hpp>
+#elif BOOST_VERSION < 106800
+#include <boost/asio/ssl/rfc2818_verification.hpp>
 #include "ssl_stream.h"
 #elif BOOST_VERSION < 107000
+#include <boost/asio/ssl/rfc2818_verification.hpp>
 #include <boost/beast/experimental/core/ssl_stream.hpp>
 #elif BOOST_VERSION < 108600
+#if BOOST_VERSION < 107300
+#include <boost/asio/ssl/rfc2818_verification.hpp>
+#else
+#include <boost/asio/ssl/host_name_verification.hpp>
+#endif
 #include <boost/beast/http.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket/ssl.hpp>
@@ -34,7 +44,9 @@ under the License.
 #include <boost/beast/websocket/ssl.hpp>
 #endif
 
-namespace http = boost::beast::http;    // from <boost/beast/http.hpp>
+namespace beast = boost::beast;     // from <boost/beast.hpp>
+namespace http = beast::http;		// from <boost/beast/http.hpp>
+namespace ssl = boost::asio::ssl;   // from <boost/asio/ssl.hpp>
 
 namespace ETP_NS
 {
@@ -44,31 +56,40 @@ namespace ETP_NS
 		/*
 		* @param frameSize				Sets the size of the write buffer used by the implementation to send frames : https://www.boost.org/doc/libs/1_75_0/libs/beast/doc/html/beast/ref/boost__beast__websocket__stream/write_buffer_bytes/overload1.html.
 		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT SslClientSession(boost::asio::ssl::context&& ctx,
+		FETPAPI_DLL_IMPORT_OR_EXPORT SslClientSession(
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+			wintls::context&& ctx,
+#else
+			ssl::context&& ctx,
+#endif
 			InitializationParameters const* initializationParams, const std::string& target, const std::string& authorization, const std::string& proxyAuthorization = "",
 			const std::map<std::string, std::string>& additionalHandshakeHeaderFields = {}, std::size_t frameSize = 4096);
 
 		virtual ~SslClientSession() {}
 
 		// Called by the base class
-#if BOOST_VERSION < 107000
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::unique_ptr<websocket::stream<boost::beast::ssl_stream<tcp::socket>>>& ws() { return ws_; }
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::unique_ptr<websocket::stream<wintls::stream<beast::tcp_stream>>>& ws() { return ws_; }
+#elif BOOST_VERSION < 107000
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::unique_ptr<websocket::stream<beast::ssl_stream<tcp::socket>>>& ws() { return ws_; }
 #elif BOOST_VERSION < 108600
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::unique_ptr<websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>>& ws() { return ws_; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::unique_ptr<websocket::stream<beast::ssl_stream<beast::tcp_stream>>>& ws() { return ws_; }
 #else
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::unique_ptr< websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>>& ws() { return ws_; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::unique_ptr< websocket::stream<ssl::stream<beast::tcp_stream>>>& ws() { return ws_; }
 #endif
 
 		bool isTls() const final { return true; }
 
 		void asyncConnect(const tcp::resolver::results_type& results)
 		{
-#if BOOST_VERSION < 107000
-			ws_.reset(new websocket::stream<boost::beast::ssl_stream<tcp::socket>>(ioc, sslContext_));
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+			ws_.reset(new websocket::stream<wintls::stream<beast::tcp_stream>>(ioc, sslContext_));
+#elif BOOST_VERSION < 107000
+			ws_.reset(new websocket::stream<beast::ssl_stream<tcp::socket>>(ioc, sslContext_));
 #elif BOOST_VERSION < 108600
-			ws_.reset(new websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>(ioc, sslContext_));
+			ws_.reset(new websocket::stream<beast::ssl_stream<beast::tcp_stream>>(ioc, sslContext_));
 #else
-			ws_.reset(new websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>(ioc, sslContext_));
+			ws_.reset(new websocket::stream<ssl::stream<beast::tcp_stream>>(ioc, sslContext_));
 #endif
 
 			ws_->binary(true);
@@ -78,12 +99,28 @@ namespace ETP_NS
 			ws_->write_buffer_bytes(frameSize_);
 #endif
 
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+			// Set SNI hostname (many hosts need this to handshake successfully)
+			ws_->next_layer().set_server_hostname(etpServerHost);
+
+			// Enable Check whether the Server Certificate was revoked
+			ws_->next_layer().set_certificate_revocation_check(true);
+#else
 			// Set SNI Hostname (many hosts need this to handshake successfully)
 			if (!SSL_set_tlsext_host_name(ws_->next_layer().native_handle(), etpServerHost.data()))
 			{
 				boost::system::error_code ecSNI{ static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category() };
 				std::cerr << "Websocket on connect (SNI): " << ecSNI.message() << std::endl;
 			}
+
+			// Set the expected hostname in the peer certificate for verification
+
+#if BOOST_VERSION < 107300
+			ws_->next_layer().set_verify_callback(ssl::rfc2818_verification(etpServerHost));
+#else
+			ws_->next_layer().set_verify_callback(ssl::host_name_verification(etpServerHost));
+#endif
+#endif
 
 			// Reality check: IPv6 is unlikely to be available yet
 			std::vector<tcp::endpoint> endpoints = std::vector<tcp::endpoint>(results.begin(), results.end());
@@ -100,19 +137,20 @@ namespace ETP_NS
 					std::static_pointer_cast<SslClientSession>(shared_from_this()),
 					std::placeholders::_1));
 #else
-			boost::beast::get_lowest_layer(*ws_).async_connect(
+			beast::get_lowest_layer(*ws_).async_connect(
 				endpoints,
-				boost::beast::bind_front_handler(
+				beast::bind_front_handler(
 					&SslClientSession::on_ssl_connect,
 					std::static_pointer_cast<SslClientSession>(shared_from_this())));
 #endif
 		}
 
 #if BOOST_VERSION < 107000
-		void on_ssl_connect(boost::system::error_code ec) {
+		void on_ssl_connect(boost::system::error_code ec)
 #else
-		void on_ssl_connect(boost::beast::error_code ec, tcp::resolver::results_type::endpoint_type) {
+		void on_ssl_connect(beast::error_code ec, tcp::resolver::results_type::endpoint_type)
 #endif
+		{
 			if (ec) {
 				std::cerr << "on_ssl_connect : " << ec.message() << std::endl;
 			}
@@ -140,7 +178,11 @@ namespace ETP_NS
 			else {
 				// Perform the SSL handshake
 				ws_->next_layer().async_handshake(
-					boost::asio::ssl::stream_base::client,
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+					wintls::handshake_type::client,
+#else
+					ssl::stream_base::client,
+#endif
 					std::bind(
 						&AbstractClientSessionCRTP::on_ssl_handshake,
 						std::static_pointer_cast<AbstractClientSessionCRTP>(shared_from_this()),
@@ -196,7 +238,11 @@ namespace ETP_NS
 
 			// Perform the SSL handshake
 			ws_->next_layer().async_handshake(
-				boost::asio::ssl::stream_base::client,
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+				wintls::handshake_type::client,
+#else
+				ssl::stream_base::client,
+#endif
 				std::bind(
 					&AbstractClientSessionCRTP::on_ssl_handshake,
 					std::static_pointer_cast<AbstractClientSessionCRTP>(shared_from_this()),
@@ -204,13 +250,19 @@ namespace ETP_NS
 		}
 
 	private:
-		boost::asio::ssl::context sslContext_;
-#if BOOST_VERSION < 107000
-		std::unique_ptr<websocket::stream<boost::beast::ssl_stream<tcp::socket>>> ws_;
-#elif BOOST_VERSION < 108600
-		std::unique_ptr<websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>> ws_;
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+		wintls::context sslContext_;
 #else
-		std::unique_ptr<websocket::stream<boost::asio::ssl::stream<boost::beast::tcp_stream>>> ws_;
+		ssl::context sslContext_;
+#endif
+#if USE_WINTLS_INSTEAD_OF_OPENSSL
+		std::unique_ptr<websocket::stream<wintls::stream<beast::tcp_stream>>> ws_;
+#elif BOOST_VERSION < 107000
+		std::unique_ptr<websocket::stream<beast::ssl_stream<tcp::socket>>> ws_;
+#elif BOOST_VERSION < 108600
+		std::unique_ptr<websocket::stream<beast::ssl_stream<beast::tcp_stream>>> ws_;
+#else
+		std::unique_ptr<websocket::stream<ssl::stream<beast::tcp_stream>>> ws_;
 #endif
 		http::request<http::empty_body> proxyHandshake;
 		http::response<http::empty_body> proxyHandshakeResponse;

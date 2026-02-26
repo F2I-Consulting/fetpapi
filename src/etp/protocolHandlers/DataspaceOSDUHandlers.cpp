@@ -30,44 +30,44 @@ void DataspaceOSDUHandlers::decodeMessageBody(const Energistics::Etp::v12::Datat
 	}
 
 	if (mh.messageType == Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo::messageTypeId) {
-		Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo obj;
-		avro::decode(*d, obj);
-		on_GetDataspaceInfo(obj, mh.messageId);
+		Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo msg;
+		msg.decode(*d);
+		on_GetDataspaceInfo(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse::messageTypeId) {
-		Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse obj;
-		avro::decode(*d, obj);
-		on_GetDataspaceInfoResponse(obj, mh.messageId);
+		Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse msg;
+		msg.decode(*d);
+		on_GetDataspaceInfoResponse(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace::messageTypeId) {
-		Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace obj;
-		avro::decode(*d, obj);
-		on_CopyToDataspace(obj, mh.messageId);
+		Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace msg;
+		msg.decode(*d);
+		on_CopyToDataspace(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse::messageTypeId) {
-		Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse obj;
-		avro::decode(*d, obj);
-		on_CopyToDataspaceResponse(obj, mh.messageId);
+		Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse msg;
+		msg.decode(*d);
+		on_CopyToDataspaceResponse(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces::messageTypeId) {
-		Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces obj;
-		avro::decode(*d, obj);
-		on_LockDataspaces(obj, mh.messageId);
+		Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces msg;
+		msg.decode(*d);
+		on_LockDataspaces(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse::messageTypeId) {
-		Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse obj;
-		avro::decode(*d, obj);
-		on_LockDataspacesResponse(obj, mh.messageId);
+		Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse msg;
+		msg.decode(*d);
+		on_LockDataspacesResponse(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent::messageTypeId) {
-		Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent obj;
-		avro::decode(*d, obj);
-		on_CopyDataspacesContent(obj, mh.correlationId);
+		Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent msg;
+		msg.decode(*d);
+		on_CopyDataspacesContent(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse::messageTypeId) {
-		Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse obj;
-		avro::decode(*d, obj);
-		on_CopyDataspacesContentResponse(obj, mh.messageId);
+		Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse msg;
+		msg.decode(*d);
+		on_CopyDataspacesContentResponse(msg, mh.messageId);
 	}
 	else {
 		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(3, "The message type ID " + std::to_string(mh.messageType) + " is invalid for the Dataspace protocol."), mh.messageId, 0x02);

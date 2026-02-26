@@ -24,7 +24,7 @@ under the License.
 #include <fesapi/common/HdfProxyFactory.h>
 
 #include "../AbstractSession.h"
-#include "../ProtocolHandlers/GetFullDataArrayHandlers.h"
+#include "../protocolHandlers/GetFullDataArrayHandlers.h"
 
 namespace ETP_NS
 {
@@ -500,8 +500,8 @@ namespace ETP_NS
 		size_t maxArraySize_{ 12000000 }; // Bytes
 
 		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier buildDataArrayIdentifier(const std::string & datasetName) const;
-		Energistics::Etp::v12::Protocol::DataArray::GetDataArrays buildGetDataArraysMessage(const std::string & datasetName) const;
-		Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata buildGetDataArrayMetadataMessage(const std::string & datasetName) const;
+		std::shared_ptr<Energistics::Etp::v12::Protocol::DataArray::GetDataArrays> buildGetDataArraysMessage(const std::string & datasetName) const;
+		std::shared_ptr<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata> buildGetDataArrayMetadataMessage(const std::string & datasetName) const;
 
 		Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata getDataArrayMetadata(const std::string & datasetName) const;
 
@@ -561,16 +561,16 @@ namespace ETP_NS
 				}
 
 				// Build the message
-				Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays msg;
+				auto msg = std::make_shared<Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays>();
 				size_t subArrayIndex = 0;
 				std::vector<int64_t> starts(daMetadata.dimensions.size(), 0);
 				std::vector<int64_t> currentCounts = counts;
 				bool hasParsedAllArray = false;
 				while (!hasParsedAllArray) {
 					std::string subArrayIndexStr = std::to_string(subArrayIndex);
-					msg.dataSubarrays[subArrayIndexStr].uid = buildDataArrayIdentifier(datasetName);
-					msg.dataSubarrays[subArrayIndexStr].counts = currentCounts;
-					msg.dataSubarrays[subArrayIndexStr].starts = starts;
+					msg->dataSubarrays[subArrayIndexStr].uid = buildDataArrayIdentifier(datasetName);
+					msg->dataSubarrays[subArrayIndexStr].counts = currentCounts;
+					msg->dataSubarrays[subArrayIndexStr].starts = starts;
 
 					// next sub array to get
 					++subArrayIndex;
@@ -591,7 +591,7 @@ namespace ETP_NS
 						}
 					}
 
-					specializedHandler->setDataSubarrays(subArrayIndexStr, msg.dataSubarrays[subArrayIndexStr]);
+					specializedHandler->setDataSubarrays(subArrayIndexStr, msg->dataSubarrays[subArrayIndexStr]);
 				}
 
 				// Send message

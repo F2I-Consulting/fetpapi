@@ -31,18 +31,20 @@ under the License.
 #include <boost/uuid/nil_generator.hpp>
 
 #include "EtpHelpers.h"
-#include "ProtocolHandlers/CoreHandlers.h"
-#include "ProtocolHandlers/DiscoveryHandlers.h"
-#include "ProtocolHandlers/StoreHandlers.h"
-#include "ProtocolHandlers/StoreNotificationHandlers.h"
-#include "ProtocolHandlers/DataArrayHandlers.h"
-#include "ProtocolHandlers/TransactionHandlers.h"
-#include "ProtocolHandlers/DataspaceHandlers.h"
-#include "ProtocolHandlers/StoreOSDUHandlers.h"
-#include "ProtocolHandlers/DataspaceOSDUHandlers.h"
+#include "protocolHandlers/CoreHandlers.h"
+#include "protocolHandlers/DiscoveryHandlers.h"
+#include "protocolHandlers/StoreHandlers.h"
+#include "protocolHandlers/StoreNotificationHandlers.h"
+#include "protocolHandlers/DataArrayHandlers.h"
+#include "protocolHandlers/TransactionHandlers.h"
+#include "protocolHandlers/DataspaceHandlers.h"
+#include "protocolHandlers/CoreOSDUHandlers.h"
+#include "protocolHandlers/StoreOSDUHandlers.h"
+#include "protocolHandlers/DataspaceOSDUHandlers.h"
 
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace websocket = beast::websocket;  // from <boost/beast/websocket.hpp>
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
-namespace websocket = boost::beast::websocket;  // from <boost/beast/websocket.hpp>
 
 namespace ETP_NS
 {
@@ -97,6 +99,13 @@ namespace ETP_NS
 		}
 
 		/**
+		 * Set the Core protocol handlers
+		 */
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setCoreOSDUProtocolHandlers(std::shared_ptr<CoreOSDUHandlers> coreOSDUHandlers) {
+			setProtocolHandlers(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::CoreOSDU), coreOSDUHandlers);
+		}
+
+		/**
 		 * Set the Store protocol handlers
 		 */
 		FETPAPI_DLL_IMPORT_OR_EXPORT void setStoreOSDUProtocolHandlers(std::shared_ptr<StoreOSDUHandlers> storeOSDUHandlers) {
@@ -139,31 +148,37 @@ namespace ETP_NS
 		}
 
 		/**
-		 * Create a default ETP message header from the ETP message body.
-		 * Encode this created default ETP message header + the ETP message body and put the result in the sending queue.
-		 *
-		 * @param mb The ETP message body to send
-		 * @param correlationId The ID of the message which this message is answering to.
-		 * @param messageFlags The message flags to be sent within the header
-		 * @return The ID of the message that has been put in the sending queue.
-		 */
-		template<typename T> int64_t send(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
+		* Create a default ETP message header from the ETP message body.
+		* Encode this created default ETP message header + the ETP message body and put the result in the sending queue.
+		*
+		* @param message		The ETP message to send
+		* @param correlationId The ID of the message which this message is answering to.
+		* @param messageFlags The message flags to be sent within the header
+		* @param msgIdAliases		The other msg ids which correspond to this same message.
+		*							It occurs when we resume a session because we can resent a same message twice with a different id.
+		* @return The ID of the message that has been put in the sending queue.
+		*/
+		int64_t send(std::shared_ptr<EtpMessage> message,
+			int64_t correlationId = 0, int32_t messageFlags = 0, const std::vector<int64_t>& msgIdAliases = {})
 		{
-			return sendWithSpecificHandler(mb, protocolHandlers.at(mb.protocolId), correlationId, messageFlags);
+			return sendWithSpecificHandler(message, protocolHandlers.at(message->messageHeader.protocol), correlationId, messageFlags, msgIdAliases);
 		}
 
 		/**
 		* Send a message to the server and block the thread until the answer of the server has been processed by the handlers
 		* Please look at setTimeOut if you want to set the default timeout value which is 10 000 ms.
 		*
-		* @param mb				The ETP message body to send
+		* @param message		The ETP message to send
 		* @param correlationId	The ID of the message which this message is answering to.
 		* @param messageFlags	The message flags to be sent within the header
+		* @param msgIdAliases		The other msg ids which correspond to this same message.
+		*							It occurs when we resume a session because we can resent a same message twice with a different id.
 		* @return The ID of the message that has been put in the sending queue.
 		*/
-		template<typename T> int64_t sendAndBlock(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
+		int64_t sendAndBlock(std::shared_ptr<EtpMessage> message,
+				int64_t correlationId = 0, int32_t messageFlags = 0, const std::vector<int64_t>& msgIdAliases = {})
 		{
-			int64_t msgId = send(mb, correlationId, messageFlags);
+			int64_t msgId = send(message, correlationId, messageFlags, msgIdAliases);
 			// The correlationId of the first message MUST be set to 0 and the correlationId of all successive
 			// messages in the same multipart request or notification MUST be set to the messageId of the first
 			// message of the multipart request or notification.
@@ -183,62 +198,84 @@ namespace ETP_NS
 		/**
 		* Send a message and register a specific handler for the response.
 		*
-		* @param mb The ETP message body to send
+		* @param message		The ETP message to send
 		* @param specificHandler The handlers which are going to be called for the response to this sent message
 		* @param correlationId The ID of the message which this message is answering to.
 		* @param messageFlags The message flags to be sent within the header
+		* @param msgIdAliases		The other msg ids which correspond to this same message.
+		*							It occurs when we resume a session because we can resent a same message twice with a different id.
 		* @return The ID of the message that has been put in the sending queue.
 		*/
-		template<typename T> int64_t sendWithSpecificHandler(const T & mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
+		int64_t sendWithSpecificHandler(std::shared_ptr<EtpMessage> message, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler,
+			int64_t correlationId = 0, int32_t messageFlags = 0, const std::vector<int64_t>& msgIdAliases = {})
 		{
-			if (mb.protocolId != 0 || mb.messageTypeId != 1) {
-				// Wait for a reconnection
-				while (isEtpSessionClosed() && !isCloseRequested()) {}
-				// Check if reconnection is successful
-				if (isEtpSessionClosed() && !isCloseRequested()) {
-					throw std::runtime_error("The ETP session could not be opened in order to send the message.");
-				}
-			}
-
-			// Encode the message into AVRO format
-			auto queueItem = encode(mb, correlationId, messageFlags);
+			message->messageHeader.correlationId = correlationId;
+			message->messageHeader.messageFlags = messageFlags;
+			message->messageHeader.messageId = messageId.fetch_add(2);
 
 			const std::lock_guard<std::mutex> sendingQueueLock(sendingQueueMutex);
-			// Set the handlers which are going to be called for the response to this sent message
-			std::get<2>(queueItem) = specificHandler;
 
 			// Push the message into the queue
-			sendingQueue.push(queueItem);
-			fesapi_log("*************************************************");
-			fesapi_log("Message Header put in the queue : ");
-			fesapi_log("protocol :", std::to_string(mb.protocolId));
-			fesapi_log("type :" , std::to_string(mb.messageTypeId));
-			fesapi_log("id :" , std::to_string(std::get<0>(queueItem)));
-			fesapi_log("correlation id :" , std::to_string(correlationId));
-			fesapi_log("flags :" , std::to_string(messageFlags));
-			fesapi_log("Whole message size :" , std::to_string(std::get<1>(queueItem).size()) , "bytes.");
-			fesapi_log("*************************************************");
-
-			// Send the message directly if the sending queue was empty.
-			if (sendingQueue.size() == 1) {
+			sendingQueue.push(std::make_tuple(message, specificHandler, msgIdAliases));
+			fesapi_log(message->to_string());
+			
+			if (message->messageHeader.protocol == static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::CoreOSDU)
+				&& message->messageHeader.messageType == Energistics::Etp::v12::Protocol::CoreOSDU::ResumeSession::messageTypeId) {
+				// Handle previous messages which have not been processed but written in the previous sendingQueue.
+				std::queue< std::tuple<std::shared_ptr<EtpMessage>, std::shared_ptr<ETP_NS::ProtocolHandlers>, std::vector<int64_t>> > queueWithPreviousInformation;
+				// Put ResumeSession at first position whatever opens
+				queueWithPreviousInformation.push(std::make_tuple(message, specificHandler, msgIdAliases));
+				// Reorder message according to their id
+				int64_t previouslyDuplicatedId = -1;
+				for (size_t i = 0; i < specificProtocolHandlers.size(); ++i) {
+					int64_t lowestMsgId = (std::numeric_limits<int64_t>::max)();
+					for (auto keyVal : specificProtocolHandlers) {
+						if (keyVal.first > previouslyDuplicatedId && keyVal.first < lowestMsgId) {
+							lowestMsgId = keyVal.first;
+						}
+					}
+					previouslyDuplicatedId = lowestMsgId;
+					auto val = specificProtocolHandlers[lowestMsgId];
+					std::get<0>(val)->messageHeader.messageId = messageId.fetch_add(2);
+					std::get<2>(val).push_back(lowestMsgId);
+					queueWithPreviousInformation.push(val);
+					fesapi_log(std::get<0>(val)->to_string());
+				}
+				// The only remaining item must be the resumeSession which is already at the first position of queueWithPreviousInformation
+				while (sendingQueue.size() != 1) {
+					std::get<0>(sendingQueue.front())->messageHeader.messageId = messageId.fetch_add(2);
+					queueWithPreviousInformation.push(sendingQueue.front());
+					fesapi_log(std::get<0>(sendingQueue.front())->to_string());
+					sendingQueue.pop();
+				}
+				if (queueWithPreviousInformation.size() > 1) {
+					std::swap(sendingQueue, queueWithPreviousInformation);
+				}
+				do_write();
+			}
+			else if (sendingQueue.size() == 1) {
+				// Send the message directly if the sending queue was empty.
 				do_write();
 			}
 
-			return std::get<0>(queueItem);
+			return message->messageHeader.messageId;
 		}
 
 		/**
 		* Send a message to the server and register a specific handler for the response and block the thread until the answer of the server has been processed by the handlers
 		* Please look at setTimeOut if you want to set the default timeout value which is 10 000 ms.
 		*
-		* @param mb				The ETP message body to send
+		* @param message		The ETP message to send
 		* @param correlationId	The ID of the message which this message is answering to.
 		* @param messageFlags	The message flags to be sent within the header
+		* @param msgIdAliases		The other msg ids which correspond to this same message.
+		*							It occurs when we resume a session because we can resent a same message twice with a different id.
 		* @return The ID of the message that has been put in the sending queue.
 		*/
-		template<typename T> int64_t sendWithSpecificHandlerAndBlock(const T& mb, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler, int64_t correlationId = 0, int32_t messageFlags = 0)
+		int64_t sendWithSpecificHandlerAndBlock(std::shared_ptr<EtpMessage> message, std::shared_ptr<ETP_NS::ProtocolHandlers> specificHandler,
+			int64_t correlationId = 0, int32_t messageFlags = 0, const std::vector<int64_t>& msgIdAliases = {})
 		{
-			const int64_t msgId = sendWithSpecificHandler(mb, specificHandler, correlationId, messageFlags);
+			const int64_t msgId = sendWithSpecificHandler(message, specificHandler, correlationId, messageFlags, msgIdAliases);
 			// The correlationId of the first message MUST be set to 0 and the correlationId of all successive
 			// messages in the same multipart request or notification MUST be set to the messageId of the first
 			// message of the multipart request or notification.
@@ -261,7 +298,7 @@ namespace ETP_NS
 					throw std::runtime_error("The ETP session could not be opened in order to send again the message.");
 				}
 				else {
-					return sendWithSpecificHandlerAndBlock(mb, specificHandler, correlationId, messageFlags);
+					return sendWithSpecificHandlerAndBlock(message, specificHandler, correlationId, messageFlags);
 				}
 			}
 
@@ -309,9 +346,8 @@ namespace ETP_NS
 		* Check wether a particular ETP message has been responded or not by the other agent.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT bool isMessageStillProcessing(int64_t msgId) {
-			const std::lock_guard<std::mutex> sendingQueueLock(sendingQueueMutex);
-			const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
-			return (!sendingQueue.empty() && std::get<0>(sendingQueue.front()) <= msgId) || specificProtocolHandlers.count(msgId) > 0;
+			std::scoped_lock lock(sendingQueueMutex, specificProtocolHandlersMutex);
+			return (!sendingQueue.empty() && std::get<0>(sendingQueue.front())->messageHeader.messageId <= msgId) || specificProtocolHandlers.count(msgId) > 0;
 		}
 
 		virtual void setMaxWebSocketMessagePayloadSize(uint64_t value) = 0;
@@ -334,7 +370,7 @@ namespace ETP_NS
 				etpSessionClosed = true;
 				sendingQueueMutex.unlock();
 				specificProtocolHandlersMutex.unlock();
-				send(Energistics::Etp::v12::Protocol::Core::CloseSession(), 0, 0x02);
+				send(std::make_shared<Energistics::Etp::v12::Protocol::Core::CloseSession>(), 0, 0x02);
 			}
 			else {
 				sendingQueueMutex.unlock();
@@ -600,11 +636,11 @@ namespace ETP_NS
 		}
 
 	protected:
-		boost::beast::flat_buffer receivedBuffer;
+		beast::flat_buffer receivedBuffer;
 		/// The default handlers for each subprotocol. Default handlers are at the index of the corresponding subprotocol id.
 		std::unordered_map<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type, std::shared_ptr<ETP_NS::ProtocolHandlers>> protocolHandlers;
 		/// A map indicating which handlers must be used for responding to which message id.
-		std::unordered_map<int64_t, std::shared_ptr<ETP_NS::ProtocolHandlers>> specificProtocolHandlers;
+		std::unordered_map<int64_t, std::tuple<std::shared_ptr<EtpMessage>, std::shared_ptr<ETP_NS::ProtocolHandlers>, std::vector<int64_t>>> specificProtocolHandlers;
 		std::mutex specificProtocolHandlersMutex;
 		/// The maximum size in bytes allowed for a complete WebSocket message payload, which is composed of one or more WebSocket frames.
 		/// The limit to use during a session is the smaller of the client's and the server's value for MaxWebSocketMessagePayloadSize,
@@ -620,8 +656,8 @@ namespace ETP_NS
 		std::atomic<double> _timeOut{ 30000 };
 		/// Indicates if the session must be verbose or not
 		std::atomic<bool> _verbose{ false };
-		/// The queue of messages to be sent where the tuple respectively define message id, message and protocol handlers for responding to this message.
-		std::queue< std::tuple<int64_t, std::vector<uint8_t>, std::shared_ptr<ETP_NS::ProtocolHandlers>> > sendingQueue;
+		/// The queue of messages to be sent where the tuple respectively define message, protocol handlers, msg id aliases for responding to this message.
+		std::queue< std::tuple<std::shared_ptr<EtpMessage>, std::shared_ptr<ETP_NS::ProtocolHandlers>, std::vector<int64_t> > > sendingQueue;
 		std::mutex sendingQueueMutex;
 		/// The next available message id.
 		std::atomic<int64_t> messageId;
@@ -655,40 +691,6 @@ namespace ETP_NS
 		 * @param decoder	Must be initialized with stream containing a coded message header.
 		 */
 		Energistics::Etp::v12::Datatypes::MessageHeader decodeMessageHeader(avro::DecoderPtr decoder);
-
-		template<typename T> std::tuple<int64_t, std::vector<uint8_t>, std::shared_ptr<ETP_NS::ProtocolHandlers>> encode(const T & mb, int64_t correlationId = 0, int32_t messageFlags = 0)
-		{
-			// Build message header
-			Energistics::Etp::v12::Datatypes::MessageHeader mh;
-			mh.protocol = mb.protocolId;
-			mh.messageType = mb.messageTypeId;
-			mh.correlationId = correlationId;
-			mh.messageId = messageId.fetch_add(2);
-			mh.messageFlags = messageFlags;
-
-			avro::OutputStreamPtr out = avro::memoryOutputStream();
-			avro::EncoderPtr e = avro::binaryEncoder();
-			e->init(*out);
-			avro::encode(*e, mh);
-			avro::encode(*e, mb);
-			e->flush();
-			const uint64_t byteCount = e->byteCount();
-
-			if (byteCount < maxWebSocketMessagePayloadSize) {
-				return std::make_tuple(mh.messageId, *avro::snapshot(*out).get(), nullptr);
-			}
-			else {
-				messageId -= 2;
-				if (correlationId != 0) {
-					return encode(EtpHelpers::buildSingleMessageProtocolException(17, "I try to send you a too big message response of protocol "
-						+ std::to_string(mb.protocolId) + " and type id " + std::to_string(mb.messageTypeId) + " and size " + std::to_string(byteCount)
-						+ " bytes according to our negotiated size capability which is " + std::to_string(maxWebSocketMessagePayloadSize) + " bytes."), correlationId, 0x02);
-				}
-				else {
-					return std::make_tuple(-1, std::vector<uint8_t>{}, nullptr); // You cannot send a message which is too big. Please use message part or chunk or whatever else.
-				}
-			}
-		}
 
 		std::shared_ptr<ETP_NS::CoreHandlers> getCoreProtocolHandlers() {
 			auto it = protocolHandlers.find(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core));
@@ -739,6 +741,13 @@ namespace ETP_NS
 				: std::dynamic_pointer_cast<DataspaceHandlers>(it->second);
 		}
 
+		std::shared_ptr<ETP_NS::CoreOSDUHandlers> getCoreOSDUProtocolHandlers() {
+			auto it = protocolHandlers.find(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::CoreOSDU));
+			return it == protocolHandlers.end()
+				? nullptr
+				: std::dynamic_pointer_cast<CoreOSDUHandlers>(it->second);
+		}
+
 		std::shared_ptr<ETP_NS::StoreOSDUHandlers> getStoreOSDUProtocolHandlers() {
 			auto it = protocolHandlers.find(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::StoreOSDU));
 			return it == protocolHandlers.end()
@@ -763,5 +772,7 @@ namespace ETP_NS
 		}
 
 		friend void CoreHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader& mh, avro::DecoderPtr d);
+		friend void CoreHandlers::on_ProtocolException(const Energistics::Etp::v12::Protocol::Core::ProtocolException& msg, int64_t correlationId);
+		friend void CoreOSDUHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader& mh, avro::DecoderPtr d);
 	};
 }

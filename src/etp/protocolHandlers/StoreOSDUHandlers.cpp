@@ -30,23 +30,23 @@ void StoreOSDUHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 	}
 
 	if (mh.messageType == Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue::messageTypeId) {
-		Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue obj;
-		avro::decode(*d, obj);
-		on_CopyDataObjectsByValue(obj, mh.messageId);
+		Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue msg;
+		msg.decode(*d);
+		on_CopyDataObjectsByValue(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse::messageTypeId) {
-		Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse obj;
-		avro::decode(*d, obj);
-		on_CopyDataObjectsByValueResponse(obj, mh.messageId);
+		Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse msg;
+		msg.decode(*d);
+		on_CopyDataObjectsByValueResponse(msg, mh.messageId);
 	}
 	else {
-		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(3, "The message type ID " + std::to_string(mh.messageType) + " is invalid for the Dataspace protocol."), mh.messageId, 0x02);
+		session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(3, "The message type ID " + std::to_string(mh.messageType) + " is invalid for the StoreOSDU protocol."), mh.messageId, 0x02);
 	}
 }
 
 void StoreOSDUHandlers::on_CopyDataObjectsByValue(const Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue&, int64_t correlationId)
 {
-	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The DataspaceHandlers::on_CopyDataObjectsByValue method has not been overriden by the agent."), correlationId, 0x02);
+	session->send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(7, "The StoreOSDUHandlers::on_CopyDataObjectsByValue method has not been overriden by the agent."), correlationId, 0x02);
 }
 
 void StoreOSDUHandlers::on_CopyDataObjectsByValueResponse(const Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse& msg, int64_t)

@@ -32,18 +32,18 @@ Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayIdentifier FesapiHdfP
 	return dai;
 }
 
-Energistics::Etp::v12::Protocol::DataArray::GetDataArrays FesapiHdfProxy::buildGetDataArraysMessage(const std::string & datasetName) const
+std::shared_ptr<Energistics::Etp::v12::Protocol::DataArray::GetDataArrays> FesapiHdfProxy::buildGetDataArraysMessage(const std::string & datasetName) const
 {
-	Energistics::Etp::v12::Protocol::DataArray::GetDataArrays msg;
-	msg.dataArrays["0"] = buildDataArrayIdentifier(datasetName);
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::DataArray::GetDataArrays>();
+	msg->dataArrays["0"] = buildDataArrayIdentifier(datasetName);
 
 	return msg;
 }
 
-Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata FesapiHdfProxy::buildGetDataArrayMetadataMessage(const std::string & datasetName) const
+std::shared_ptr<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata> FesapiHdfProxy::buildGetDataArrayMetadataMessage(const std::string & datasetName) const
 {
-	Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata msg;
-	msg.dataArrays["0"] = buildDataArrayIdentifier(datasetName);
+	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata>();
+	msg->dataArrays["0"] = buildDataArrayIdentifier(datasetName);
 
 	return msg;
 }
@@ -236,13 +236,13 @@ void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
 
 	if (totalCount * valueSize <= maxArraySize_) {
 		// PUT DATA ARRAYS
-		Energistics::Etp::v12::Protocol::DataArray::PutDataArrays pda;
-		pda.dataArrays["0"].uid.uri = uri;
-		pda.dataArrays["0"].uid.pathInResource = pathInResource;
-		pda.dataArrays["0"].array.dimensions = dimensions;
+		auto pda = std::make_shared<Energistics::Etp::v12::Protocol::DataArray::PutDataArrays>();
+		pda->dataArrays["0"].uid.uri = uri;
+		pda->dataArrays["0"].uid.pathInResource = pathInResource;
+		pda->dataArrays["0"].array.dimensions = dimensions;
 
 		// Create AVRO Array
-		pda.dataArrays["0"].array.data = convertVoidArrayIntoAvroAnyArray(datatype, values, totalCount);
+		pda->dataArrays["0"].array.data = convertVoidArrayIntoAvroAnyArray(datatype, values, totalCount);
 
 		// Send Data Arrays
 		session_->sendAndBlock(pda, 0, 0x02);
@@ -308,11 +308,11 @@ void FesapiHdfProxy::createArrayNd(
 	}
 
 	// PUT UNINITIALIZED DATA ARRAYS
-	Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays puda;
-	puda.dataArrays["0"].uid.uri = buildEtp12Uri();
-	puda.dataArrays["0"].uid.pathInResource = pathInResource;
-	puda.dataArrays["0"].metadata.dimensions = dimensions;
-	puda.dataArrays["0"].metadata.transportArrayType = anyArrayType;
+	auto puda = std::make_shared<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays>();
+	puda->dataArrays["0"].uid.uri = buildEtp12Uri();
+	puda->dataArrays["0"].uid.pathInResource = pathInResource;
+	puda->dataArrays["0"].metadata.dimensions = dimensions;
+	puda->dataArrays["0"].metadata.transportArrayType = anyArrayType;
 
 	// Send Uninitialized Data Arrays
 	session_->sendAndBlock(puda, 0, 0x02);
@@ -327,7 +327,7 @@ void FesapiHdfProxy::writeArrayNdSlab(
 	const uint64_t* offsetInEachDimension,
 	unsigned int numDimensions)
 {
-	std::set<int64_t>stillProcessingMsgIds = async_writeArrayNdSlab(groupName, datasetName,
+	std::set<int64_t> stillProcessingMsgIds = async_writeArrayNdSlab(groupName, datasetName,
 		datatype, values, numValuesInEachDimension,
 		offsetInEachDimension, numDimensions);
 
@@ -337,6 +337,7 @@ void FesapiHdfProxy::writeArrayNdSlab(
 		for (int64_t msgId : stillProcessingMsgIds) {
 			if (!session_->isMessageStillProcessing(msgId)) {
 				idsToErase.push_back(msgId);
+				t_start = std::chrono::high_resolution_clock::now();
 			}
 		}
 		for (int64_t msgId : idsToErase) {
@@ -410,14 +411,14 @@ std::set<int64_t> FesapiHdfProxy::async_writeArrayNdSlab(
 		}
 
 		// PUT DATA SUBARRAYS
-		Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays pdsa;
-		pdsa.dataSubarrays["0"].uid.uri = uri;
-		pdsa.dataSubarrays["0"].uid.pathInResource = pathInResource;
-		pdsa.dataSubarrays["0"].starts = starts;
-		pdsa.dataSubarrays["0"].counts = counts;
+		auto pdsa = std::make_shared<Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays>();
+		pdsa->dataSubarrays["0"].uid.uri = uri;
+		pdsa->dataSubarrays["0"].uid.pathInResource = pathInResource;
+		pdsa->dataSubarrays["0"].starts = starts;
+		pdsa->dataSubarrays["0"].counts = counts;
 
 		// Create AVRO Array
-		pdsa.dataSubarrays["0"].data = convertVoidArrayIntoAvroAnyArray(datatype, values, totalCount);
+		pdsa->dataSubarrays["0"].data = convertVoidArrayIntoAvroAnyArray(datatype, values, totalCount);
 
 		// Send putDataSubarrays Message
 		sentMessageIds.insert(session_->send(pdsa, 0, 0x02));

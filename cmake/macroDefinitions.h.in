@@ -18,5 +18,9 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
-/** @namespace	${FETPAPI_ETP_NS} @brief The ${FETPAPI_ETP_NS} namespace. */
-#define ETP_NS ${FETPAPI_ETP_NS}
+/** @namespace	@FETPAPI_ETP_NS@ @brief The @FETPAPI_ETP_NS@ namespace. */
+#define ETP_NS @FETPAPI_ETP_NS@
+
+/** Build FETPAPI with ETP SSL support **/
+#cmakedefine01 WITH_ETP_SSL
+#cmakedefine01 USE_WINTLS_INSTEAD_OF_OPENSSL

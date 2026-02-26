@@ -67,7 +67,7 @@ namespace ETP_NS
 			// Try to reconnect up to 10 times
 			if (!isCloseRequested_ && reconnectionTryCount_ < 10) {
 				++reconnectionTryCount_;
-				std::cerr << "Session has been disconnected, trying to reconnect... " << reconnectionTryCount_ << "/10" << std::endl;
+				std::cerr << "Session " << getIdentifier() << " has been disconnected, trying to reconnect... " << reconnectionTryCount_ << "/10" << std::endl;
 				getIoContext().restart();
 				run();
 			}
@@ -107,7 +107,17 @@ namespace ETP_NS
 			fesapi_log("Now connected to Websocket");
 			webSocketSessionClosed = false;
 
-			send(requestSession, 0, 0x02);
+			if (reconnectionTryCount_ > 0) {
+				auto resumeSession = std::make_shared<Energistics::Etp::v12::Protocol::CoreOSDU::ResumeSession>();
+				resumeSession->applicationName = requestSession->applicationName;
+				resumeSession->applicationVersion = requestSession->applicationVersion;
+				resumeSession->clientInstanceId = requestSession->clientInstanceId;
+				std::copy(identifier.begin(), identifier.end(), resumeSession->sessionId.array.begin());
+				send(resumeSession, 0, 0x02);
+			}
+			else {
+				send(requestSession, 0, 0x02);
+			}
 			do_read();
 		}
 
@@ -123,7 +133,7 @@ namespace ETP_NS
 		std::string proxyAuthorization;
 		std::map<std::string, std::string> additionalHandshakeHeaderFields_;
 		websocket::response_type responseType; // In order to check handshake sec_websocket_protocol
-		Energistics::Etp::v12::Protocol::Core::RequestSession requestSession;
+		std::shared_ptr<Energistics::Etp::v12::Protocol::Core::RequestSession> requestSession;
 
 		/**
 		 * @param initializationParams  The initialization parameters of the session including IP host, port, requestedProtocols, supportedDataObjects
@@ -148,19 +158,20 @@ namespace ETP_NS
 			initializationParams->postSessionCreationOperation(this);
 
 			// Build the request session
-			requestSession.applicationName = initializationParams->getApplicationName();
-			requestSession.applicationVersion = initializationParams->getApplicationVersion();
+			requestSession = std::make_shared<Energistics::Etp::v12::Protocol::Core::RequestSession>();
+			requestSession->applicationName = initializationParams->getApplicationName();
+			requestSession->applicationVersion = initializationParams->getApplicationVersion();
 
-			std::copy(initializationParams->getInstanceId().begin(), initializationParams->getInstanceId().end(), requestSession.clientInstanceId.array.begin());
+			std::copy(initializationParams->getInstanceId().begin(), initializationParams->getInstanceId().end(), requestSession->clientInstanceId.array.begin());
 
-			requestSession.requestedProtocols = initializationParams->makeSupportedProtocols();
-			requestSession.supportedDataObjects = initializationParams->makeSupportedDataObjects();
-			requestSession.supportedFormats.push_back("xml");
-			requestSession.currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+			requestSession->requestedProtocols = initializationParams->makeSupportedProtocols();
+			requestSession->supportedDataObjects = initializationParams->makeSupportedDataObjects();
+			requestSession->supportedFormats.push_back("xml");
+			requestSession->currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
 			auto caps = initializationParams->makeEndpointCapabilities();
 			if (!caps.empty()) {
-				requestSession.endpointCapabilities = caps;
+				requestSession->endpointCapabilities = caps;
 			}
 
 			maxWebSocketMessagePayloadSize = initializationParams->getMaxWebSocketMessagePayloadSize();

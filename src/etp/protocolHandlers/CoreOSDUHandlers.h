@@ -16,19 +16,21 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 -----------------------------------------------------------------------*/
-#include "SslClientSession.h"
+#pragma once
 
-using namespace ETP_NS;
+#include "ProtocolHandlers.h"
 
-SslClientSession::SslClientSession(
-#if USE_WINTLS_INSTEAD_OF_OPENSSL
-	wintls::context&& ctx,
-#else
-	ssl::context&& ctx,
-#endif
-	InitializationParameters const* initializationParams, const std::string& target, const std::string& authorization, const std::string& proxyAuthorization,
-	const std::map<std::string, std::string>& additionalHandshakeHeaderFields, std::size_t frameSize)
-	: AbstractClientSessionCRTP<SslClientSession>(initializationParams, target, authorization, proxyAuthorization), sslContext_(std::move(ctx)), frameSize_(frameSize)
+namespace ETP_NS
 {
-	additionalHandshakeHeaderFields_ = additionalHandshakeHeaderFields;
+	class FETPAPI_DLL_IMPORT_OR_EXPORT CoreOSDUHandlers : public ProtocolHandlers
+	{
+	public:
+		CoreOSDUHandlers(AbstractSession* mySession): ProtocolHandlers(mySession) {}
+		virtual ~CoreOSDUHandlers() = default;
+
+	    void decodeMessageBody(const Energistics::Etp::v12::Datatypes::MessageHeader & mh, avro::DecoderPtr d);
+
+		virtual void on_ResumeSession(const Energistics::Etp::v12::Protocol::CoreOSDU::ResumeSession& msg, int64_t correlationId);
+		virtual void on_ResumeSessionResponse(const Energistics::Etp::v12::Protocol::CoreOSDU::ResumeSessionResponse& msg, int64_t correlationId);
+	};
 }

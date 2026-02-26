@@ -18,7 +18,7 @@ under the License.
 -----------------------------------------------------------------------*/
 #pragma once
 
-#include "../nsDefinitions.h"
+#include "../macroDefinitions.h"
 #include "EtpMessages.h"
 
 #if defined(_WIN32) && !defined(FETPAPI_STATIC)
@@ -72,7 +72,7 @@ namespace ETP_NS
 		/**
 		* Build a protocol exception message which only contains a single error message (not a messsage map).
 		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT Energistics::Etp::v12::Protocol::Core::ProtocolException buildSingleMessageProtocolException(int32_t m_code, const std::string & m_message);
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::shared_ptr<Energistics::Etp::v12::Protocol::Core::ProtocolException> buildSingleMessageProtocolException(int32_t m_code, const std::string & m_message);
 
 		/**
 		* Extract and return the uuid and the version of a dataobject based on its URI.

@@ -15,7 +15,7 @@ set (FETPAPI_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 # version mechanism
 set (Fetpapi_VERSION_MAJOR 0)
-set (Fetpapi_VERSION_MINOR 4)
+set (Fetpapi_VERSION_MINOR 5)
 set (Fetpapi_VERSION_PATCH 0)
 set (Fetpapi_VERSION_TWEAK 0)
 
@@ -120,6 +120,7 @@ endif()
 
 # avro DEPENDENCY
 find_package(AVRO REQUIRED)
+target_link_libraries (${PROJECT_NAME} PUBLIC AVRO::AVRO ${CMAKE_THREAD_LIBS_INIT})
 
 if (WITH_FESAPI)
 	find_package(FESAPI REQUIRED)
@@ -129,10 +130,11 @@ if (WITH_FESAPI)
 			message(SEND_ERROR "The FESAPI library (FESAPI_JAR variable) does not look to be a valid file. Please modify it.")
 		endif ()
 	endif (WITH_JAVA_WRAPPING)
+	target_link_libraries(${PROJECT_NAME} PUBLIC FESAPI::FESAPI)
 endif (WITH_FESAPI)
 
-target_link_libraries (${PROJECT_NAME} PRIVATE AVRO::AVRO ${CMAKE_THREAD_LIBS_INIT})
 if (WIN32)
+	# boost uuid depends on bcrypt library
 	target_link_libraries (${PROJECT_NAME} PRIVATE bcrypt.lib)
 
 	set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -149,24 +151,26 @@ else (WIN32)
 endif (WIN32)
 
 if (WITH_ETP_SSL)
-	target_compile_definitions(${PROJECT_NAME} PRIVATE WITH_ETP_SSL)
-	if (NOT TARGET OpenSSL::SSL OR NOT TARGET OpenSSL::Crypto)
-		find_package(OpenSSL REQUIRED)
+	if (WIN32)
+		set (USE_WINTLS_INSTEAD_OF_OPENSSL ON CACHE BOOL "Build FETPAPI with ETP SSL support.")
 	endif()
-	target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
-	# OpenSSL::applink is recommended under MSVC : https://cmake.org/cmake/help/latest/module/FindOpenSSL.html
-	if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-		target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::applink)
-	endif ()
-endif ()
 
-if (WITH_FESAPI)
-	target_link_libraries(${PROJECT_NAME} PRIVATE FESAPI::FESAPI)
-endif (WITH_FESAPI)
+	if (NOT USE_WINTLS_INSTEAD_OF_OPENSSL)
+		target_compile_definitions(${PROJECT_NAME} PRIVATE WITH_ETP_SSL)
+		if (NOT TARGET OpenSSL::SSL OR NOT TARGET OpenSSL::Crypto)
+			find_package(OpenSSL REQUIRED)
+		endif()
+		target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+		# OpenSSL::applink is recommended under MSVC : https://cmake.org/cmake/help/latest/module/FindOpenSSL.html
+		if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+			target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::applink)
+		endif ()
+	endif()
+endif ()
 
 # Namespaces definitions
 set (FETPAPI_ETP_NS etp CACHE STRING "Namespace for etp objects")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/nsDefinitions.h ${CMAKE_CURRENT_SOURCE_DIR}/src/nsDefinitions.h) # Overwrite if different
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macroDefinitions.h.in ${CMAKE_CURRENT_SOURCE_DIR}/src/macroDefinitions.h @ONLY) # Overwrite if different
 
 # ============================================================================
 # SWIG wrapping
@@ -195,9 +199,9 @@ endif (WITH_PYTHON_WRAPPING)
 
 include(${CMAKE_CURRENT_SOURCE_DIR}/src/CMakeLists.txt)
 set (ALL_SOURCES_AND_HEADERS
-	${ALL_SOURCES_AND_HEADERS}
-	${FETPAPI_SOURCES}
 	${FETPAPI_HEADERS}
+	${FETPAPI_ETP_SOURCES}
+	${FETPAPI_ETP_HEADERS}
 	${FETPAPI_PROTOCOL_SOURCES}
 	${FETPAPI_PROTOCOL_HEADERS}
 	${FETPAPI_FESAPI_SOURCES}
@@ -205,16 +209,15 @@ set (ALL_SOURCES_AND_HEADERS
 	${FETPAPI_SSL_SOURCES}
 	${FETPAPI_SSL_HEADERS}
 )
-
-if (WITH_FESAPI)
-	target_include_directories(${PROJECT_NAME} PRIVATE ${FESAPI_INCLUDE_DIR})
-endif (WITH_FESAPI)
-
 target_sources(${PROJECT_NAME} PRIVATE ${ALL_SOURCES_AND_HEADERS})
 
-target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${AVRO_INCLUDE_DIR})
 if (WITH_ETP_SSL)
-	target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${OPENSSL_INCLUDE_DIR})
+	if (NOT USE_WINTLS_INSTEAD_OF_OPENSSL)
+		target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE ${OPENSSL_INCLUDE_DIR})
+	else()
+		find_package(WINTLS REQUIRED)
+		target_link_libraries(${PROJECT_NAME} PUBLIC WINTLS::WINTLS)
+	endif()
 endif ()
 
 target_include_directories(${PROJECT_NAME} INTERFACE
@@ -224,8 +227,8 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 # organizing sources and headers in the Visual Studio Project
 if (WIN32)
 	set (ETP_PREFIX "etp")
-	source_group ("${ETP_PREFIX}" FILES ${FETPAPI_SOURCES} ${FETPAPI_HEADERS})
-	source_group ("${ETP_PREFIX}\\ProtocolHandlers" FILES ${FETPAPI_PROTOCOL_SOURCES} ${FETPAPI_PROTOCOL_HEADERS})
+	source_group ("${ETP_PREFIX}" FILES ${FETPAPI_ETP_SOURCES} ${FETPAPI_ETP_HEADERS})
+	source_group ("${ETP_PREFIX}\\protocolHandlers" FILES ${FETPAPI_PROTOCOL_SOURCES} ${FETPAPI_PROTOCOL_HEADERS})
 
 	if (WITH_ETP_SSL)
 		source_group ("${ETP_PREFIX}\\ssl" FILES ${FETPAPI_SSL_SOURCES} ${FETPAPI_SSL_HEADERS})
@@ -287,7 +290,7 @@ install(EXPORT Fetpapi-export
 )
 
 INSTALL (
-	FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/nsDefinitions.h
+	FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/macroDefinitions.h
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fetpapi
 	COMPONENT fetpapi_headers
 )
@@ -300,7 +303,7 @@ INSTALL (
 
 INSTALL (
 	FILES ${FETPAPI_PROTOCOL_HEADERS}
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fetpapi/etp/ProtocolHandlers
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/fetpapi/etp/protocolHandlers
 	COMPONENT fetpapi_headers
 )
 

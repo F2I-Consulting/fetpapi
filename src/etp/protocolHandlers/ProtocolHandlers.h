@@ -20,7 +20,7 @@ under the License.
 
 #include <memory>
 
-#include "../../nsDefinitions.h"
+#include "../../macroDefinitions.h"
 #include "../EtpMessages.h"
 
 #if defined(_WIN32) && !defined(FETPAPI_STATIC)

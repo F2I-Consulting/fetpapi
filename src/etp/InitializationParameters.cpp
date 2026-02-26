@@ -180,6 +180,9 @@ std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> InitializationP
 	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Dataspace);
 	result.push_back(protocol);
 
+	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::CoreOSDU);
+	result.push_back(protocol);
+
 	protocol.protocol = static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::StoreOSDU);
 	result.push_back(protocol);
 
@@ -197,6 +200,7 @@ void InitializationParameters::postSessionCreationOperation(AbstractSession* ses
 	session->setDataArrayProtocolHandlers(std::make_shared<DataArrayHandlers>(session));
 	session->setTransactionProtocolHandlers(std::make_shared<TransactionHandlers>(session));
 	session->setDataspaceProtocolHandlers(std::make_shared<DataspaceHandlers>(session));
+	session->setCoreOSDUProtocolHandlers(std::make_shared<CoreOSDUHandlers>(session));
 	session->setStoreOSDUProtocolHandlers(std::make_shared<StoreOSDUHandlers>(session));
 	session->setDataspaceOSDUProtocolHandlers(std::make_shared<DataspaceOSDUHandlers>(session));
 }

@@ -32,52 +32,52 @@ void DataArrayHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 
 	if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::GetDataArrays::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrays gda;
-		avro::decode(*d, gda);
+		gda.decode(*d);
 		on_GetDataArrays(gda, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse gdar;
-		avro::decode(*d, gdar);
+		gdar.decode(*d);
 		on_GetDataArraysResponse(gdar, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutDataArrays::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::PutDataArrays pda;
-		avro::decode(*d, pda);
+		pda.decode(*d);
 		on_PutDataArrays(pda, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutDataArraysResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::PutDataArraysResponse msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_PutDataArraysResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_GetDataSubarrays(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::GetDataSubarraysResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::GetDataSubarraysResponse msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_GetDataSubarraysResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_PutDataSubarrays(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutDataSubarraysResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::PutDataSubarraysResponse msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_PutDataSubarraysResponse(msg, mh.correlationId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata gdam;
-		avro::decode(*d, gdam);
+		gdam.decode(*d);
 		on_GetDataArrayMetadata(gdam, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse gdamr;
-		avro::decode(*d, gdamr);
+		gdamr.decode(*d);
 
 		// Validation
 		bool valid = true;
@@ -121,12 +121,12 @@ void DataArrayHandlers::decodeMessageBody(const Energistics::Etp::v12::Datatypes
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_PutUninitializedDataArrays(msg, mh.messageId);
 	}
 	else if (mh.messageType == Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse::messageTypeId) {
 		Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse msg;
-		avro::decode(*d, msg);
+		msg.decode(*d);
 		on_PutUninitializedDataArraysResponse(msg, mh.correlationId);
 	}
 	else {

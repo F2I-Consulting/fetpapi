@@ -12,7 +12,8 @@
 Download (build and install if necessary) third party libraries:
 - BOOST : All versions from version 1.66 should be ok but you may experience some [min/max build issues](https://github.com/boostorg/beast/issues/1980) using version 1.72 or 1.73.
 - AVRO : https://avro.apache.org/releases.html#Download (starting from version 1.9.0 [except 1.11.1](https://issues.apache.org/jira/browse/AVRO-3601), build it with the above boost library.)
-- (OPTIONALLY) OpenSSL : version 3.4 is known to work.
+- (OPTIONALLY) OpenSSL : version 3.4 is known to work. OpenSSL is mandatory on Unix environement if you want SSL/TLS support. On Windows environment, you can depends on [Wintls](https://github.com/laudrup/boost-wintls/tree/master) instead
+- (OPTIONALLY) [Wintls](https://github.com/laudrup/boost-wintls/tree/master) : Starting from version 0.9.9. Only on Windows and only if you don't want to use OpenSSL to support SSL/TLS. FYI, WinTLs uses native Windows API [(SSPI/Schannel)](https://docs.microsoft.com/en-us/windows-server/security/tls/tls-ssl-schannel-ssp-overview) functionality instead of OpenSSL for providing TLS encrypted stream functionality.
 - (OPTIONALLY) [FESAPI](https://github.com/F2I-Consulting/fesapi/releases) : All versions from version 2.7.0.0 should be ok but a minimal version of 2.11.0.0 is recommended to automatically recognize FESAPI CMake Variables using CMake find Module and build silently the EtpClient example.
 
 # Configure the build
@@ -32,9 +33,14 @@ FETPAPI uses cmake as its build tool. A 3.12 version or later of cmake is requir
 	- You will then have to also provide the path to the SWIG (version 3 as a mininum version) executable http://swig.org/download.html in the SWIG_EXECUTABLE variable (and click again on "Configure" button)
 	- you will find the wrappers in fetpapi/cs/src (fetpapi/cs also contains a VS2015 project for the wrappers) or fetpapi/python/src
 - OPTIONALLY, for SSL support, please enable the WITH_ETP_SSL variable and set the following variables :
-	- OPENSSL_INCLUDE_DIR : the OpenSSL include directory
-	- LIB_EAY_RELEASE : the OpenSSL crypto library you want to link with.
-	- SSL_EAY_RELEASE : the OpenSSL ssl library you want to link with. 
+	- If you use OpenSSL which is mandatory on Unix and optional on Windows to support SSL/TLS
+		- OPENSSL_INCLUDE_DIR : the OpenSSL include directory
+		- LIB_EAY_RELEASE : the OpenSSL crypto library you want to link with.
+		- SSL_EAY_RELEASE : the OpenSSL ssl library you want to link with.
+		- USE_WINTLS_INSTEAD_OF_OPENSSL : must be set to OFF on windows
+	- If you use Wintls on Windows to support SSL/TLS
+		- USE_WINTLS_INSTEAD_OF_OPENSSL : must be set to ON on windows
+		- WINTLS_ROOT : Path to the folder containing the include folder of Wintls
 - OPTIONALLY, for FESAPI (v2.7.0.0 as a minimal version) support (see [here](https://github.com/F2I-Consulting/fesapi) for documentation on how to build fesapi), please enable the WITH_FESAPI variable and usually set the following variable :
 	- FESAPI_ROOT : The path to the folder containing include and lib folders of FESAPI (using [our own cmake find module](./cmake/modules/FindFESAPI.cmake))
 

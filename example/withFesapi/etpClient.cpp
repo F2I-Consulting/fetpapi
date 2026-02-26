@@ -360,15 +360,14 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 		else if (commandTokens[0] == "PutDataObject") {
 			auto* dataObj = repo.getDataObjectByUuid(commandTokens[1]);
 			if (dataObj != nullptr) {
-				Energistics::Etp::v12::Protocol::Store::PutDataObjects putDataObjects;
 				Energistics::Etp::v12::Datatypes::Object::DataObject dataObject = ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(dataObj);
-				putDataObjects.dataObjects["0"] = dataObject;
-
-				session->send(putDataObjects, 0, 0x10 | 0x02); // 0x10 requires Acknowledge from the store
+				std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataObjects;
+				dataObjects["0"] = dataObject;
+				session->putDataObjects(dataObjects);
 			}
 		}
 		else if (commandTokens[0] == "SubscribeNotif") {
-			Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications mb;
+			auto mb = std::make_shared<Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications>();
 			Energistics::Etp::v12::Datatypes::Object::SubscriptionInfo subscriptionInfo;
 			subscriptionInfo.context.uri = commandTokens[1];
 			subscriptionInfo.scope = Energistics::Etp::v12::Datatypes::Object::ContextScopeKind::self;
@@ -402,7 +401,7 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				}
 			}
 
-			mb.request["0"] = subscriptionInfo;
+			mb->request["0"] = subscriptionInfo;
 
 			session->send(mb, 0, 0x02);
 
@@ -483,10 +482,10 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				//session->deleteDataspaces({ {"0", "eml:///dataspace('project/study')"} });
 			}
 			else if (commandTokens[0] == "Ping") {
-				Energistics::Etp::v12::Protocol::Core::Ping ping;
-				ping.currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+				auto ping = std::make_shared<Energistics::Etp::v12::Protocol::Core::Ping>();
+				ping->currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 				session->send(ping, 0, 0x02);
-				std::cout << "PING at " << ping.currentDateTime << std::endl;
+				std::cout << "PING at " << ping->currentDateTime << std::endl;
 				std::cout << "Please Set Verbosity to 1 if you don't see anything" << std::endl;
 			}
 			else if (commandTokens[0] == "PutDummyHorizon") {
@@ -549,45 +548,49 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				
 				auto transaction_start = std::chrono::high_resolution_clock::now();
 
-				session->startTransaction(dataspacesToLock);
+				std::string result = session->startTransaction(dataspacesToLock);
+				if (result.empty()) {
+					const size_t ni = 10000;
+					const size_t nj = 1000;
+					std::unique_ptr<double[]> resqml_points(new double[ni * nj]);
+					for (double i = 0; i < ni * nj; ++i) {
+						resqml_points[(int)i] = i * 100;
+					}
+					horizon_grid_2d_representation->setGeometryAsArray2dOfExplicitZ(resqml_points.get(), ni, nj, hdf_proxy,
+						0.0, 0.0, 0.0,
+						1.0, 0.0, 0.0, 25.0,
+						0.0, 1.0, 0.0, 50.0);
 
-				const size_t ni = 10000;
-				const size_t nj = 1000;
-				std::unique_ptr<double[]> resqml_points(new double[ni * nj]);
-				for (double i = 0; i < ni * nj; ++i) {
-					resqml_points[(int)i] = i * 100;
+					for (size_t propIndex = 0; propIndex < 100; ++propIndex) {
+						auto t_start = std::chrono::high_resolution_clock::now();
+						auto* prop = tmpRepo.createContinuousProperty(horizon_grid_2d_representation, "", "", 1, gsoap_eml2_3::eml23__IndexableElement::nodes, gsoap_resqml2_0_1::resqml20__ResqmlUom::m,
+							gsoap_resqml2_0_1::resqml20__ResqmlPropertyKind::length);
+						std::unique_ptr<double[]> prop_values(new double[ni * nj]);
+						prop->pushBackDoubleHdf5Array2dOfValues(prop_values.get(), ni, nj, hdf_proxy);
+						std::cout << " Pushed prop " << propIndex << " in " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " ms" << std::endl;
+						std::cout << " Global time  " << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - transaction_start).count() << " s" << std::endl;
+					}
+
+					tmpRepo.setUriSource(dataspace.uri);
+					std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataobjects;
+					auto allUuids = tmpRepo.getUuids();
+					int index = 0;
+					for (auto& uuid : allUuids)
+						dataobjects[std::to_string(index++)] = ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(tmpRepo, uuid);
+					successKeys = session->putDataObjects(dataobjects);
+					for (std::string& str : successKeys)
+						std::cout << "successKey : " << str << std::endl;
+
+					std::cout << "commit : " << session->commitTransaction() << std::endl;
+
+					if (session != nullptr && !session->isWebSocketSessionClosed())
+						horizon_grid_2d_representation->getZValues(resqml_points.get());
+
+					tmpRepo.clear();
 				}
-				horizon_grid_2d_representation->setGeometryAsArray2dOfExplicitZ(resqml_points.get(), ni, nj, hdf_proxy,
-					0.0, 0.0, 0.0,
-					1.0, 0.0, 0.0, 25.0,
-					0.0, 1.0, 0.0, 50.0);
-
-				for (size_t propIndex = 0; propIndex < 1; ++propIndex) {
-					auto t_start = std::chrono::high_resolution_clock::now();
-					auto* prop = tmpRepo.createContinuousProperty(horizon_grid_2d_representation, "", "", 1, gsoap_eml2_3::eml23__IndexableElement::nodes, gsoap_resqml2_0_1::resqml20__ResqmlUom::m,
-						gsoap_resqml2_0_1::resqml20__ResqmlPropertyKind::length);
-					std::unique_ptr<double[]> prop_values(new double[ni * nj]);
-					prop->pushBackDoubleHdf5Array2dOfValues(prop_values.get(), ni, nj, hdf_proxy);
-					std::cout << " Pushed prop " << propIndex << " in " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " ms" << std::endl;
-					std::cout << " Global time  " << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - transaction_start).count() << " s" << std::endl;
+				else {
+					std::cerr << "Error when opening transaction : " << result << std::endl;
 				}
-
-				tmpRepo.setUriSource(dataspace.uri);
-				std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataobjects;
-				auto allUuids = tmpRepo.getUuids();
-				int index = 0;
-				for (auto& uuid : allUuids)
-					dataobjects[std::to_string(index++)] = ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(tmpRepo, uuid);
-				successKeys = session->putDataObjects(dataobjects);
-				for (std::string& str : successKeys)
-					std::cout << "successKey : " << str << std::endl;
-
-				std::cout << "commit : " << session->commitTransaction() << std::endl;
-
-				if (session != nullptr && !session->isWebSocketSessionClosed())
-					horizon_grid_2d_representation->getZValues(resqml_points.get());
-
-				tmpRepo.clear();
 			}
 			else if (commandTokens[0] == "GetDataspaces") {
 				const auto dataspaces = session->getDataspaces();
@@ -634,11 +637,10 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				h1i1PointSetRep->pushBackXyzGeometryPatch(6, pointCoords, nullptr, crs);
 
 				// Now send the XML part
-				Energistics::Etp::v12::Protocol::Store::PutDataObjects putDataObjects;
 				Energistics::Etp::v12::Datatypes::Object::DataObject dataObject = ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(h1i1PointSetRep);
-				putDataObjects.dataObjects["0"] = dataObject;
-
-				session->send(putDataObjects, 0, 0x02 | 0x10); // 0x10 requires Acknowledge from the store
+				std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> dataObjects;
+				dataObjects["0"] = dataObject;
+				session->putDataObjects(dataObjects);
 			}
 			else if (commandTokens[0] == "PutAllDataObjects") {
 				std::map<std::string, Energistics::Etp::v12::Datatypes::Object::DataObject> putDataObjectsMap;
@@ -654,34 +656,34 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 		}
 		else if (commandTokens.size() == 3) {
 			if (commandTokens[0] == "GetDataArray") {
-				Energistics::Etp::v12::Protocol::DataArray::GetDataArrays gda;
-				gda.dataArrays["0"].uri = commandTokens[1];
-				gda.dataArrays["0"].pathInResource = commandTokens[2];
-				std::cout << gda.dataArrays["0"].pathInResource << std::endl;
+				auto gda = std::make_shared< Energistics::Etp::v12::Protocol::DataArray::GetDataArrays>();
+				gda->dataArrays["0"].uri = commandTokens[1];
+				gda->dataArrays["0"].pathInResource = commandTokens[2];
+				std::cout << gda->dataArrays["0"].pathInResource << std::endl;
 				session->send(gda, 0, 0x02);
 				std::cout << "Please Set Verbosity to 1 if you don't see anything" << std::endl;
 			}
 			else if (commandTokens[0] == "GetDataArrayMetadata") {
-				Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata msg;
-				msg.dataArrays["0"].uri = commandTokens[1];
-				msg.dataArrays["0"].pathInResource = commandTokens[2];
-				std::cout << msg.dataArrays["0"].pathInResource << std::endl;
+				auto msg = std::make_shared< Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata>();
+				msg->dataArrays["0"].uri = commandTokens[1];
+				msg->dataArrays["0"].pathInResource = commandTokens[2];
+				std::cout << msg->dataArrays["0"].pathInResource << std::endl;
 				session->send(msg, 0, 0x02);
 				std::cout << "Please Set Verbosity to 1 if you don't see anything" << std::endl;
 			}
 			else if (commandTokens[0] == "PutDataArray") {
-				Energistics::Etp::v12::Protocol::DataArray::PutDataArrays pda;
-				pda.dataArrays["0"].uid.uri = commandTokens[1];
-				pda.dataArrays["0"].uid.pathInResource = commandTokens[2];
+				auto pda = std::make_shared< Energistics::Etp::v12::Protocol::DataArray::PutDataArrays>();
+				pda->dataArrays["0"].uid.uri = commandTokens[1];
+				pda->dataArrays["0"].uid.pathInResource = commandTokens[2];
 
 				std::vector<int64_t> dimensions = { 10 };
-				pda.dataArrays["0"].array.dimensions = dimensions;
+				pda->dataArrays["0"].array.dimensions = dimensions;
 
 				Energistics::Etp::v12::Datatypes::AnyArray data;
 				Energistics::Etp::v12::Datatypes::ArrayOfInt arrayOfInt;
 				arrayOfInt.values = { 0,1,2,3,4,5,6,7,8,9 };
 				data.item.set_ArrayOfInt(std::move(arrayOfInt));
-				pda.dataArrays["0"].array.data = data;
+				pda->dataArrays["0"].array.data = data;
 				std::cout << "Start sending the array" << std::endl;
 
 				session->send(pda, 0, 0x02);
@@ -751,12 +753,12 @@ int main(int argc, char **argv)
 	auto t_start = std::chrono::high_resolution_clock::now();
 	while (clientSession->isEtpSessionClosed()) {
 		auto timeOut = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count();
-		if (timeOut > 5000) {
+		if (timeOut > 50000) {
 			throw std::invalid_argument("Time out : " + std::to_string(timeOut) + " ms.\n");
 		}
 	}
 
-	clientSession->setTimeOut(60000);
+	clientSession->setTimeOut(10000);
 	askUser(clientSession, repo);
 
 	sessionThread.join();
