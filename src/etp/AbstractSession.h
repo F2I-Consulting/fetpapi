@@ -166,7 +166,7 @@ namespace ETP_NS
 
 		/**
 		* Send a message to the server and block the thread until the answer of the server has been processed by the handlers
-		* Please look at setTimeOut if you want to set the default timeout value which is 10 000 ms.
+		* Please look at setTimeOut if you want to set the default timeout value which is 30 000 ms.
 		*
 		* @param message		The ETP message to send
 		* @param correlationId	The ID of the message which this message is answering to.
@@ -263,7 +263,7 @@ namespace ETP_NS
 
 		/**
 		* Send a message to the server and register a specific handler for the response and block the thread until the answer of the server has been processed by the handlers
-		* Please look at setTimeOut if you want to set the default timeout value which is 10 000 ms.
+		* Please look at setTimeOut if you want to set the default timeout value which is 30 000 ms.
 		*
 		* @param message		The ETP message to send
 		* @param correlationId	The ID of the message which this message is answering to.

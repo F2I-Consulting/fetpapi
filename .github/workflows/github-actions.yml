@@ -76,14 +76,14 @@ jobs:
           cmake --install .
       - name: FESAPI install
         run: |
-          (New-Object System.Net.WebClient).DownloadFile("https://github.com/F2I-Consulting/fesapi/releases/download/v2.14.0.0/fesapi2_14_0_0-cpp-vs2019-x64.zip", "${{ runner.temp }}\fesapi.zip")
+          (New-Object System.Net.WebClient).DownloadFile("https://github.com/F2I-Consulting/fesapi/releases/download/v2.14.1.0/fesapi2_14_1_0-cpp-vs2019-x64.zip", "${{ runner.temp }}\fesapi.zip")
           7z x ${{ runner.temp }}\fesapi.zip -o${{ runner.temp }}
       - name: CMake build and install
         run: |
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi2_14_0_0-cpp-vs2019-x64 -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
+          cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi2_14_1_0-cpp-vs2019-x64 -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
           cmake --build . --config Release -j2
   ubuntu-22:
     runs-on: ubuntu-22.04
