@@ -31,9 +31,23 @@ under the License.
 
 #include "catch.hpp"
 
+#include "etp/EtpHelpers.h"
 #include "etp/ClientSessionLaunchers.h"
 #include "etp/fesapi/FesapiHdfProxy.h"
 #include "etp/fesapi/FesapiHelpers.h"
+
+TEST_CASE("Validate ETP URI", "[EtpUri]")
+{
+	REQUIRE(ETP_NS::EtpHelpers::validateUri("eml:///dataspace('test/test')"));
+	REQUIRE_FALSE(ETP_NS::EtpHelpers::validateUri("eml://dataspace('test/test')")); // Missing slash
+	REQUIRE(ETP_NS::EtpHelpers::validateUri("eml:///dataspace('test/test')/eml20.obj_EpcExternalPartReference(da9e0cc3-0f71-4fd9-83ad-a6334b9b0832)"));
+	REQUIRE(ETP_NS::EtpHelpers::validateDataObjectUri("eml:///dataspace('test/test')/eml20.obj_EpcExternalPartReference(da9e0cc3-0f71-4fd9-83ad-a6334b9b0832)"));
+	REQUIRE_FALSE(ETP_NS::EtpHelpers::validateDataObjectUri("eml:///dataspace('test/test')"));
+
+	REQUIRE(ETP_NS::EtpHelpers::getDataspaceUri("eml:///dataspace('test/test')/eml20.obj_EpcExternalPartReference(da9e0cc3-0f71-4fd9-83ad-a6334b9b0832)") == "eml:///dataspace('test/test')");
+	REQUIRE(ETP_NS::EtpHelpers::getDataObjectType("eml:///dataspace('test/test')/eml20.obj_EpcExternalPartReference(da9e0cc3-0f71-4fd9-83ad-a6334b9b0832)") == "eml20.obj_EpcExternalPartReference");
+	REQUIRE(ETP_NS::EtpHelpers::getUuidAndVersionFromUri("eml:///dataspace('test/test')/eml20.obj_EpcExternalPartReference(da9e0cc3-0f71-4fd9-83ad-a6334b9b0832)").first == "da9e0cc3-0f71-4fd9-83ad-a6334b9b0832");
+}
 
 boost::uuids::random_generator gen;
 

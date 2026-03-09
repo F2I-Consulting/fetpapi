@@ -76,6 +76,7 @@ namespace ETP_NS
 
 		/**
 		* Extract and return the uuid and the version of a dataobject based on its URI.
+		* TODO : version extraction is not supported for now and will always be empty.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::pair<std::string, std::string> getUuidAndVersionFromUri(const std::string & uri);
 	}

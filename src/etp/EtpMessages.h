@@ -19,7 +19,7 @@ namespace Energistics {
 	namespace Etp {
 		namespace v12 {
 			namespace Datatypes {
-				enum class Protocol : uint16_t {
+				enum class Protocol : int32_t {
 					Core = 0,
 					ChannelStreaming = 1,
 					ChannelDataFrame = 2,
