@@ -65,6 +65,9 @@ jobs:
         run: |
           curl -L "https://archives.boost.io/release/1.90.0/binaries/boost_1_90_0-msvc-14.2-64.exe" -o "${{ runner.temp }}\boost.exe"
           Start-Process -Wait -FilePath "${{ runner.temp }}\boost.exe" "/SILENT","/SP-","/SUPPRESSMSGBOXES","/DIR=${{ runner.temp }}\boost-install"
+      - name : Wintls install
+        run: |
+          git clone -b v1.0.0 https://github.com/laudrup/boost-wintls.git ${{ runner.temp }}\wintls
       - name: AVRO install
         run: |
           cd ${{ runner.temp }}
@@ -83,8 +86,20 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi2_14_1_0-cpp-vs2019-x64 -DWITH_ETP_SSL=FALSE ${{ github.workspace }}
+          cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DBoost_INCLUDE_DIR=${{ runner.temp }}\boost-install -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi2_14_1_0-cpp-vs2019-x64 -DWINTLS_ROOT=${{ runner.temp }}\wintls ${{ github.workspace }}
           cmake --build . --config Release -j2
+          cmake --install .
+      - name: Compare install header files vs source header files
+        shell: bash
+        run: |
+          dir1="${{ github.workspace }}/src"
+          dir2="${{ github.workspace }}/../build/install/include/fetpapi"
+          diff <(cd "$dir1" && find . -type f -name "*.h" | grep -v "./etp/ssl/ssl_stream.h" | sort) <(cd "$dir2" && find . -type f -name "*.h" | grep -v "./etp/ssl/ssl_stream.h" | sort)
+          if [ $? -ne 0 ]; then
+           echo "❌ The directories have not the same .h files"
+           exit 1
+          fi
+          echo "✅ The directories have the same .h files"
   ubuntu-22:
     runs-on: ubuntu-22.04
     steps:
