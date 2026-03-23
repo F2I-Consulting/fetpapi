@@ -52,16 +52,13 @@ endif (BUILD_SHARED_LIBS)
 add_library (${PROJECT_NAME} ${LIB_TYPE} "") 
 
 # Define the compile options according to the compiler
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake-harden.cmake)
+harden(${PROJECT_NAME} CXX RUNTIME)
 target_compile_options(${PROJECT_NAME}	PRIVATE
 	$<$<CXX_COMPILER_ID:MSVC>:/bigobj>
 	$<$<CXX_COMPILER_ID:MSVC>:/MP>
 	$<$<CXX_COMPILER_ID:MSVC>:/W4>
 	$<$<CXX_COMPILER_ID:MSVC>:/utf-8> # Necessary for fmt library which AVRO depends on
-	$<$<CXX_COMPILER_ID:GNU>:-Wall>
-	$<$<CXX_COMPILER_ID:GNU>:-Wextra>
-	$<$<CXX_COMPILER_ID:GNU>:-Wcast-qual>
-	$<$<CXX_COMPILER_ID:GNU>:-pedantic>
-	$<$<CXX_COMPILER_ID:CLANG>:-Weverything>
 )
 
 if (WIN32)

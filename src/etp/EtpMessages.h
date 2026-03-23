@@ -57,7 +57,7 @@ namespace Energistics {
 namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::Protocol> {
 		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::Protocol& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(v));
+			e.encodeEnum(static_cast<std::size_t>(v));
 		}
 		static void decode(Decoder& d, Energistics::Etp::v12::Datatypes::Protocol& v) {
 			v = static_cast<Energistics::Etp::v12::Datatypes::Protocol>(d.decodeEnum());
@@ -575,7 +575,7 @@ namespace Energistics {
 namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::AnyArrayType> {
 		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::AnyArrayType& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::AnyArrayType>::type>(v));
+			e.encodeEnum(static_cast<std::size_t>(v));
 		}
 		static void decode(Decoder& d, Energistics::Etp::v12::Datatypes::AnyArrayType& v) {
 			v = static_cast<Energistics::Etp::v12::Datatypes::AnyArrayType>(d.decodeEnum());
@@ -616,7 +616,7 @@ namespace Energistics {
 namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::AnyLogicalArrayType> {
 		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::AnyLogicalArrayType& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::AnyLogicalArrayType>::type>(v));
+			e.encodeEnum(static_cast<std::size_t>(v));
 		}
 		static void decode(Decoder& d, Energistics::Etp::v12::Datatypes::AnyLogicalArrayType& v) {
 			v = static_cast<Energistics::Etp::v12::Datatypes::AnyLogicalArrayType>(d.decodeEnum());
@@ -1151,7 +1151,7 @@ namespace Energistics {
 namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::DataObjectCapabilityKind> {
 		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::DataObjectCapabilityKind& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::DataObjectCapabilityKind>::type>(v));
+			e.encodeEnum(static_cast<std::size_t>(v));
 		}
 		static void decode(Decoder& d, Energistics::Etp::v12::Datatypes::DataObjectCapabilityKind& v) {
 			v = static_cast<Energistics::Etp::v12::Datatypes::DataObjectCapabilityKind>(d.decodeEnum());
@@ -1587,7 +1587,7 @@ namespace Energistics {
 namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::EndpointCapabilityKind> {
 		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::EndpointCapabilityKind& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::EndpointCapabilityKind>::type>(v));
+			e.encodeEnum(static_cast<std::size_t>(v));
 		}
 		static void decode(Decoder& d, Energistics::Etp::v12::Datatypes::EndpointCapabilityKind& v) {
 			v = static_cast<Energistics::Etp::v12::Datatypes::EndpointCapabilityKind>(d.decodeEnum());
@@ -1696,7 +1696,7 @@ namespace Energistics {
 namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::ProtocolCapabilityKind> {
 		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::ProtocolCapabilityKind& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::ProtocolCapabilityKind>::type>(v));
+			e.encodeEnum(static_cast<std::size_t>(v));
 		}
 		static void decode(Decoder& d, Energistics::Etp::v12::Datatypes::ProtocolCapabilityKind& v) {
 			v = static_cast<Energistics::Etp::v12::Datatypes::ProtocolCapabilityKind>(d.decodeEnum());
@@ -2382,7 +2382,7 @@ namespace Energistics {
 namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::ChannelData::ChannelDataKind> {
 		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::ChannelData::ChannelDataKind& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::ChannelData::ChannelDataKind>::type>(v));
+			e.encodeEnum(static_cast<std::size_t>(v));
 		}
 		static void decode(Decoder& d, Energistics::Etp::v12::Datatypes::ChannelData::ChannelDataKind& v) {
 			v = static_cast<Energistics::Etp::v12::Datatypes::ChannelData::ChannelDataKind>(d.decodeEnum());
@@ -2451,7 +2451,7 @@ namespace Energistics {
 namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::ChannelData::ChannelIndexKind> {
 		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::ChannelData::ChannelIndexKind& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::ChannelData::ChannelIndexKind>::type>(v));
+			e.encodeEnum(static_cast<std::size_t>(v));
 		}
 		static void decode(Decoder& d, Energistics::Etp::v12::Datatypes::ChannelData::ChannelIndexKind& v) {
 			v = static_cast<Energistics::Etp::v12::Datatypes::ChannelData::ChannelIndexKind>(d.decodeEnum());
@@ -2502,7 +2502,7 @@ namespace Energistics {
 namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::ChannelData::IndexDirection> {
 		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::ChannelData::IndexDirection& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::ChannelData::IndexDirection>::type>(v));
+			e.encodeEnum(static_cast<std::size_t>(v));
 		}
 		static void decode(Decoder& d, Energistics::Etp::v12::Datatypes::ChannelData::IndexDirection& v) {
 			v = static_cast<Energistics::Etp::v12::Datatypes::ChannelData::IndexDirection>(d.decodeEnum());
@@ -2527,7 +2527,7 @@ namespace Energistics {
 namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::ChannelData::PassDirection> {
 		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::ChannelData::PassDirection& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::ChannelData::PassDirection>::type>(v));
+			e.encodeEnum(static_cast<std::size_t>(v));
 		}
 		static void decode(Decoder& d, Energistics::Etp::v12::Datatypes::ChannelData::PassDirection& v) {
 			v = static_cast<Energistics::Etp::v12::Datatypes::ChannelData::PassDirection>(d.decodeEnum());
@@ -3279,7 +3279,7 @@ namespace Energistics {
 namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind> {
 		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind>::type>(v));
+			e.encodeEnum(static_cast<std::size_t>(v));
 		}
 		static void decode(Decoder& d, Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind& v) {
 			v = static_cast<Energistics::Etp::v12::Datatypes::Object::ActiveStatusKind>(d.decodeEnum());
@@ -3359,7 +3359,7 @@ namespace Energistics {
 namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::Object::ContextScopeKind> {
 		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::Object::ContextScopeKind& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Object::ContextScopeKind>::type>(v));
+			e.encodeEnum(static_cast<std::size_t>(v));
 		}
 		static void decode(Decoder& d, Energistics::Etp::v12::Datatypes::Object::ContextScopeKind& v) {
 			v = static_cast<Energistics::Etp::v12::Datatypes::Object::ContextScopeKind>(d.decodeEnum());
@@ -4129,7 +4129,7 @@ namespace Energistics {
 namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind> {
 		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind>::type>(v));
+			e.encodeEnum(static_cast<std::size_t>(v));
 		}
 		static void decode(Decoder& d, Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind& v) {
 			v = static_cast<Energistics::Etp::v12::Datatypes::Object::ObjectChangeKind>(d.decodeEnum());
@@ -4270,7 +4270,7 @@ namespace Energistics {
 namespace avro {
 	template<> struct codec_traits<Energistics::Etp::v12::Datatypes::Object::RelationshipKind> {
 		static void encode(Encoder& e, const Energistics::Etp::v12::Datatypes::Object::RelationshipKind& v) {
-			e.encodeEnum(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Object::RelationshipKind>::type>(v));
+			e.encodeEnum(static_cast<std::size_t>(v));
 		}
 		static void decode(Decoder& d, Energistics::Etp::v12::Datatypes::Object::RelationshipKind& v) {
 			v = static_cast<Energistics::Etp::v12::Datatypes::Object::RelationshipKind>(d.decodeEnum());

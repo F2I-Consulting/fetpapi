@@ -111,7 +111,7 @@ std::shared_ptr<ETP_NS::ClientSession> ETP_NS::ClientSessionLaunchers::createCli
 		}
 		auto restClientSession = std::make_shared<HttpsClientSession>(ioc, ctx);
 		restClientSession->run(
-			initializationParams->getEtpServerHost(), initializationParams->getEtpServerPort(), etpServerCapTarget, 11, authorization,
+			initializationParams->getEtpServerHost(), initializationParams->getEtpServerPort(), etpServerCapTarget, 11u, authorization,
 			initializationParams->getProxyHost(), initializationParams->getProxyPort(), proxyAuthorization);
 		// Run the I/O service. The call will return when the get operation is complete.
 		ioc.run();

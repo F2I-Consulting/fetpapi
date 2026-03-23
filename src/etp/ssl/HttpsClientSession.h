@@ -95,7 +95,7 @@ namespace ETP_NS
 				const std::string& etpServerHost,
 				uint16_t etpServerPort,
 				const std::string& etpServerTarget,
-				int version,
+				uint32_t version,
 				std::string authorization = "",
 				const std::string& proxyHost = "",
 				uint16_t proxyPort = 80,

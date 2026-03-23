@@ -386,7 +386,7 @@ std::vector<std::string> AbstractSession::putDataObjects(const std::map<std::str
 	// TODO : optimize by taking into account the real size and not the maximum size of a message header (and map size)
 	// +1 is the end (0 as a variable length integer) of the map
 	// +1 is the size of the pruneContainedObjects boolean
-	size_t messageSize = 62;
+	size_t messageSize = 62ull;
 
 	std::vector<std::string> result;
 	auto msg = std::make_shared<Energistics::Etp::v12::Protocol::Store::PutDataObjects>();
@@ -399,16 +399,16 @@ std::vector<std::string> AbstractSession::putDataObjects(const std::map<std::str
 		// Add key size
 		size_t dataObjectSize = 10 + it->first.size();
 		// Add value size
-		dataObjectSize += 10 + it->second.resource.uri.size();
+		dataObjectSize += 10ull + it->second.resource.uri.size();
 			// ignore alternateUris for now
-		dataObjectSize += 10 + it->second.resource.name.size();
-		dataObjectSize += 10 + it->second.resource.has_sourceCount() ? 10 : 0;
-		dataObjectSize += 10 + it->second.resource.has_targetCount() ? 10 : 0;
-		dataObjectSize += 40; //  lastChanged, storeLastWrite, storeCreated, activeStatus
+		dataObjectSize += 10ull + it->second.resource.name.size();
+		dataObjectSize += 10ull + (it->second.resource.has_sourceCount() ? 10ull : 0ull);
+		dataObjectSize += 10ull + (it->second.resource.has_targetCount() ? 10ull : 0ull);
+		dataObjectSize += 40ull; //  lastChanged, storeLastWrite, storeCreated, activeStatus
 			// ignore customData for now
-		dataObjectSize += 10 + it->second.format.size();
-		dataObjectSize += 10 + it->second.has_blobId() ? 100 : 0;
-		dataObjectSize += 10 + it->second.data.size();
+		dataObjectSize += 10ull + it->second.format.size();
+		dataObjectSize += 10ull + (it->second.has_blobId() ? 100ull : 0ull);
+		dataObjectSize += 10ull + it->second.data.size();
 
 		if (messageSize + dataObjectSize > maxWebSocketMessagePayloadSize) {
 			const int64_t sentMessageId = send(msg, correlationId);
@@ -417,7 +417,7 @@ std::vector<std::string> AbstractSession::putDataObjects(const std::map<std::str
 			handlers->clearSuccessKeys();
 
 			msg->dataObjects.clear();
-			messageSize = 62;
+			messageSize = 62ull;
 			if (correlationId == 0) {
 				correlationId = sentMessageId;
 			}

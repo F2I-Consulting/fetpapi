@@ -36,6 +36,12 @@ message("SWIG C# files have been generated.")
 #Add the swig cpp file to the FesapiCpp
 target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/swig/swigGeneratedCsWrapper.cpp)
 target_sources(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/swig/swigGeneratedCsWrapper.h)
+# Disable warnings on SWIG generated file which we do not control
+if (WIN32)
+	set_source_files_properties(${CMAKE_SOURCE_DIR}/swig/swigGeneratedCsWrapper.cpp PROPERTIES COMPILE_OPTIONS "/W0")
+else()
+	set_source_files_properties(${CMAKE_SOURCE_DIR}/swig/swigGeneratedCsWrapper.cpp PROPERTIES COMPILE_OPTIONS "-w")
+endif()
 
 # Create the Visual Studio project from a template file
 set (CS_LIBRARY_NAME FetpapiCs)
