@@ -32,10 +32,11 @@ namespace
 {
 	std::size_t getNegotiatedMaxWebSocketFramePayloadSize(const std::string& responseBody, std::size_t preferredMaxFrameSize) {
 		const auto maxWebSocketFramePayloadSizePos = responseBody.find("MaxWebSocketFramePayloadSize");
-		if (maxWebSocketFramePayloadSizePos == std::string::npos) return preferredMaxFrameSize;
+		if (maxWebSocketFramePayloadSizePos == std::string::npos ||
+			maxWebSocketFramePayloadSizePos > static_cast<size_t>(std::numeric_limits<std::streamoff>::max())) return preferredMaxFrameSize;
 
 		std::istringstream iss(responseBody);
-		iss.seekg(maxWebSocketFramePayloadSizePos);
+		iss.seekg(static_cast<std::streamoff>(maxWebSocketFramePayloadSizePos));
 
 		std::string temp;
 		std::size_t serverMaxWebSocketFramePayloadSize;

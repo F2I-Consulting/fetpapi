@@ -178,68 +178,54 @@ namespace {
 	}
 }
 
-void FesapiHdfProxy::writeArrayNd(const std::string & groupName,
-	const std::string & name,
+void FesapiHdfProxy::writeArrayNd(const std::string& groupName,
+	const std::string& name,
 	COMMON_NS::AbstractObject::numericalDatatypeEnum datatype,
-	const void * values,
-	const uint64_t * numValuesInEachDimension,
+	const void* values,
+	const uint64_t* numValuesInEachDimension,
 	unsigned int numDimensions)
 {
-	if (!isOpened())
-		open();
+	if (!isOpened()) open();
 
-	// URI AND PATH
-	std::string uri{ buildEtp12Uri() };
-
-	std::string pathInResource{ (groupName.back() == '/' ? 
-		groupName : groupName + '/') + name };
-
-	// Create Dimensions and Total Count
-	size_t totalCount{ 1 };
-	std::vector<int64_t> dimensions{};
-
-	for (size_t i = 0; i < numDimensions; ++i) {
-		dimensions.push_back(numValuesInEachDimension[i]);
-		totalCount *= numValuesInEachDimension[i];
-	}
-
-	// Determine Value Size (bytes) and Any Array Type
-	size_t valueSize{ 1 };
-
-	switch (datatype) {
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE:
-		valueSize = sizeof(double);
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT:
-		valueSize = sizeof(float);
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64:
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64:
-		valueSize = sizeof(int64_t);
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32:
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32:
-		valueSize = sizeof(int32_t);
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16:
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16:
-		valueSize = sizeof(short);
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8:
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8:
-		valueSize = sizeof(char);
-		break;
-	default:
-		throw std::logic_error(
-			"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
-	}
+	const size_t totalCount = std::accumulate(numValuesInEachDimension, numValuesInEachDimension + numDimensions, size_t{ 1 }, std::multiplies<uint64_t>());
+	const size_t valueSize = [&datatype] {
+		switch (datatype) {
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE:
+			return sizeof(double);
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT:
+			return sizeof(float);
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64:
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64:
+			return sizeof(int64_t);
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32:
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32:
+			return sizeof(int32_t);
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16:
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16:
+			return sizeof(short);
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8:
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8:
+			return sizeof(char);
+			break;
+		default:
+			throw std::logic_error(
+				"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
+		}
+	}();
 
 	if (totalCount * valueSize <= maxArraySize_) {
 		// PUT DATA ARRAYS
 		auto pda = std::make_shared<Energistics::Etp::v12::Protocol::DataArray::PutDataArrays>();
-		pda->dataArrays["0"].uid.uri = uri;
-		pda->dataArrays["0"].uid.pathInResource = pathInResource;
-		pda->dataArrays["0"].array.dimensions = dimensions;
+		pda->dataArrays["0"].uid.uri = buildEtp12Uri();
+		pda->dataArrays["0"].uid.pathInResource = (groupName.back() == '/' ? groupName : groupName + '/') + name;
+		pda->dataArrays["0"].array.dimensions.resize(numDimensions);
+		std::transform(numValuesInEachDimension, numValuesInEachDimension + numDimensions, pda->dataArrays["0"].array.dimensions.begin(),
+			[](uint64_t val) { return static_cast<int64_t>(val); });
 
 		// Create AVRO Array
 		pda->dataArrays["0"].array.data = convertVoidArrayIntoAvroAnyArray(datatype, values, totalCount);
@@ -270,48 +256,43 @@ void FesapiHdfProxy::createArrayNd(
 	const uint64_t* numValuesInEachDimension,
 	unsigned int numDimensions)
 {
-	std::string pathInResource{ (groupName.back() == '/' ?
-		groupName : groupName + '/') + datasetName };
-
-	std::vector<int64_t> dimensions{};
-	for (size_t i = 0; i < numDimensions; ++i) {
-		dimensions.push_back(numValuesInEachDimension[i]);
-	}
-	Energistics::Etp::v12::Datatypes::AnyArrayType anyArrayType;
-
-	switch (datatype) {
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE:
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble;
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT:
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfFloat;
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64:
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64:
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong;
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32:
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32:
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt;
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16:
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16:
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt;
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8:
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8:
-		anyArrayType = Energistics::Etp::v12::Datatypes::AnyArrayType::bytes;
-		break;
-	default:
-		throw std::logic_error(
-			"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
-	}
+	const Energistics::Etp::v12::Datatypes::AnyArrayType anyArrayType = [&datatype] {
+		switch (datatype) {
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE:
+			return Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble;
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT:
+			return Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfFloat;
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64:
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64:
+			return Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong;
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32:
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32:
+			return Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt;
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16:
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16:
+			return Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt;
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8:
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8:
+			return Energistics::Etp::v12::Datatypes::AnyArrayType::bytes;
+			break;
+		default:
+			throw std::logic_error(
+				"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
+		}
+	}();
 
 	// PUT UNINITIALIZED DATA ARRAYS
 	auto puda = std::make_shared<Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays>();
 	puda->dataArrays["0"].uid.uri = buildEtp12Uri();
-	puda->dataArrays["0"].uid.pathInResource = pathInResource;
-	puda->dataArrays["0"].metadata.dimensions = dimensions;
+	puda->dataArrays["0"].uid.pathInResource = (groupName.back() == '/' ? groupName : groupName + '/') + datasetName;
+	puda->dataArrays["0"].metadata.dimensions.resize(numDimensions);
+	std::transform(numValuesInEachDimension, numValuesInEachDimension + numDimensions, puda->dataArrays["0"].metadata.dimensions.begin(),
+		[](uint64_t val) { return static_cast<int64_t>(val); });
 	puda->dataArrays["0"].metadata.transportArrayType = anyArrayType;
 
 	// Send Uninitialized Data Arrays
@@ -358,62 +339,53 @@ std::set<int64_t> FesapiHdfProxy::async_writeArrayNdSlab(
 	const uint64_t* offsetInEachDimension,
 	unsigned int numDimensions)
 {
-	if (!isOpened())
-		open();
-
-	// URI AND PATH
-	const std::string uri{ buildEtp12Uri() };
-
-	const std::string pathInResource{ (groupName.back() == '/' ?
-		groupName : groupName + '/') + datasetName };
+	if (!isOpened()) open();
 
 	// Create Total Count
-	const size_t totalCount = std::accumulate(numValuesInEachDimension, numValuesInEachDimension + numDimensions, 1, std::multiplies<size_t>());
-
-	// Determine Value Size (bytes) and Any Array Type
-	size_t valueSize{ 1 };
-
-	switch (datatype) {
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE:
-		valueSize = sizeof(double);
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT:
-		valueSize = sizeof(float);
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64:
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64:
-		valueSize = sizeof(int64_t);
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32:
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32:
-		valueSize = sizeof(int32_t);
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16:
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16:
-		valueSize = sizeof(int16_t);
-		break;
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8:
-	case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8:
-		valueSize = sizeof(int8_t);
-		break;
-	default:
-		throw std::logic_error(
-			"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
-	}
+	const size_t totalCount = std::accumulate(numValuesInEachDimension, numValuesInEachDimension + numDimensions, 1ull, std::multiplies<size_t>());
+	const size_t valueSize = [&datatype] {
+		switch (datatype) {
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::DOUBLE:
+			return sizeof(double);
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::FLOAT:
+			return sizeof(float);
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT64:
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT64:
+			return sizeof(int64_t);
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT32:
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT32:
+			return sizeof(int32_t);
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT16:
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT16:
+			return sizeof(short);
+			break;
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::INT8:
+		case COMMON_NS::AbstractObject::numericalDatatypeEnum::UINT8:
+			return sizeof(char);
+			break;
+		default:
+			throw std::logic_error(
+				"You need to give a COMMON_NS::AbstractObject::numericalDatatypeEnum as the datatype");
+		}
+	}();
 
 	std::set<int64_t> sentMessageIds;
 	if (totalCount * valueSize <= maxArraySize_) {
 		std::vector<int64_t> counts;
 		std::vector<int64_t> starts;
 		for (size_t i = 0; i < numDimensions; ++i) {
-			counts.push_back(numValuesInEachDimension[i]);
-			starts.push_back(offsetInEachDimension[i]);
+			counts.push_back(static_cast<int64_t>(numValuesInEachDimension[i]));
+			starts.push_back(static_cast<int64_t>(offsetInEachDimension[i]));
 		}
 
 		// PUT DATA SUBARRAYS
 		auto pdsa = std::make_shared<Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays>();
-		pdsa->dataSubarrays["0"].uid.uri = uri;
-		pdsa->dataSubarrays["0"].uid.pathInResource = pathInResource;
+		pdsa->dataSubarrays["0"].uid.uri = buildEtp12Uri();
+		pdsa->dataSubarrays["0"].uid.pathInResource = (groupName.back() == '/' ? groupName : groupName + '/') + datasetName;
 		pdsa->dataSubarrays["0"].starts = starts;
 		pdsa->dataSubarrays["0"].counts = counts;
 
@@ -443,7 +415,7 @@ std::set<int64_t> FesapiHdfProxy::async_writeArrayNdSlab(
 					starts.get(), numDimensions);
 				sentMessageIds.insert(intermediateResult.begin(), intermediateResult.end());
 
-				writtenTotalCount = std::accumulate(counts.get(), counts.get() + numDimensions, 1, std::multiplies<size_t>());
+				writtenTotalCount = std::accumulate(counts.get(), counts.get() + numDimensions, 1ull, std::multiplies<size_t>());
 
 				starts[dimIdx] += counts[dimIdx];
 				counts[dimIdx] = previousCount - counts[dimIdx];

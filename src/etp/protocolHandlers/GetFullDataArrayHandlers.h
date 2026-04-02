@@ -85,33 +85,43 @@ namespace ETP_NS
 			auto dataArray = msg.dataArrays.begin()->second;
 			if (dataArray.data.item.idx() == 0) {
 				const Energistics::Etp::v12::Datatypes::ArrayOfBoolean& avroArray = dataArray.data.item.get_ArrayOfBoolean();
-				for (size_t i = 0; i < avroArray.values.size(); ++i) {
-					values[i] = avroArray.values[i];
-				}
+				std::transform(
+					avroArray.values.begin(), avroArray.values.end(),
+					values,
+					[](const auto& x) { return static_cast<T>(x); }
+				);
 			}
 			else if (dataArray.data.item.idx() == 1) {
 				const Energistics::Etp::v12::Datatypes::ArrayOfInt& avroArray = dataArray.data.item.get_ArrayOfInt();
-				for (size_t i = 0; i < avroArray.values.size(); ++i) {
-					values[i] = avroArray.values[i];
-				}
+				std::transform(
+					avroArray.values.begin(), avroArray.values.end(),
+					values,
+					[](const auto& x) { return static_cast<T>(x); }
+				);
 			}
 			else if (dataArray.data.item.idx() == 2) {
 				const Energistics::Etp::v12::Datatypes::ArrayOfLong& avroArray = dataArray.data.item.get_ArrayOfLong();
-				for (size_t i = 0; i < avroArray.values.size(); ++i) {
-					values[i] = avroArray.values[i];
-				}
+				std::transform(
+					avroArray.values.begin(), avroArray.values.end(),
+					values,
+					[](const auto& x) { return static_cast<T>(x); }
+				);
 			}
 			else if (dataArray.data.item.idx() == 3) {
 				const Energistics::Etp::v12::Datatypes::ArrayOfFloat& avroArray = dataArray.data.item.get_ArrayOfFloat();
-				for (size_t i = 0; i < avroArray.values.size(); ++i) {
-					values[i] = avroArray.values[i];
-				}
+				std::transform(
+					avroArray.values.begin(), avroArray.values.end(),
+					values,
+					[](const auto& x) { return static_cast<T>(x); }
+				);
 			}
 			else if (dataArray.data.item.idx() == 4) {
 				const Energistics::Etp::v12::Datatypes::ArrayOfDouble& avroArray = dataArray.data.item.get_ArrayOfDouble();
-				for (size_t i = 0; i < avroArray.values.size(); ++i) {
-					values[i] = avroArray.values[i];
-				}
+				std::transform(
+					avroArray.values.begin(), avroArray.values.end(),
+					values,
+					[](const auto& x) { return static_cast<T>(x); }
+				);
 			}
 			/*
 			else if (dataArray.data.item.idx() == 5) {
@@ -123,9 +133,11 @@ namespace ETP_NS
 			*/
 			else if (dataArray.data.item.idx() == 6) {
 				const std::string& avroValues = dataArray.data.item.get_bytes();
-				for (size_t i = 0; i < avroValues.size(); ++i) {
-					values[i] = avroValues[i];
-				}
+				std::transform(
+					avroValues.begin(), avroValues.end(),
+					values,
+					[](const auto& x) { return static_cast<T>(x); }
+				);
 			}
 		}
 		else {
@@ -142,54 +154,63 @@ namespace ETP_NS
 			}
 
 			auto dataArray = receivedKeyValue.second;
-			size_t dataArrayValueCount = iterator->second.counts[0];
-			for (size_t dimIndex = 1; dimIndex < iterator->second.counts.size(); ++dimIndex) {
-				dataArrayValueCount *= iterator->second.counts[dimIndex];
-			}
+			int64_t dataArrayValueCount = std::accumulate(iterator->second.counts.begin(), iterator->second.counts.end(), 1, std::multiplies<int64_t>());
 			auto currentStarts = iterator->second.starts;
 
-			size_t subarrayOffset = 0;
+			int64_t subarrayOffset = 0;
 			while (subarrayOffset < dataArrayValueCount) {
 				// Compute the offset in the receiving array
-				size_t arrayOffset = currentStarts.back();
-				for (int64_t dimIndex = iterator->second.counts.size() - 2; dimIndex >= 0; --dimIndex) {
-					size_t multiplier = iterator->second.counts[dimIndex + 1];
-					for (size_t dimIndex2 = dimIndex + 2; dimIndex2 < iterator->second.counts.size(); ++dimIndex2) {
-						multiplier *= iterator->second.counts[dimIndex2];
-					}
-					arrayOffset += currentStarts[dimIndex] * multiplier;
+				int64_t arrayOffset = currentStarts.back();
+				for (int64_t dimIndex = static_cast<int64_t>(iterator->second.counts.size()) - 2; dimIndex >= 0; --dimIndex) {
+					const int64_t multiplier = std::accumulate(iterator->second.counts.begin() + dimIndex + 1, iterator->second.counts.end(), 1, std::multiplies<int64_t>());
+					arrayOffset += currentStarts[static_cast<size_t>(dimIndex)] * multiplier;
 				}
 
 				// Copy from the ETP subarray to the receiving array
 				if (dataArray.data.item.idx() == 0) {
 					const Energistics::Etp::v12::Datatypes::ArrayOfBoolean& avroArray = dataArray.data.item.get_ArrayOfBoolean();
-					for (auto i = 0; i < iterator->second.counts.back(); ++i) {
-						values[i + arrayOffset] = avroArray.values[i + subarrayOffset];
-					}
+					std::transform(
+						avroArray.values.begin() + subarrayOffset,
+						avroArray.values.begin() + subarrayOffset + iterator->second.counts.back(),
+						values + arrayOffset,
+						[](const auto& x) { return static_cast<T>(x); }
+					);
 				}
 				else if (dataArray.data.item.idx() == 1) {
 					const Energistics::Etp::v12::Datatypes::ArrayOfInt& avroArray = dataArray.data.item.get_ArrayOfInt();
-					for (auto i = 0; i < iterator->second.counts.back(); ++i) {
-						values[i + arrayOffset] = avroArray.values[i + subarrayOffset];
-					}
+					std::transform(
+						avroArray.values.begin() + subarrayOffset,
+						avroArray.values.begin() + subarrayOffset + iterator->second.counts.back(),
+						values + arrayOffset,
+						[](const auto& x) { return static_cast<T>(x); }
+					);
 				}
 				else if (dataArray.data.item.idx() == 2) {
 					const Energistics::Etp::v12::Datatypes::ArrayOfLong& avroArray = dataArray.data.item.get_ArrayOfLong();
-					for (auto i = 0; i < iterator->second.counts.back(); ++i) {
-						values[i + arrayOffset] = avroArray.values[i + subarrayOffset];
-					}
+					std::transform(
+						avroArray.values.begin() + subarrayOffset,
+						avroArray.values.begin() + subarrayOffset + iterator->second.counts.back(),
+						values + arrayOffset,
+						[](const auto& x) { return static_cast<T>(x); }
+					);
 				}
 				else if (dataArray.data.item.idx() == 3) {
 					const Energistics::Etp::v12::Datatypes::ArrayOfFloat& avroArray = dataArray.data.item.get_ArrayOfFloat();
-					for (auto i = 0; i < iterator->second.counts.back(); ++i) {
-						values[i + arrayOffset] = avroArray.values[i + subarrayOffset];
-					}
+					std::transform(
+						avroArray.values.begin() + subarrayOffset,
+						avroArray.values.begin() + subarrayOffset + iterator->second.counts.back(),
+						values + arrayOffset,
+						[](const auto& x) { return static_cast<T>(x); }
+					);
 				}
 				else if (dataArray.data.item.idx() == 4) {
 					const Energistics::Etp::v12::Datatypes::ArrayOfDouble& avroArray = dataArray.data.item.get_ArrayOfDouble();
-					for (auto i = 0; i < iterator->second.counts.back(); ++i) {
-						values[i + arrayOffset] = avroArray.values[i + subarrayOffset];
-					}
+					std::transform(
+						avroArray.values.begin() + subarrayOffset,
+						avroArray.values.begin() + subarrayOffset + iterator->second.counts.back(),
+						values + arrayOffset,
+						[](const auto& x) { return static_cast<T>(x); }
+					);
 				}
 				/*
 				else if (dataArray.data.item.idx() == 5) {
@@ -201,19 +222,23 @@ namespace ETP_NS
 				*/
 				else if (dataArray.data.item.idx() == 6) {
 					const std::string& avroValues = dataArray.data.item.get_bytes();
-					for (auto i = 0; i < iterator->second.counts.back(); ++i) {
-						values[i + arrayOffset] = avroValues[i + subarrayOffset];
-					}
+					std::transform(
+						avroValues.begin() + subarrayOffset,
+						avroValues.begin() + subarrayOffset + iterator->second.counts.back(),
+						values + arrayOffset,
+						[](const auto& x) { return static_cast<T>(x); }
+					);
 				}
 
 				// Compute the new starts in the ETP subarray
-				for (int64_t dimIndex = iterator->second.counts.size() - 2; dimIndex >= 0; --dimIndex) {
-					if (currentStarts[dimIndex] + 1 < iterator->second.starts[dimIndex] + iterator->second.counts[dimIndex]) {
-						++currentStarts[dimIndex];
+				for (int64_t dimIndex = static_cast<int64_t>(iterator->second.counts.size()) - 2; dimIndex >= 0; --dimIndex) {
+					const size_t uDimIndex = static_cast<size_t>(dimIndex);
+					if (currentStarts[uDimIndex] + 1 < iterator->second.starts[uDimIndex] + iterator->second.counts[uDimIndex]) {
+						++currentStarts[uDimIndex];
 						break;
 					}
 					else {
-						currentStarts[dimIndex] = iterator->second.starts[dimIndex];
+						currentStarts[uDimIndex] = iterator->second.starts[uDimIndex];
 					}
 				}
 

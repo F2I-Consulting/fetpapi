@@ -509,16 +509,17 @@ namespace ETP_NS
 		{
 			// First get metadata about the data array
 			const Energistics::Etp::v12::Datatypes::DataArrayTypes::DataArrayMetadata daMetadata = getDataArrayMetadata(datasetName);
-			const size_t valueCount = std::accumulate(daMetadata.dimensions.begin(), daMetadata.dimensions.end(), 1, std::multiplies<int64_t>());
+			const size_t valueCount = std::accumulate(daMetadata.dimensions.begin(), daMetadata.dimensions.end(),
+				size_t{1}, [](size_t a, int64_t b) { return a * static_cast<size_t>(b); });
 
 			size_t valueSize = 1;
 			switch (daMetadata.transportArrayType) {
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::bytes:
 			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfBoolean: break;
-			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt: valueSize = 6; break; // 25% more because of zig zag encoding worst case scenario
-			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfFloat: valueSize = 4; break;
-			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong:  valueSize = 10; break; // 25% more because of zig zag encoding worst case scenario
-			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble: valueSize = 8; break;
+			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfInt: valueSize = 6ull; break; // 25% more because of zig zag encoding worst case scenario
+			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfFloat: valueSize = 4ull; break;
+			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfLong:  valueSize = 10ull; break; // 25% more because of zig zag encoding worst case scenario
+			case Energistics::Etp::v12::Datatypes::AnyArrayType::arrayOfDouble: valueSize = 8ull; break;
 			default: throw std::logic_error("Array of strings are not implemented yet");
 			}
 			const size_t wholeSize = valueCount * valueSize;
@@ -543,18 +544,17 @@ namespace ETP_NS
 
 				// Compute the dimensions of the subArrays to get
 				size_t subArrayValueCount = 1;
-				for (int64_t dimIndex = daMetadata.dimensions.size() - 1; dimIndex >= 0; --dimIndex) {
-					int64_t maxCountOnDim = daMetadata.preferredSubarrayDimensions.empty()
-						? daMetadata.dimensions[dimIndex]
-						: daMetadata.preferredSubarrayDimensions[dimIndex];
+				for (auto it = daMetadata.dimensions.rbegin(); it != daMetadata.dimensions.rend(); ++it) {
+					const size_t dimIndex = static_cast<size_t>(std::distance(daMetadata.dimensions.begin(), it.base()) - 1);
+					const size_t maxCountOnDim = static_cast<size_t>(daMetadata.preferredSubarrayDimensions.empty() ? *it : daMetadata.preferredSubarrayDimensions[dimIndex]);
 					subArrayValueCount *= maxCountOnDim;
-					int64_t allowedCountOnDim = maxCountOnDim;
+					size_t allowedCountOnDim = maxCountOnDim;
 					while (subArrayValueCount * valueSize + (subArrayValueCount + 1) * 8 > maxAllowedDataArraySize) {
 						subArrayValueCount /= allowedCountOnDim;
 						allowedCountOnDim /= 2;
 						subArrayValueCount *= allowedCountOnDim;
 					}
-					counts[dimIndex] = allowedCountOnDim;
+					counts[dimIndex] = static_cast<int64_t>(allowedCountOnDim);
 					if (allowedCountOnDim != maxCountOnDim) {
 						break;
 					}
@@ -575,11 +575,12 @@ namespace ETP_NS
 					// next sub array to get
 					++subArrayIndex;
 					hasParsedAllArray = true;
-					for (int64_t dimIndex = daMetadata.dimensions.size() - 1; dimIndex >= 0; --dimIndex) {
-						if (starts[dimIndex] + currentCounts[dimIndex] < daMetadata.dimensions[dimIndex]) {
+					for (auto it = daMetadata.dimensions.rbegin(); it != daMetadata.dimensions.rend(); ++it) {
+						const size_t dimIndex = static_cast<size_t>(std::distance(daMetadata.dimensions.begin(), it.base()) - 1);
+						if (starts[dimIndex] + currentCounts[dimIndex] < *it) {
 							starts[dimIndex] += currentCounts[dimIndex];
-							if (starts[dimIndex] + currentCounts[dimIndex] > daMetadata.dimensions[dimIndex]) {
-								currentCounts[dimIndex] = daMetadata.dimensions[dimIndex] - starts[dimIndex];
+							if (starts[dimIndex] + currentCounts[dimIndex] > *it) {
+								currentCounts[dimIndex] = *it - starts[dimIndex];
 							}
 
 							for (size_t dimIndex2 = dimIndex + 1; dimIndex2 < daMetadata.dimensions.size(); ++dimIndex2) {

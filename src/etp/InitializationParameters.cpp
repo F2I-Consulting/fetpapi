@@ -82,7 +82,7 @@ std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> Initializatio
 	Energistics::Etp::v12::Datatypes::DataValue value;
 
 	if (maxWebSocketMessagePayloadSize > 0) {
-		value.item.set_long(maxWebSocketMessagePayloadSize);
+		value.item.set_long(static_cast<int64_t>(maxWebSocketMessagePayloadSize));
 		result["MaxWebSocketFramePayloadSize"] = value;
 		result["MaxWebSocketMessagePayloadSize"] = value;
 	}
