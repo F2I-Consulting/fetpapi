@@ -93,7 +93,7 @@ jobs:
         shell: bash
         run: |
           dir1="${{ github.workspace }}/src"
-          dir2="${{ github.workspace }}/../build/install/include/fetpapi"
+          dir2="${{ github.workspace }}/../build/install/include"
           diff <(cd "$dir1" && find . -type f -name "*.h" | grep -v "./etp/ssl/ssl_stream.h" | sort) <(cd "$dir2" && find . -type f -name "*.h" | grep -v "./etp/ssl/ssl_stream.h" | sort)
           if [ $? -ne 0 ]; then
            echo "❌ The directories have not the same .h files"
@@ -175,6 +175,7 @@ jobs:
         with:
           distribution: 'temurin' # See 'Supported distributions' for available options
           java-version: '11'
+      - uses: docker/setup-compose-action@v2
       - name: APT install
         run: |
           sudo apt update
@@ -205,8 +206,15 @@ jobs:
           cd ${{ github.workspace }}/..
           mkdir build
           cd build
-          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.14.1.0.jar -DWITH_JAVA_WRAPPING=TRUE ${{ github.workspace }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+          cmake -DAVRO_ROOT=${{ runner.temp }}/avro-cpp-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DFESAPI_JAR=${{ runner.temp }}/fesapi-install/lib/fesapiJava-2.14.1.0.jar -DWITH_JAVA_WRAPPING=TRUE -DWITH_TEST=TRUE ${{ github.workspace }} -DCMAKE_C_COMPILER=${{ matrix.cc }} -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
           cmake --build . --config Release -j2
+      - name: Deploy an ETP server
+        run: |
+          docker compose -f ${{ github.workspace }}/docker/docker-compose.yml up -d
+          until curl -s -o /dev/null -w "%{http_code}" http://localhost:9002/.well-known/etp-server-capabilities?GetVersion=etp12.energistics.org | grep -q "200"; do sleep 2; done
+      - name: Run Unit tests
+        run: |
+          ${{ github.workspace }}/../build/test/unitTest
   build_wheels_windows:
     name: Build wheels on windows-latest
     runs-on: windows-latest

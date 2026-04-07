@@ -1,0 +1,30 @@
+name: etpserver
+services:
+  open-etp-postgresql:
+    container_name: open-etp-postgresql
+    image: postgres
+    environment:
+      POSTGRES_USER: tester
+      POSTGRES_PASSWORD: tester
+      POSTGRES_DB: postkv
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+  open-etp-server:
+    container_name: open-etp-server
+    image: community.opengroup.org:5555/osdu/platform/domain-data-mgmt-services/reservoir/open-etp-server/open-etp-server-main
+    command: openETPServer server --start --log_level debug --jobs 4
+    depends_on:
+      open-etp-postgresql:
+        condition: service_healthy
+    environment:
+      RDMS_DATA_PARTITION_MODE: single
+      ENABLE_ANY_NUMBER_OF_THREADS: true
+      POSTGRESQL_CONN_STRING: host=open-etp-postgresql port=5432 dbname=postkv user=tester password=tester
+    ports:
+      - "9002:9002"
+    restart: unless-stopped

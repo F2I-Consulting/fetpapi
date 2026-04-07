@@ -31,10 +31,10 @@ under the License.
 
 #include "catch.hpp"
 
-#include "etp/EtpHelpers.h"
-#include "etp/ClientSessionLaunchers.h"
-#include "etp/fesapi/FesapiHdfProxy.h"
-#include "etp/fesapi/FesapiHelpers.h"
+#include "fetpapi/etp/EtpHelpers.h"
+#include "fetpapi/etp/ClientSessionLaunchers.h"
+#include "fetpapi/etp/fesapi/FesapiHdfProxy.h"
+#include "fetpapi/etp/fesapi/FesapiHelpers.h"
 
 TEST_CASE("Validate ETP URI", "[EtpUri]")
 {
@@ -49,61 +49,113 @@ TEST_CASE("Validate ETP URI", "[EtpUri]")
 	REQUIRE(ETP_NS::EtpHelpers::getUuidAndVersionFromUri("eml:///dataspace('test/test')/eml20.obj_EpcExternalPartReference(da9e0cc3-0f71-4fd9-83ad-a6334b9b0832)").first == "da9e0cc3-0f71-4fd9-83ad-a6334b9b0832");
 }
 
-boost::uuids::random_generator gen;
+struct EtpSessionFixture {
+	std::shared_ptr<ETP_NS::ClientSession> clientSession;
+	boost::uuids::random_generator gen;
 
-std::shared_ptr<ETP_NS::AbstractSession> connect()
-{
-	//ETP_NS::InitializationParameters initializationParams(gen(), "ws://etp.f2i-consulting.com:9002/");
-	ETP_NS::InitializationParameters initializationParams(gen(), "ws://127.0.0.1:9002/");
-	std::map< std::string, std::string > additionalHeaderField = { {"data-partition-id", ""} };
-	auto clientSession = ETP_NS::ClientSessionLaunchers::createClientSession(&initializationParams, "Basic Zm9vOmJhcg==");
-	clientSession->setVerbose(false);
+	void connect(const std::string& etpserverUrl = "ws://127.0.0.1:9002/", const std::string& etpServerAuth = "Basic Zm9vOmJhcg==") {
+		ETP_NS::InitializationParameters initializationParams(gen(), etpserverUrl);
+		clientSession = ETP_NS::ClientSessionLaunchers::createClientSession(&initializationParams, etpServerAuth);
+		REQUIRE(clientSession != nullptr);
 
-	std::thread sessionThread(&ETP_NS::ClientSession::run, clientSession);
-	sessionThread.detach();
+		std::thread sessionThread(&ETP_NS::ClientSession::run, clientSession);
+		sessionThread.detach();
 
-	// Wait for the ETP session to be opened
-	auto t_start = std::chrono::high_resolution_clock::now();
-	while (clientSession->isEtpSessionClosed()) {
-		auto timeOut = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count();
-		if (timeOut > 5000) {
-			throw std::invalid_argument("Time out : " + std::to_string(timeOut) + " ms.\n");
+		auto t_start = std::chrono::high_resolution_clock::now();
+		while (clientSession->isEtpSessionClosed()) {
+			auto timeOut = std::chrono::duration<double, std::milli>(
+				std::chrono::high_resolution_clock::now() - t_start).count();
+			if (timeOut > 5000) {
+				clientSession = nullptr;
+				break;
+			}
 		}
 	}
 
-	return clientSession;
+	~EtpSessionFixture() {
+		if (clientSession && !clientSession->isEtpSessionClosed()) {
+			clientSession->close();
+		}
+	}
+};
+
+TEST_CASE_METHOD(EtpSessionFixture, "ETP Connection", "[Connection]") {
+	SECTION("Successful connection with valid credentials") {
+		REQUIRE_NOTHROW(connect());
+		REQUIRE(clientSession != nullptr);
+		REQUIRE_FALSE(clientSession->isEtpSessionClosed());
+	}
+
+	SECTION("Failed connection with invalid credentials") {
+		REQUIRE_NOTHROW(connect("ws://127.0.0.1:9002/", "Basic invalid:credentials"));
+		REQUIRE(clientSession == nullptr);
+	}
+
+	SECTION("Connection timeout") {
+		REQUIRE_NOTHROW(connect("ws://127.0.0.1:9999/"));
+		REQUIRE(clientSession == nullptr);
+	}
 }
 
-std::string putDataspace(std::shared_ptr<ETP_NS::AbstractSession> session)
-{
-	std::string dataspaceUuid = boost::lexical_cast<std::string>(gen());
-	Energistics::Etp::v12::Datatypes::Object::Dataspace dataspace;
-	dataspace.uri = "eml:///dataspace('testF2I/" + dataspaceUuid + "')";
-	dataspace.path = "testF2I/" + dataspaceUuid;
-	std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace> query = { {"0", dataspace} };
-	std::vector<std::string> successKeys = session->putDataspaces(query);
+struct EtpDataspaceFixture : public EtpSessionFixture {
+	std::string dataspaceUri;
 
-	return successKeys.size() == 1 && successKeys[0] == "0" ? dataspace.uri : "";
+	EtpDataspaceFixture() {
+		connect();
+		dataspaceUri = putDataspace();
+		REQUIRE_FALSE(dataspaceUri.empty());
+	}
+
+	~EtpDataspaceFixture() {
+		if (!dataspaceUri.empty()) {
+			deleteDataspace();
+		}
+	}
+
+	std::string putDataspace() {
+		std::string dataspaceUuid = boost::lexical_cast<std::string>(gen());
+		Energistics::Etp::v12::Datatypes::Object::Dataspace dataspace;
+		dataspace.uri = "eml:///dataspace('testF2I/" + dataspaceUuid + "')";
+		dataspace.path = "testF2I/" + dataspaceUuid;
+		std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace> query = { {"0", dataspace} };
+		std::vector<std::string> successKeys = clientSession->putDataspaces(query);
+
+		return (successKeys.size() == 1 && successKeys[0] == "0") ? dataspace.uri : "";
+	}
+
+	void deleteDataspace() {
+		std::map<std::string, std::string> query = { {"0", dataspaceUri} };
+		REQUIRE_NOTHROW(clientSession->deleteDataspaces(query));
+	}
+};
+
+TEST_CASE_METHOD(EtpDataspaceFixture, "Dataspace Operations", "[Dataspace]") {
+	SECTION("Dataspace can be deleted and recreated") {
+		deleteDataspace();
+		REQUIRE_NOTHROW(putDataspace());
+		REQUIRE_FALSE(dataspaceUri.empty());
+	}
+
+	SECTION("Fail to create dataspace with duplicate URI") {
+		Energistics::Etp::v12::Datatypes::Object::Dataspace duplicateDataspace;
+		duplicateDataspace.uri = dataspaceUri;
+		duplicateDataspace.path = "testF2I/unknown";
+		std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace> query = { {"0", duplicateDataspace} };
+		std::vector<std::string> successKeys = clientSession->putDataspaces(query);
+
+		REQUIRE(successKeys.empty());
+	}
 }
 
-void deleteDataspace(std::shared_ptr<ETP_NS::AbstractSession> session, const std::string & dataspaceUri)
+TEST_CASE_METHOD(EtpDataspaceFixture, "Put a DataArray", "[DataArray]")
 {
-	std::map< std::string, std::string > query = { { "0", dataspaceUri } };
-	session->deleteDataspaces(query);
-}
-
-TEST_CASE("Put a DataArray", "[DataArray]")
-{
-	std::shared_ptr<ETP_NS::AbstractSession> session = connect();
-	session->setVerbose(true);
-	const std::string dataspaceUri = putDataspace(session);
-	REQUIRE(dataspaceUri.size() > 0);
+	clientSession->setVerbose(true);
 
 	// Initialize the FESAPI Repository
 	COMMON_NS::DataObjectRepository repo;
 	repo.setDefaultStandard(COMMON_NS::DataObjectRepository::EnergisticsStandard::RESQML2_0_1);
 	repo.setDefaultStandard(COMMON_NS::DataObjectRepository::EnergisticsStandard::EML2_0);
-	repo.setHdfProxyFactory(new ETP_NS::FesapiHdfProxyFactory(session.get()));
+	repo.setHdfProxyFactory(new ETP_NS::FesapiHdfProxyFactory(clientSession.get()));
 
 	// Create the point set representation, an ETP HDF proxy if necessary and a partial crs
 	RESQML2_NS::PointSetRepresentation* h1i1PointSetRep = repo.createPointSetRepresentation("d95dcb6c-96df-4749-a481-5981390067f4", "Horizon1 Interp1 PointSetRep");
@@ -128,7 +180,7 @@ TEST_CASE("Put a DataArray", "[DataArray]")
 	auto t_start = std::chrono::high_resolution_clock::now();
 	std::vector<std::string> dataspaceUris;
 	dataspaceUris.push_back(dataspaceUri);
-	std::string transactionFailure = session->startTransaction(dataspaceUris, false);
+	std::string transactionFailure = clientSession->startTransaction(dataspaceUris, false);
 	REQUIRE(transactionFailure.empty());
 	h1i1PointSetRep->pushBackXyzGeometryPatch(xyzPointCount, xyzPoints.get(), nullptr, crs);
 	std::cout << "Put DataArray in : " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " milliseconds." << std::endl;
@@ -140,8 +192,8 @@ TEST_CASE("Put a DataArray", "[DataArray]")
 	for (auto uuid : repo.getUuids()) {
 		dataObjects[std::to_string(index++)] = ETP_NS::FesapiHelpers::buildEtpDataObjectFromEnergisticsObject(repo, uuid);
 	}
-	session->putDataObjects(dataObjects);
-	transactionFailure = session->commitTransaction();
+	clientSession->putDataObjects(dataObjects);
+	transactionFailure = clientSession->commitTransaction();
 	REQUIRE(transactionFailure.empty());
 
 	//Reading back
@@ -149,10 +201,6 @@ TEST_CASE("Put a DataArray", "[DataArray]")
 	t_start = std::chrono::high_resolution_clock::now();
 	h1i1PointSetRep->getXyzPointsOfPatch(0, receivedXyzPoints.get());
 	std::cout << "Get DataArray in : " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " milliseconds." << std::endl;
-
-	// Cleaning
-	deleteDataspace(session, dataspaceUri);
-	session->close();
 
 	for (size_t xyzPointIndex = 0; xyzPointIndex < xyzPointCount; ++xyzPointIndex) {
 		REQUIRE(receivedXyzPoints[xyzPointIndex * 3] == xyzPointIndex);

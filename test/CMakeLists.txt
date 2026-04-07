@@ -18,7 +18,11 @@ target_sources(unitTest PRIVATE ${FETPAPI_TEST_SOURCES} ${FETPAPI_TEST_HEADERS})
 target_include_directories(unitTest PRIVATE ${FESAPI_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/test/ ${CMAKE_SOURCE_DIR}/src/)
 target_include_directories(unitTest SYSTEM PRIVATE ${AVRO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${FETPAPI_INCLUDE_DIR})
 if (WITH_ETP_SSL)
-	target_include_directories(unitTest SYSTEM PRIVATE ${OPENSSL_INCLUDE_DIR})
+	if (NOT USE_WINTLS_INSTEAD_OF_OPENSSL)
+		target_include_directories(unitTest SYSTEM PRIVATE ${OPENSSL_INCLUDE_DIR})
+	else()
+		target_include_directories(unitTest SYSTEM PRIVATE ${WINTLS_INCLUDE_DIR})
+	endif()
 endif ()
 
 target_compile_options(unitTest	PRIVATE
@@ -66,11 +70,9 @@ target_link_libraries (unitTest PRIVATE ${FESAPI_LIBRARY_RELEASE} ${Boost_SYSTEM
 
 #OpenSSL
 if (WITH_ETP_SSL)
-	target_compile_definitions(unitTest PRIVATE WITH_ETP_SSL)
-	if (NOT TARGET OpenSSL::SSL OR NOT TARGET OpenSSL::Crypto)
-		find_package(OpenSSL REQUIRED)
+	if (NOT USE_WINTLS_INSTEAD_OF_OPENSSL)
+		target_link_libraries(unitTest PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 	endif()
-	target_link_libraries(unitTest PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 endif ()
 
 #AVRO

@@ -28,9 +28,9 @@ under the License.
 #include <fesapi/resqml2_0_1/ContinuousProperty.h>
 #include <fesapi/resqml2_0_1/LocalDepth3dCrs.h>
 
-#include "etp/ClientSessionLaunchers.h"
-#include "etp/fesapi/FesapiHdfProxy.h"
-#include "etp/fesapi/FesapiHelpers.h"
+#include "fetpapi/etp/ClientSessionLaunchers.h"
+#include "fetpapi/etp/fesapi/FesapiHdfProxy.h"
+#include "fetpapi/etp/fesapi/FesapiHelpers.h"
 
 namespace {
 	std::vector<std::string> tokenize(const std::string& str, char delimiter) {

@@ -40,7 +40,7 @@ under the License.
 %include "stdint.i"
 %include "std_string.i"
 
-%include "../src/macroDefinitions.h"
+%include "../src/fetpapi/macroDefinitions.h"
 
 //************************/
 // JAVA
@@ -147,14 +147,14 @@ under the License.
 typedef long long 				time_t;
 
 %{
-#include "../src/etp/ClientSessionLaunchers.h"
-#include "../src/etp/EtpHelpers.h"
+#include "../src/fetpapi/etp/ClientSessionLaunchers.h"
+#include "../src/fetpapi/etp/EtpHelpers.h"
 %}
 
 #ifdef WITH_FESAPI
 %{
-#include "../src/etp/fesapi/FesapiHdfProxy.h"
-#include "../src/etp/fesapi/FesapiHelpers.h"
+#include "../src/fetpapi/etp/fesapi/FesapiHdfProxy.h"
+#include "../src/fetpapi/etp/fesapi/FesapiHelpers.h"
 %}
 #endif
 

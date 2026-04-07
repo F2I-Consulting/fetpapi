@@ -2,8 +2,8 @@
 /cs/fetpapiCs.csproj
 /swig/setup.py
 /swig/swigEtp1_2Include.i
-/src/macroDefinitions.h
-/src/version_config.h
+/src/fetpapi/macroDefinitions.h
+/src/fetpapi/version_config.h
 
 ## Ignore csharp swig generated files
 /swig/swigGeneratedCsWrapper.cpp

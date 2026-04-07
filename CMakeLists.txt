@@ -22,7 +22,7 @@ set (Fetpapi_VERSION_TWEAK 0)
 set (Fetpapi_VERSION ${Fetpapi_VERSION_MAJOR}.${Fetpapi_VERSION_MINOR}.${Fetpapi_VERSION_PATCH}.${Fetpapi_VERSION_TWEAK})
 
 # Create the version config header file in order for FETPAPI users to know the FETPAPI version at runtime.
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/src/version_config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/version_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/src/fetpapi/version_config.h)
 
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 	set (CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/install CACHE PATH "${PROJECT_NAME} install prefix" FORCE)
@@ -170,7 +170,7 @@ endif ()
 
 # Namespaces definitions
 set (FETPAPI_ETP_NS etp CACHE STRING "Namespace for etp objects")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macroDefinitions.h.in ${CMAKE_CURRENT_SOURCE_DIR}/src/macroDefinitions.h @ONLY) # Overwrite if different
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/macroDefinitions.h.in ${CMAKE_CURRENT_SOURCE_DIR}/src/fetpapi/macroDefinitions.h @ONLY) # Overwrite if different
 
 # ============================================================================
 # SWIG wrapping
@@ -197,7 +197,7 @@ endif (WITH_PYTHON_WRAPPING)
 # Getting source files
 # ============================================================================
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/src/CMakeLists.txt)
+include(${CMAKE_CURRENT_SOURCE_DIR}/src/fetpapi/CMakeLists.txt)
 set (ALL_SOURCES_AND_HEADERS
 	${FETPAPI_HEADERS}
 	${FETPAPI_ETP_SOURCES}
