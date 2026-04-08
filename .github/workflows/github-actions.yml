@@ -238,7 +238,7 @@ jobs:
             cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fesapi-install ${{ runner.temp }}\fesapi-src &&
             cmake --build . --config Release -j2 &&
             cmake --build . --config Release --target INSTALL &&
-            %VCPKG_INSTALLATION_ROOT%\vcpkg install bext-wintls boost-beast avro-cpp &&
+            %VCPKG_INSTALLATION_ROOT%\vcpkg install bext-wintls boost-beast boost-url avro-cpp &&
             cd ${{ runner.temp }} &&
             mkdir fetpapi-build &&
             cd fetpapi-build &&
@@ -339,7 +339,7 @@ jobs:
             wget --no-verbose https://archives.boost.io/release/1.90.0/source/boost_1_90_0.tar.gz &&
             tar xf boost_1_90_0.tar.gz &&
             cd boost_1_90_0 &&
-            ./bootstrap.sh --prefix=${{ github.workspace }}/../boost-install --with-libraries=filesystem,iostreams,program_options,regex,system &&
+            ./bootstrap.sh --prefix=${{ github.workspace }}/../boost-install --with-libraries=filesystem,iostreams,program_options,regex,system,url &&
             ./b2 -d0 install &&
             git clone https://github.com/F2I-Consulting/Minizip.git ${{ github.workspace }}/../minizip &&
             mkdir ${{ github.workspace }}/../minizip-build &&
@@ -384,7 +384,7 @@ jobs:
             cmake --install .
           # See https://cibuildwheel.pypa.io/en/stable/faq/#macos-passing-dyld_library_path-to-delocate
           CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
-            DYLD_LIBRARY_PATH=${{ github.workspace }}/../fesapi-install/lib:${{ github.workspace }}/../fetpapi-install/lib delocate-wheel --require-archs {delocate_archs} -w {dest_dir} {wheel}
+            DYLD_LIBRARY_PATH=${{ github.workspace }}/../boost-install/lib:${{ github.workspace }}/../fesapi-install/lib:${{ github.workspace }}/../fetpapi-install/lib delocate-wheel --require-archs {delocate_archs} -w {dest_dir} {wheel}
           CIBW_TEST_COMMAND: python ${{ github.workspace }}/python/example/etp_client_example.py
         with:
           package-dir: ./python

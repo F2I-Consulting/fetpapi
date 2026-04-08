@@ -103,7 +103,7 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 
 	// Request for Acknowledge
 	if ((receivedMh.messageFlags & 0x10) != 0) {
-		std::shared_ptr < Energistics::Etp::v12::Protocol::Core::Acknowledge> acknowledge;
+		auto acknowledge = std::make_shared<Energistics::Etp::v12::Protocol::Core::Acknowledge>();
 		acknowledge->messageHeader.protocol = receivedMh.protocol;
 		send(acknowledge, receivedMh.messageId, 0x02);
 	}
@@ -117,42 +117,21 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 			// Receive Protocol Exception
 			protocolHandlers[static_cast<int32_t>(Energistics::Etp::v12::Datatypes::Protocol::Core)]->decodeMessageBody(receivedMh, d);
 			if ((receivedMh.messageFlags & 0x02) != 0) {
-				const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
-				auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
-				for (int64_t idAlias : std::get<2>(specificProtocolHandlerIt->second)) {
-					auto specificProtocolHandlerIt2 = specificProtocolHandlers.find(idAlias);
-					if (specificProtocolHandlerIt2 != specificProtocolHandlers.end()) {
-						specificProtocolHandlers.erase(specificProtocolHandlerIt2);
-					}
-				}
-				if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
-					specificProtocolHandlers.erase(specificProtocolHandlerIt);
-				}
+				eraseFromSpecificProtocolHandlers(receivedMh.correlationId);
 			}
 		}
 		else {
-			std::shared_ptr<ETP_NS::ProtocolHandlers> specificProtocolHandler;
-			{
+			std::shared_ptr<ETP_NS::ProtocolHandlers> specificProtocolHandler = [this, &receivedMh]() {
 				const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
 				auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
-				if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
-					specificProtocolHandler = std::get<1>(specificProtocolHandlerIt->second);
-				}
-			} // Scope for specificProtocolHandlersLock
+				return specificProtocolHandlerIt != specificProtocolHandlers.end() ? std::get<1>(specificProtocolHandlerIt->second) : nullptr;
+			}();
 
 			if (specificProtocolHandler) {
 				// Receive a message which has been asked to be processed with a specific protocol handler
 				specificProtocolHandler->decodeMessageBody(receivedMh, d);
 				if ((receivedMh.messageFlags & 0x02) != 0) {
-					const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
-					auto specificProtocolHandlerIt = specificProtocolHandlers.find(receivedMh.correlationId);
-					for (int64_t idAlias : std::get<2>(specificProtocolHandlerIt->second)) {
-						auto specificProtocolHandlerIt2 = specificProtocolHandlers.find(idAlias);
-						if (specificProtocolHandlerIt2 != specificProtocolHandlers.end()) {
-							specificProtocolHandlers.erase(specificProtocolHandlerIt2);
-						}
-					}
-					specificProtocolHandlers.erase(specificProtocolHandlerIt);
+					eraseFromSpecificProtocolHandlers(receivedMh.correlationId);
 				}
 			}
 			else {
@@ -174,7 +153,11 @@ void AbstractSession::on_read(boost::system::error_code ec, std::size_t bytes_tr
 		send(ETP_NS::EtpHelpers::buildSingleMessageProtocolException(19, "The agent is unable to de-serialize the body of the message id " + std::to_string(receivedMh.messageId) + " : " + std::string(e.what())), 0, 0x02);
 	}
 
-	if (specificProtocolHandlers.empty() && isCloseRequested_)
+	const bool specificProtocolHandlersIsEmpty = [this]() {
+		const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
+		return specificProtocolHandlers.empty();
+	}();
+	if (specificProtocolHandlersIsEmpty && isCloseRequested_)
 	{
 		etpSessionClosed = true;
 		send(std::make_shared<Energistics::Etp::v12::Protocol::Core::CloseSession>(), 0, 0x02);

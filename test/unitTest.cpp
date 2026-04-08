@@ -139,7 +139,7 @@ TEST_CASE_METHOD(EtpDataspaceFixture, "Dataspace Operations", "[Dataspace]") {
 	SECTION("Fail to create dataspace with duplicate URI") {
 		Energistics::Etp::v12::Datatypes::Object::Dataspace duplicateDataspace;
 		duplicateDataspace.uri = dataspaceUri;
-		duplicateDataspace.path = "testF2I/unknown";
+		duplicateDataspace.path = dataspaceUri.substr(dataspaceUri.find("'") + 1, 44);
 		std::map<std::string, Energistics::Etp::v12::Datatypes::Object::Dataspace> query = { {"0", duplicateDataspace} };
 		std::vector<std::string> successKeys = clientSession->putDataspaces(query);
 
@@ -149,8 +149,6 @@ TEST_CASE_METHOD(EtpDataspaceFixture, "Dataspace Operations", "[Dataspace]") {
 
 TEST_CASE_METHOD(EtpDataspaceFixture, "Put a DataArray", "[DataArray]")
 {
-	clientSession->setVerbose(true);
-
 	// Initialize the FESAPI Repository
 	COMMON_NS::DataObjectRepository repo;
 	repo.setDefaultStandard(COMMON_NS::DataObjectRepository::EnergisticsStandard::RESQML2_0_1);

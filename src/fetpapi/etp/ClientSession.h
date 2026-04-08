@@ -64,23 +64,25 @@ namespace ETP_NS
 			// Run will return only when there will no more be any uncomplete operations (such as a reading operation for example)
 			getIoContext().run();
 
-			// Try to reconnect up to 10 times
-			if (!isCloseRequested_ && reconnectionTryCount_ < 10) {
-				++reconnectionTryCount_;
-				std::cerr << "Session " << getIdentifier() << " has been disconnected, trying to reconnect... " << reconnectionTryCount_ << "/10" << std::endl;
-				getIoContext().restart();
-				run();
-			}
-
-			if (!isCloseRequested_ && reconnectionTryCount_ >= 10) {
-				std::cerr << "Could not reconnect after 10 retries... Give up and close" << reconnectionTryCount_ << "/10" << std::endl;
-				isCloseRequested_ = true;
+			if (!isCloseRequested_) {
+				// Try to reconnect up to 10 times
+				if (reconnectionTryCount_ < maxReconnectionTryCount_) {
+					++reconnectionTryCount_;
+					std::cerr << "Session " << getIdentifier() << " has been disconnected, trying to reconnect... " << reconnectionTryCount_ << "/" << maxReconnectionTryCount_ << std::endl;
+					getIoContext().restart();
+					run();
+				}
+				else {
+					std::cerr << "Could not reconnect after " << maxReconnectionTryCount_ << " retries... Give up and close" << reconnectionTryCount_ << "/" << maxReconnectionTryCount_ << std::endl;
+					isCloseRequested_ = true;
+				}
 			}
 		}
 		
 		void on_resolve(boost::system::error_code ec, tcp::resolver::results_type results) {
 			if (ec) {
 				std::cerr << "on_resolve : " << ec.message() << std::endl;
+				return;
 			}
 
 			asyncConnect(results);

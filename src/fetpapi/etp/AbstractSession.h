@@ -23,6 +23,8 @@ under the License.
 #include <queue>
 #include <unordered_map>
 #include <utility>
+#include <chrono>
+#include <thread>
 
 #include <boost/asio.hpp>
 #include <boost/beast/core.hpp>
@@ -187,6 +189,7 @@ namespace ETP_NS
 
 			auto t_start = std::chrono::high_resolution_clock::now();
 			while (isMessageStillProcessing(correlationId == 0 ? msgId : correlationId)) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 				if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > _timeOut) {
 					throw std::runtime_error("Time out waiting for a response of message id " + std::to_string(msgId));
 				}
@@ -284,6 +287,7 @@ namespace ETP_NS
 
 			const auto t_start = std::chrono::high_resolution_clock::now();
 			while (isMessageStillProcessing(correlationId == 0 ? msgId : correlationId)) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 				if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > _timeOut) {
 					throw std::runtime_error("Time out waiting for a response of message id " + std::to_string(msgId));
 				}
@@ -292,7 +296,9 @@ namespace ETP_NS
 			// If the message has not been answered correctly
 			if (isEtpSessionClosed() && !isCloseRequested()) {
 				// Wait for a reconnection
-				while (isEtpSessionClosed() && !isCloseRequested()) {}
+				while (isEtpSessionClosed() && !isCloseRequested()) {
+					std::this_thread::sleep_for(std::chrono::milliseconds(100));
+				}
 				// Check if reconnection is successfull
 				if (isEtpSessionClosed()) {
 					throw std::runtime_error("The ETP session could not be opened in order to send again the message.");
@@ -364,17 +370,14 @@ namespace ETP_NS
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT void close() {
 			isCloseRequested_ = true;
-			sendingQueueMutex.lock();
-			specificProtocolHandlersMutex.lock();
-			if (specificProtocolHandlers.empty() && sendingQueue.empty()) {
+			const bool shouldSendCloseMsgNow = [this]() {
+				std::scoped_lock lock(sendingQueueMutex, specificProtocolHandlersMutex);
+				return specificProtocolHandlers.empty() && sendingQueue.empty();
+			}();
+			
+			if (shouldSendCloseMsgNow) {
 				etpSessionClosed = true;
-				sendingQueueMutex.unlock();
-				specificProtocolHandlersMutex.unlock();
 				send(std::make_shared<Energistics::Etp::v12::Protocol::Core::CloseSession>(), 0, 0x02);
-			}
-			else {
-				sendingQueueMutex.unlock();
-				specificProtocolHandlersMutex.unlock();
 			}
 		}
 
@@ -387,6 +390,7 @@ namespace ETP_NS
 			close();
 			auto t_start = std::chrono::high_resolution_clock::now();
 			while (!webSocketSessionClosed) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 				if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > _timeOut) {
 					throw std::runtime_error("Time out waiting for closing");
 				}
@@ -594,19 +598,19 @@ namespace ETP_NS
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::string startTransaction(std::vector<std::string> dataspaceUris = {}, bool readOnly = false);
 
-		/**
-		* A customer sends to a store to commit and end a transaction. This message implies that the customer 
-		* has received from or sent to the store all the data required for some purpose. The customer asserts that 
-		* the data sent in the scope of this transaction is a consistent unit of work.
+		/*
+		* A customer sends to a store to cancel a transaction. The store MUST disregard any requests or data sent
+		* with that transaction. The current transaction (the one being canceled) MUST NOT change the state of
+		* the store.
 		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		* @return Failure message or empty string if success
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT std::string rollbackTransaction();
 
-		/*
-		* A customer sends to a store to cancel a transaction. The store MUST disregard any requests or data sent 
-		* with that transaction. The current transaction (the one being canceled) MUST NOT change the state of 
-		* the store.
+		/**
+		* A customer sends to a store to commit and end a transaction. This message implies that the customer 
+		* has received from or sent to the store all the data required for some purpose. The customer asserts that 
+		* the data sent in the scope of this transaction is a consistent unit of work.
 		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		* @return Failure message or empty string if success
 		*/
@@ -664,9 +668,10 @@ namespace ETP_NS
 		/// The identifier of the session
 		boost::uuids::uuid identifier{ boost::uuids::nil_uuid() };
 		std::mutex identifierMutex;
-		/// Indicates that the endpoint request to close the websocket session 
-		bool isCloseRequested_{ false };
+		/// Indicates that the endpoint request to close the websocket session
+		std::atomic<bool> isCloseRequested_{ false };
 		size_t reconnectionTryCount_ = 0;
+		static constexpr size_t maxReconnectionTryCount_ = 10;
 
 		AbstractSession() = default;
 
@@ -691,6 +696,21 @@ namespace ETP_NS
 		 * @param decoder	Must be initialized with stream containing a coded message header.
 		 */
 		Energistics::Etp::v12::Datatypes::MessageHeader decodeMessageHeader(avro::DecoderPtr decoder);
+
+		/**
+		* Erase all information about a message in specificProtocolHandlers.
+		* The message is identified by its ID and all its aliases.
+		*/
+		void eraseFromSpecificProtocolHandlers(int64_t msgId) {
+			const std::lock_guard<std::mutex> specificProtocolHandlersLock(specificProtocolHandlersMutex);
+			auto specificProtocolHandlerIt = specificProtocolHandlers.find(msgId);
+			if (specificProtocolHandlerIt != specificProtocolHandlers.end()) {
+				for (int64_t idAlias : std::get<2>(specificProtocolHandlerIt->second)) {
+					specificProtocolHandlers.erase(idAlias);
+				}
+				specificProtocolHandlers.erase(specificProtocolHandlerIt);
+			}
+		}
 
 		std::shared_ptr<ETP_NS::CoreHandlers> getCoreProtocolHandlers() {
 			auto it = protocolHandlers.find(static_cast<std::underlying_type<Energistics::Etp::v12::Datatypes::Protocol>::type>(Energistics::Etp::v12::Datatypes::Protocol::Core));

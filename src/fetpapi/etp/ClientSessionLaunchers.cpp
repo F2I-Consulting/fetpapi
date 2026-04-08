@@ -141,6 +141,5 @@ std::shared_ptr<ETP_NS::ClientSession> ETP_NS::ClientSessionLaunchers::createCli
 	}
 #endif
 
-	initializationParams->postSessionCreationOperation(result.get());
 	return result;
 }

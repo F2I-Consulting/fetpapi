@@ -21,12 +21,23 @@ under the License.
 #include <stdexcept>
 #include <tuple>
 
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 108100
+#include <boost/url.hpp>
+#endif
+
 #include "AbstractSession.h"
 
 using namespace ETP_NS;
 
 namespace {
+
+#if BOOST_VERSION < 108100
 	std::tuple<std::string, uint16_t, std::string> extractHostPortPathFromUrl(const std::string& url) {
+		if (url.empty()) {
+			throw std::invalid_argument("URL cannot be empty");
+		}
+
 		std::tuple<std::string, uint16_t, std::string> result;
 		const size_t schemeSeparatorPos = url.find("://");
 
@@ -43,8 +54,8 @@ namespace {
 		else {
 			hostEnd = portStart++;
 			portEnd = url.find("/", portStart);
-			int readPort = stoi(url.substr(portStart, portEnd - portStart));
-			if (readPort < 1 || readPort >(std::numeric_limits<int16_t>::max)()) {
+			uint16_t readPort = static_cast<uint16_t>(stoi(url.substr(portStart, portEnd - portStart)));
+			if (readPort < 1 || readPort > (std::numeric_limits<uint16_t>::max)()) {
 				throw std::out_of_range("The port " + std::to_string(readPort) + " is out of the allowed range for TCP ports (0,2^16)");
 			}
 			std::get<1>(result) = static_cast<uint16_t>(readPort);
@@ -61,18 +72,49 @@ namespace {
 
 		return result;
 	}
+#else
+	std::tuple<std::string, uint16_t, std::string> extractHostPortPathFromUrl(const std::string& urlStr) {
+		// Parse the URL
+		boost::urls::result<boost::urls::url_view> result = boost::urls::parse_uri(urlStr);
+		if (!result) {
+			throw std::invalid_argument("Invalid URL: " + urlStr);
+		}
+		boost::urls::url_view url = *result;
+
+		// Extract host (handles IPv4, IPv6, and domain names)
+		std::string host = url.host();
+		if (host.empty()) {
+			throw std::invalid_argument("Host cannot be empty");
+		}
+
+		// Extract port (falls back to default if not specified)
+		uint16_t port = url.port_number();
+		if (port == 0) {
+			port = boost::urls::default_port(url.scheme_id());
+			if (port == 0) {
+				throw std::invalid_argument("The default port is unknown for scheme " + std::string(url.scheme()));
+			}
+		}
+
+		return { host, port, url.path() };
+	}
+#endif
 }
 
 void InitializationParameters::initFromUrl(const std::string& etpUrl, const std::string& proxyUrl)
 {
-	std::tuple<std::string, uint16_t, std::string> serverInfo = extractHostPortPathFromUrl(etpUrl);
-	etpServerHost = std::get<0>(serverInfo);
-	etpServerPort = std::get<1>(serverInfo);
-	etpServerUrlPath = std::get<2>(serverInfo);
+	if (!etpUrl.empty()) {
+		std::tuple<std::string, uint16_t, std::string> serverInfo = extractHostPortPathFromUrl(etpUrl);
+		etpServerHost = std::get<0>(serverInfo);
+		etpServerPort = std::get<1>(serverInfo);
+		etpServerUrlPath = std::get<2>(serverInfo);
+	}
 
-	serverInfo = extractHostPortPathFromUrl(proxyUrl);
-	proxyHost = std::get<0>(serverInfo);
-	proxyPort = std::get<1>(serverInfo);
+	if (!proxyUrl.empty()) {
+		std::tuple<std::string, uint16_t, std::string> serverInfo = extractHostPortPathFromUrl(proxyUrl);
+		proxyHost = std::get<0>(serverInfo);
+		proxyPort = std::get<1>(serverInfo);
+	}
 }
 
 std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> InitializationParameters::makeEndpointCapabilities() const

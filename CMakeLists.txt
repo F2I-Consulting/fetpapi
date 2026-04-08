@@ -103,16 +103,25 @@ set (WITH_ETP_SSL ON CACHE BOOL "Build FETPAPI with ETP SSL support.")
 find_package (Threads)
 
 # Boost DEPENDENCY
-find_package(Boost 1.70)
+find_package(Boost 1.81)
 if (NOT Boost_FOUND)
-	# Boost system is required for Beast until version 1.70 : https://www.boost.org/doc/libs/1_69_0/libs/beast/doc/html/beast/introduction.html
-	find_package(Boost 1.66 REQUIRED system)
+	find_package(Boost 1.70 QUIET)
+	if (NOT Boost_FOUND)
+		# Boost system is required for Beast until version 1.70 : https://www.boost.org/doc/libs/1_69_0/libs/beast/doc/html/beast/introduction.html
+		find_package(Boost 1.66 REQUIRED COMPONENTS system)
+	endif()
+else()
+	# Boost URL is mandatory for FETPAPI when using Boost1.81
+	# VCPKG can install Boost 1.81 without URL
+	find_package(Boost 1.81 REQUIRED COMPONENTS url)
 endif()
 if (WIN32 AND (Boost_VERSION_MAJOR EQUAL 1) AND (Boost_VERSION_MINOR LESS 74) AND (Boost_VERSION_MINOR GREATER 71))
 	message(WARNING "You may experience min/max issue with this boost version : See https://github.com/boostorg/beast/issues/1980")
 endif ()
 target_compile_definitions(${PROJECT_NAME} PRIVATE BOOST_ALL_NO_LIB)
-if (DEFINED Boost_SYSTEM_LIBRARY)
+if(TARGET Boost::url)
+	target_link_libraries (${PROJECT_NAME} PRIVATE Boost::url)
+elseif (TARGET Boost::system)
 	target_link_libraries (${PROJECT_NAME} PRIVATE Boost::system)
 else ()
 	target_link_libraries (${PROJECT_NAME} PRIVATE Boost::boost)

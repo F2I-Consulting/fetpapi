@@ -1937,20 +1937,20 @@ namespace ETP_NS
 		*/
 		std::string startTransaction(std::vector<std::string> dataspaceUris = {}, bool readOnly = false);
 
-		/**
-		* A customer sends to a store to commit and end a transaction. This message implies that the customer 
-		* has received from or sent to the store all the data required for some purpose. The customer asserts that 
-		* the data sent in the scope of this transaction is a consistent unit of work.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		/*
+		* A customer sends to a store to cancel a transaction. The store MUST disregard any requests or data sent
+		* with that transaction. The current transaction (the one being canceled) MUST NOT change the state of
+		* the store.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		* @return Failure message or empty string if success
 		*/
 		std::string rollbackTransaction();
 
-		/*
-		* A customer sends to a store to cancel a transaction. The store MUST disregard any requests or data sent 
-		* with that transaction. The current transaction (the one being canceled) MUST NOT change the state of 
-		* the store.
-		* It actually sends a message and block the current thread until a response has been received from the store.
+		/**
+		* A customer sends to a store to commit and end a transaction. This message implies that the customer 
+		* has received from or sent to the store all the data required for some purpose. The customer asserts that 
+		* the data sent in the scope of this transaction is a consistent unit of work.
+		* It actually sends a message and blocks the current thread until a response has been received from the store.
 		* @return Failure message or empty string if success
 		*/
 		std::string commitTransaction();
