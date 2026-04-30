@@ -229,10 +229,10 @@ jobs:
         env:
           CIBW_BUILD: cp38-win_amd64 cp39-win_amd64 cp310-win_amd64 cp311-win_amd64 cp312-win_amd64 cp313-win_amd64
           CIBW_ARCHS: auto64
-          CIBW_BEFORE_ALL: >
+          CIBW_BEFORE_ALL_WINDOWS: >
             %VCPKG_INSTALLATION_ROOT%\vcpkg install boost-uuid minizip hdf5[zlib] &&
             cd ${{ runner.temp }} &&
-            git clone --branch v2.14.1.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src &&
+            git clone --branch v2.14.1.0 --depth 1 https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src &&
             mkdir fesapi-build &&
             cd fesapi-build &&
             cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fesapi-install ${{ runner.temp }}\fesapi-src &&
@@ -243,7 +243,7 @@ jobs:
             mkdir fetpapi-build &&
             cd fetpapi-build &&
             cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fetpapi-install ${{ github.workspace }} &&
-            cmake --build . --config Release -j2 &&
+            cmake --build . --config Release --parallel 2 &&
             cmake --build . --config Release --target INSTALL &&
             pip install delvewheel
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
@@ -272,43 +272,39 @@ jobs:
           CIBW_BUILD: cp38-manylinux_* cp39-manylinux_* cp310-manylinux_* cp311-manylinux_* cp312-manylinux_* cp313-manylinux_*
           CIBW_ARCHS: auto64
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
-          CIBW_BEFORE_ALL: >
-            yum install -y wget gcc-c++ boost-devel openssl-devel &&
-            yum search epel-release &&
-            yum info epel-release &&
-            yum install -y epel-release &&
-            yum --enablerepo=epel install -y minizip1.2-devel cmake3 &&
-            cd / &&
-            wget --no-verbose https://support.hdfgroup.org/releases/hdf5/v2_0/v2_0_0/downloads/hdf5-2.0.0.tar.gz && 
-            tar -xzf hdf5-2.0.0.tar.gz &&
-            mkdir hdf5-build &&
-            cd hdf5-build &&
-            cmake3 -G "Unix Makefiles" -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_BUILD_TYPE:STRING=Release -DHDF5_ENABLE_ZLIB_SUPPORT:BOOL=ON -DBUILD_SHARED_LIBS:BOOL=OFF -DHDF5_BUILD_FORTRAN:BOOL=OFF -DHDF5_BUILD_JAVA:BOOL=OFF -DHDF5_ENABLE_PARALLEL:BOOL=OFF -DHDF5_BUILD_CPP_LIB:BOOL=OFF -DHDF5_BUILD_HL_LIB:BOOL=OFF -DHDF5_BUILD_EXAMPLES:BOOL=OFF -DHDF5_BUILD_GENERATORS:BOOL=OFF -DHDF5_BUILD_TOOLS:BOOL=OFF -DHDF5_BUILD_UTILS:BOOL=OFF -DBUILD_TESTING:BOOL=OFF -DCMAKE_INSTALL_PREFIX:STRING=/hdf5-install /hdf5-2.0.0 &&
-            cmake3 --build . -j2 &&
-            cmake3 --install . &&
-            cd / &&
-            git clone --branch v2.14.1.0 --single-branch https://github.com/F2I-Consulting/fesapi.git /fesapi-src &&
-            mkdir fesapi-build &&
-            cd fesapi-build &&
-            cmake3 -DCMAKE_BUILD_TYPE=Release -DHDF5_ROOT=/hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fesapi-install /fesapi-src &&
-            cmake3 --build . -j2 &&
-            cmake3 --install . &&
-            cd / &&
-            git clone -b release-1.12.1 https://github.com/apache/avro.git avro &&
-            mkdir avro-build &&
-            cd avro-build &&
-            cmake3 -Wno-dev -Wno-deprecated -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_BUILD_TYPE=Release -DAVRO_BUILD_EXECUTABLES=FALSE -DAVRO_BUILD_TESTS=FALSE -DAVRO_BUILD_SHARED=FALSE -DCMAKE_INSTALL_PREFIX=/avro-install /avro/lang/c++ &&
-            cmake3 --build . -j2 &&
-            cmake3 --install . &&
-            cd / &&
-            mkdir build &&
-            cd build &&
-            cmake3 -DCMAKE_BUILD_TYPE=Release -DAVRO_ROOT=/avro-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_ROOT=/fesapi-install -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fetpapi-install {project} &&
-            cmake3 --build . -j2 &&
+          CIBW_BEFORE_ALL: |
+            dnf install -y wget gcc-c++ boost-devel openssl-devel
+            dnf search epel-release
+            dnf info epel-release
+            dnf install -y epel-release
+            dnf --enablerepo=epel install -y minizip1.2-devel hdf5-devel cmake3
+            cd /
+            git clone --branch v2.14.1.0 --depth 1 https://github.com/F2I-Consulting/fesapi.git /fesapi-src
+            mkdir fesapi-build
+            cd fesapi-build
+            cmake3 -DCMAKE_BUILD_TYPE=Release /fesapi-src
+            mv /fesapi-src/src /fesapi-src/fesapi
+            pip download fesapi --no-deps --only-binary=:all: --no-cache-dir --no-color
+            FESAPI_WHEEL=$(ls fesapi-*.whl | head -n 1)
+            unzip "$FESAPI_WHEEL"
+            LIB_FESAPI_CPP=$(find "$(pwd)/fesapi.libs" -name 'libFesapiCpp*' -type f | head -n 1)
+            echo "Found libFesapiCpp file: $LIB_FESAPI_CPP"
+            cd /
+            git clone -b release-1.12.1 https://github.com/apache/avro.git avro
+            mkdir avro-build
+            cd avro-build
+            cmake3 -Wno-dev -Wno-deprecated -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DCMAKE_BUILD_TYPE=Release -DAVRO_BUILD_EXECUTABLES=FALSE -DAVRO_BUILD_TESTS=FALSE -DAVRO_BUILD_SHARED=FALSE -DCMAKE_INSTALL_PREFIX=/avro-install /avro/lang/c++
+            cmake3 --build . --parallel $(nproc)
+            cmake3 --install .
+            cd /
+            mkdir build
+            cd build
+            cmake3 -DCMAKE_BUILD_TYPE=Release -DAVRO_ROOT=/avro-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=/fesapi-src -DFESAPI_LIBRARY_RELEASE="$LIB_FESAPI_CPP" -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fetpapi-install {project}
+            cmake3 --build . --parallel $(nproc)
             cmake3 --install .
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
-            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/fesapi-install/lib64:/fetpapi-install/lib64 &&
-            auditwheel repair -w {dest_dir} {wheel}
+            export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/fesapi-build/fesapi.libs:/fetpapi-install/lib64 &&
+            auditwheel repair -w {dest_dir} {wheel} --exclude "$LIB_FESAPI_CPP" 
           CIBW_TEST_COMMAND: python {project}/python/example/etp_client_example.py
         with:
           package-dir: ./python
@@ -356,7 +352,7 @@ jobs:
             cmake --build . --config Release -j2 &&
             cmake --install . &&
             cd ${{ github.workspace }}/.. &&
-            git clone --branch v2.14.1.0 --single-branch https://github.com/F2I-Consulting/fesapi.git ${{ github.workspace }}/../fesapi-src &&
+            git clone --branch v2.14.1.0 --depth 1 https://github.com/F2I-Consulting/fesapi.git ${{ github.workspace }}/../fesapi-src &&
             mkdir fesapi-build &&
             cd fesapi-build &&
             cmake -DCMAKE_BUILD_TYPE=Release -DBOOST_ROOT=${{ github.workspace }}/../boost-install -DMINIZIP_ROOT=${{ github.workspace }}/../minizip-install -DHDF5_ROOT=${{ github.workspace }}/../hdf5-install -DHDF5_USE_STATIC_LIBRARIES=TRUE -DCMAKE_INSTALL_PREFIX:STRING=${{ github.workspace }}/../fesapi-install ${{ github.workspace }}/../fesapi-src &&
@@ -370,7 +366,7 @@ jobs:
             make &&
             make install &&
             cd ${{ github.workspace }}/.. &&
-            git clone -b release-1.12.1 https://github.com/apache/avro.git avro &&
+            git clone --branch release-1.12.1 --depth 1 https://github.com/apache/avro.git avro &&
             mkdir avro-build &&
             cd avro-build &&
             cmake -Wno-dev -Wno-deprecated -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DAVRO_BUILD_EXECUTABLES=FALSE -DAVRO_BUILD_TESTS=FALSE -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/../avro-install ${{ github.workspace }}/../avro/lang/c++ &&

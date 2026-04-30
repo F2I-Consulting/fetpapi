@@ -103,6 +103,44 @@ namespace {
 #endif
 }
 
+InitializationParameters::InitializationParameters(boost::uuids::uuid instanceUuid,
+	const std::string& etpServerUrl, const std::string& proxyUrl) :
+	identifier(instanceUuid), supportedDataObjects(makeSupportedDataObjects()), supportedProtocols(makeSupportedProtocols())
+{
+	initFromUrl(etpServerUrl, proxyUrl);
+}
+
+InitializationParameters::InitializationParameters(const std::string& instanceUuid,
+	const std::string& etpServerUrl, const std::string& proxyUrl) :
+	supportedDataObjects(makeSupportedDataObjects()), supportedProtocols(makeSupportedProtocols())
+{
+	initFromUrl(etpServerUrl, proxyUrl);
+	std::stringstream ss(instanceUuid);
+	ss >> identifier;
+}
+
+InitializationParameters::InitializationParameters(boost::uuids::uuid instanceUuid,
+	const std::string& host, uint16_t port, const std::string& urlPath) :
+	identifier(instanceUuid), etpServerHost(host), etpServerPort(port), etpServerUrlPath(urlPath),
+	supportedDataObjects(makeSupportedDataObjects()), supportedProtocols(makeSupportedProtocols())
+{
+	if (!etpServerUrlPath.empty() && etpServerUrlPath[0] != '/') {
+		throw std::invalid_argument("urlPath must start with a slash or be empty");
+	}
+}
+
+InitializationParameters::InitializationParameters(const std::string& instanceUuid,
+	const std::string& host, uint16_t port, const std::string& urlPath) :
+	etpServerHost(host), etpServerPort(port), etpServerUrlPath(urlPath),
+	supportedDataObjects(makeSupportedDataObjects()), supportedProtocols(makeSupportedProtocols())
+{
+	std::stringstream ss(instanceUuid);
+	ss >> identifier;
+	if (!etpServerUrlPath.empty() && etpServerUrlPath[0] != '/') {
+		throw std::invalid_argument("urlPath must start with a slash or be empty");
+	}
+}
+
 void InitializationParameters::initFromUrl(const std::string& etpUrl, const std::string& proxyUrl)
 {
 	if (!etpUrl.empty()) {
@@ -234,17 +272,4 @@ std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> InitializationP
 	result.push_back(protocol);
 
 	return result;
-}
-
-void InitializationParameters::postSessionCreationOperation(AbstractSession* session) const {
-	session->setCoreProtocolHandlers(std::make_shared<CoreHandlers>(session));
-	session->setDiscoveryProtocolHandlers(std::make_shared<DiscoveryHandlers>(session));
-	session->setStoreProtocolHandlers(std::make_shared<StoreHandlers>(session));
-	session->setStoreNotificationProtocolHandlers(std::make_shared<StoreNotificationHandlers>(session));
-	session->setDataArrayProtocolHandlers(std::make_shared<DataArrayHandlers>(session));
-	session->setTransactionProtocolHandlers(std::make_shared<TransactionHandlers>(session));
-	session->setDataspaceProtocolHandlers(std::make_shared<DataspaceHandlers>(session));
-	session->setCoreOSDUProtocolHandlers(std::make_shared<CoreOSDUHandlers>(session));
-	session->setStoreOSDUProtocolHandlers(std::make_shared<StoreOSDUHandlers>(session));
-	session->setDataspaceOSDUProtocolHandlers(std::make_shared<DataspaceOSDUHandlers>(session));
 }

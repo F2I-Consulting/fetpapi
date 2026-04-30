@@ -50,11 +50,17 @@ using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 
 namespace ETP_NS
 {
+	/**
+	* The most abstract class defining a websocket ETP session.
+	* When such an instance is deleted, this class ensures that the socket is closed.
+	*/
 	class AbstractSession : public std::enable_shared_from_this<AbstractSession>
 	{
 	public:
 
-		virtual ~AbstractSession() = default;
+		virtual ~AbstractSession() {
+			closeAndBlock();
+		}
 
 		/**
 		* Return the identifier of the session which is an UUID.
@@ -369,6 +375,11 @@ namespace ETP_NS
 		* This method does not block.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT void close() {
+			if (isCloseRequested_) {
+				fesapi_log("A session close has already been requested.");
+				return;
+			}
+
 			isCloseRequested_ = true;
 			const bool shouldSendCloseMsgNow = [this]() {
 				std::scoped_lock lock(sendingQueueMutex, specificProtocolHandlersMutex);
@@ -391,6 +402,11 @@ namespace ETP_NS
 		*									By default, it is true.
 		*/
 		FETPAPI_DLL_IMPORT_OR_EXPORT void closeAndBlock(bool forceCloseAfterTimeOut = true) {
+			if (webSocketSessionClosed) {
+				fesapi_log("The websocket session is already closed.");
+				return;
+			}
+
 			close();
 			auto t_start = std::chrono::steady_clock::now();
 			while (!webSocketSessionClosed) {

@@ -156,7 +156,16 @@ namespace ETP_NS
 		{
 			messageId = 2; // The client side of the connection MUST use ONLY non-zero even-numbered messageIds. 
 
-			initializationParams->postSessionCreationOperation(this);
+			setCoreProtocolHandlers(std::make_shared<CoreHandlers>(this));
+			setDiscoveryProtocolHandlers(std::make_shared<DiscoveryHandlers>(this));
+			setStoreProtocolHandlers(std::make_shared<StoreHandlers>(this));
+			setStoreNotificationProtocolHandlers(std::make_shared<StoreNotificationHandlers>(this));
+			setDataArrayProtocolHandlers(std::make_shared<DataArrayHandlers>(this));
+			setTransactionProtocolHandlers(std::make_shared<TransactionHandlers>(this));
+			setDataspaceProtocolHandlers(std::make_shared<DataspaceHandlers>(this));
+			setCoreOSDUProtocolHandlers(std::make_shared<CoreOSDUHandlers>(this));
+			setStoreOSDUProtocolHandlers(std::make_shared<StoreOSDUHandlers>(this));
+			setDataspaceOSDUProtocolHandlers(std::make_shared<DataspaceOSDUHandlers>(this));
 
 			// Build the request session
 			requestSession = std::make_shared<Energistics::Etp::v12::Protocol::Core::RequestSession>();
@@ -165,8 +174,8 @@ namespace ETP_NS
 
 			std::copy(initializationParams->getInstanceId().begin(), initializationParams->getInstanceId().end(), requestSession->clientInstanceId.array.begin());
 
-			requestSession->requestedProtocols = initializationParams->makeSupportedProtocols();
-			requestSession->supportedDataObjects = initializationParams->makeSupportedDataObjects();
+			requestSession->requestedProtocols = initializationParams->getSupportedProtocols();
+			requestSession->supportedDataObjects = initializationParams->getSupportedDataObjects();
 			requestSession->supportedFormats.push_back("xml");
 			requestSession->currentDateTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 

@@ -39,6 +39,9 @@ under the License.
 
 %include "stdint.i"
 %include "std_string.i"
+#if SWIG_VERSION >= 0x040200
+%include "std_string_view.i"
+#endif
 
 %include "../src/fetpapi/macroDefinitions.h"
 
@@ -140,7 +143,7 @@ under the License.
         SWIG_exception(SWIG_RuntimeError,const_cast<char*>(e.what()));
     }
     catch(...) {
-        SWIG_exception(SWIG_UnknownError,"Unknown exception at FESAPI C++ API level");
+        SWIG_exception(SWIG_UnknownError,"Unknown exception at FETPAPI C++ API level");
     }
 }
 
@@ -1195,7 +1198,6 @@ namespace Energistics {
 %feature("director") ETP_NS::TransactionHandlers;
 %feature("director") ETP_NS::DataspaceHandlers;
 %feature("director") ETP_NS::DataspaceOSDUHandlers;
-%feature("director") ETP_NS::InitializationParameters;
 
 /* Following extensions aims at preventing the Python garbage collector from 
    garbage collecting a protocol handler that may be still used by a session. */
@@ -1404,6 +1406,11 @@ namespace Energistics {
 #endif
 
 #ifdef SWIGJAVA
+%typemap(javaimports) ETP_NS::AbstractSession %{
+import java.lang.AutoCloseable;
+import com.f2i_consulting.fetpapi.*;
+%}
+%typemap(javainterfaces) ETP_NS::AbstractSession "AutoCloseable"
 %typemap(javacode) ETP_NS::AbstractSession %{
   private CoreHandlers coreHandlersReference;
   private DiscoveryHandlers discoveryHandlersReference;
@@ -1414,6 +1421,12 @@ namespace Energistics {
   private TransactionHandlers transactionHandlersReference;
   private DataspaceHandlers dataspaceHandlersReference;
   private DataspaceOSDUHandlers dataspaceOSDUHandlersReference;
+  
+  @Override
+  public void close() {
+	closeAndBlock();
+    delete();
+  }
 %}
 
 %typemap(javain, 
@@ -1640,8 +1653,12 @@ namespace ETP_NS
 	    virtual void on_CopyToDataspace(const Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace& msg, int64_t correlationId);
 		virtual void on_CopyToDataspaceResponse(const Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse & msg, int64_t correlationId);
 	};
-
+	
 	%nodefaultctor AbstractSession;
+	/**
+	* The most abstract class defining a websocket ETP session.
+	* When such an instance is deleted, this class ensures that the socket is closed.
+	*/
 	class AbstractSession
 	{
 	public:
@@ -1722,13 +1739,6 @@ namespace ETP_NS
 		/****************
 		***** CORE ******
 		****************/
-		
-		/**
-		* Send a message for closing to the server after having sent all previous messages.
-		* The session would really close only after all messages have been sent and responded.
-		* This method does not block.
-		*/
-		void close();
 
 		/**
 		* Send a message for closing to the server after having sent all previous messages.
@@ -2017,10 +2027,21 @@ namespace ETP_NS
 		* @param proxyUrl		The proxy URL. It must follow the syntax http://<host>:<port> or simply <host>:<port>.
 		*						Leave it empty if your connection to eptServerUrl is direct and does not pass throughr any proxy.
 		*/
-		InitializationParameters(const std::string& instanceUuid,
-			const std::string& etpServerUrl, const std::string& proxyUrl = "");
-		InitializationParameters(const std::string& instanceUuid, const std::string & host, unsigned short port, const std::string & urlPath = "");
-		virtual ~InitializationParameters();
+		InitializationParameters(const std::string& instanceUuid, const std::string& etpServerUrl, const std::string& proxyUrl = "");
+			
+		/**
+		* Only to be used for direct connection to the ETP server URL (not whenpassing through a proxy)
+		* Mainly for use with SWIG i.e. boost uuid structure is not easily portable whereas strings are.
+		*
+		* @param instanceUuid	The UUID of the client or server instance.
+		* @param host			The fully qualified domain name of a network host, or its IP address as a set of four decimal digit groups separated by ".".
+		* @param port			The port number to connect to.
+		* @param urlPath		The rest of the locator consists of data specific to the scheme, and is known as the "url-path".
+		*						It supplies the details of how the specified resource can be accessed.
+		*						It must start with a slash or be empty.
+		*/
+		InitializationParameters(const std::string& instanceUuid, const std::string & host, uint16_t port, const std::string & urlPath = "");
+		~InitializationParameters();
 
 		void setMaxWebSocketMessagePayloadSize(uint64_t value);
 		uint64_t getMaxWebSocketMessagePayloadSize() const;
@@ -2041,19 +2062,103 @@ namespace ETP_NS
 		const std::string& getProxyHost() const;
 		uint16_t getProxyPort() const;
 
+		/**
+		* Allow to force TLS usage even if the connection is not done on the 443 TLS port.
+		*/
 		void setForceTls(bool force);
+		/**
+		* Check if the connection has been asked to run on a secured websocket even if not using the 443  TLS port.
+		*/
 		bool isTlsForced() const;
 
-		virtual std::string getApplicationName() const;
-		virtual std::string getApplicationVersion() const;
-
-		virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> makeSupportedDataObjects() const;
-		virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> makeSupportedProtocols() const;
+		/**
+		* Set the string by which the client or server identifies itself, normally a software product or system name.
+		* The format is entirely application dependent. Vendors are encouraged to identify their company name as part of this string.
+		*/	
+#if SWIG_VERSION >= 0x040200
+		void setApplicationName(std::string_view applicationName);
+#else
+		void setApplicationName(const std::string& applicationName);
+#endif
+		
+		/**
+		* Get the string by which the client or server identifies itself, normally a software product or system name.
+		* The format is entirely application dependent. Vendors are encouraged to identify their company name as part of this string.
+		*/
+		const std::string& getApplicationName() const;
+		/**
+		* Set The version of the application identified in applicationName.
+		*/
+#if SWIG_VERSION >= 0x040200
+		void setApplicationVersion(std::string_view applicationVersion);
+#else
+		void setApplicationVersion(const std::string& applicationVersion);
+#endif
+		/**
+		* Get The version of the application identified in applicationName.
+		*/
+		const std::string& getApplicationVersion() const;
 
 		/**
-		* Override this method in order to register some dedicated protocol handlers for a session.
+		* Set the data objects that the client wants to use in this session and the information for each.
+		* Client and server use this field (in RequestSession and OpenSession messages respectively) to negotiate the objects
+		* that will be used during the session and determine the data object capabilities for each.
 		*/
-		virtual void postSessionCreationOperation(AbstractSession* session) const;
+		void setSupportedDataObjects(const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& supportedDataObjects);
+		/**
+		* Get the data objects that the client wants to use in this session and the information for each.
+		* Client and server use this field (in RequestSession and OpenSession messages respectively) to negotiate the objects
+		* that will be used during the session and determine the data object capabilities for each.
+		*/
+		const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& getSupportedDataObjects() const;
+		/**
+		* CLIENT NOTES:
+		* Set the ETP sub-protocol(s) and associated information for each sub-protocol that the client expects to communicate on for the ETP session.
+		* It is an array of SupportedProtocol records, each of which identifies
+		*   a sub-protocol ID,
+		*   the role for the sub-protocol it expects the server to fill,
+		*   and name-value pairs of protocol capabilities.
+		* 1. An ETP sub-protocol MUST appear only once in this array.
+		* 2. Each sub-protocol MUST specify only one role (for the server).
+		* 3. Core (Protocol 0) MUST NOT be included in this list.
+		* 4. Requested roles MUST be consistent across protocols in an ETP session.
+		*      EXAMPLE: An endpoint CANNOT request to be customer in one protocol and store in another, in the same ETP session.
+		* SERVER NOTES:
+		* Set the ETP sub-protocols and associated information for each sub-protocol that the server will support in response to the client's request.
+		* It is an array of SupportedProtocol records, each of which identifies
+		*   the protocol IDs that the server will support for this session,
+		*   the role it will use for each protocol (as assigned by the client in the RequestSession message),
+		*   and key-value pairs of related capabilities.
+		* 1. This array MUST be all or a subset of the protocols that the client requested in the supportedProtocols field of the RequestSession message.
+		* 2. A server may be capable of supporting both roles in an ETP sub-protocol, but in any given session it MUST fill only one role
+		*      (the one requested by the client in the RequestSession message).
+		* 3. Core (Protocol 0) MUST NOT be included in this list.
+		*/
+		void setSupportedProtocols(const std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol>& supportedProtocols);
+		/**
+		* CLIENT NOTES:
+		* Get the ETP sub-protocol(s) and associated information for each sub-protocol that the client expects to communicate on for the ETP session.
+		* It is an array of SupportedProtocol records, each of which identifies
+		*   a sub-protocol ID,
+		*   the role for the sub-protocol it expects the server to fill,
+		*   and name-value pairs of protocol capabilities.
+		* 1. An ETP sub-protocol MUST appear only once in this array.
+		* 2. Each sub-protocol MUST specify only one role (for the server).
+		* 3. Core (Protocol 0) MUST NOT be included in this list.
+		* 4. Requested roles MUST be consistent across protocols in an ETP session.
+		*      EXAMPLE: An endpoint CANNOT request to be customer in one protocol and store in another, in the same ETP session.
+		* SERVER NOTES:
+		* Get the ETP sub-protocols and associated information for each sub-protocol that the server will support in response to the client's request.
+		* It is an array of SupportedProtocol records, each of which identifies
+		*   the protocol IDs that the server will support for this session,
+		*   the role it will use for each protocol (as assigned by the client in the RequestSession message),
+		*   and key-value pairs of related capabilities.
+		* 1. This array MUST be all or a subset of the protocols that the client requested in the supportedProtocols field of the RequestSession message.
+		* 2. A server may be capable of supporting both roles in an ETP sub-protocol, but in any given session it MUST fill only one role
+		*      (the one requested by the client in the RequestSession message).
+		* 3. Core (Protocol 0) MUST NOT be included in this list.
+		*/
+		const std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol>& getSupportedProtocols() const;
 	};
 
 	namespace ClientSessionLaunchers
@@ -2075,11 +2180,11 @@ import com.f2i_consulting.fesapi.common.HdfProxyFactory;
 %}
 %typemap(csimports) FesapiHdfProxyFactory %{
 	using F2iConsulting.Fesapi.common;
-%}	
+%}
 	class FesapiHdfProxyFactory : public COMMON_NS::HdfProxyFactory
 	{
 	public:
-		FesapiHdfProxyFactory(AbstractSession* session); // We may have to tell PlainClientSession instead of AbstractSession for some directors/inheritancy reason.
+		FesapiHdfProxyFactory(AbstractSession* session);
 	};
 	
 	namespace FesapiHelpers {

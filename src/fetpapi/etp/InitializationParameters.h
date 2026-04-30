@@ -39,19 +39,202 @@ namespace ETP_NS
 {
 	class InitializationParameters
 	{
-	private:
-		void initFromUrl(const std::string& etpUrl, const std::string& proxyUrl);
+	public:
+
+		/**
+		* @param instanceUuid	The UUID of the client instance.
+		* @param etpServerUrl	Must follow the syntax ws://<host>:<port>/<path> or wss://<host>:<port>/<path> or simply <host>:<port>/<path>
+		*						where port is optional and is defaulted to 80 if scheme is "ws" or if no scheme is provided.
+		*						In "wss" schema cases, port is defaulted to 443.
+		* @param proxyUrl		The proxy URL. It must follow the syntax http://<host>:<port> or simply <host>:<port>.
+		*						Leave it empty if your connection to eptServerUrl is direct and does not pass throughr any proxy.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT InitializationParameters(boost::uuids::uuid instanceUuid,
+			const std::string& etpServerUrl, const std::string& proxyUrl = "");
+
+		/**
+		* Mainly for use with SWIG i.e. boost uuid structure is not easily portable whereas strings are.
+		* @param instanceUuid	The UUID of the client instance.
+		* @param etpServerUrl	Must follow the syntax ws://<host>:<port>/<path> or wss://<host>:<port>/<path> or simply <host>:<port>/<path>
+		*						where port is optional and is defaulted to 80 if scheme is "ws" or if no scheme is provided.
+		*						In "wss" schema cases, port is defaulted to 443.
+		* @param proxyUrl		The proxy URL. It must follow the syntax http://<host>:<port> or simply <host>:<port>.
+		*						Leave it empty if your connection to eptServerUrl is direct and does not pass through any proxy.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT InitializationParameters(const std::string& instanceUuid,
+			const std::string& etpServerUrl, const std::string& proxyUrl = "");
+
+		/**
+		* Only to be used for direct connection to the ETP server URL (not whenpassing through a proxy)
+		* @param instanceUuid	The UUID of the client or server instance.
+		* @param host			The fully qualified domain name of a network host, or its IP address as a set of four decimal digit groups separated by ".".
+		* @param port			The port number to connect to.
+		* @param urlPath		The rest of the locator consists of data specific to the scheme, and is known as the "url-path".
+		*						It supplies the details of how the specified resource can be accessed.
+		*						It must start with a slash or be empty.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT InitializationParameters(boost::uuids::uuid instanceUuid,
+			const std::string& host, uint16_t port, const std::string& urlPath = "");
+		
+		/**
+		* Only to be used for direct connection to the ETP server URL (not whenpassing through a proxy)
+		* Mainly for use with SWIG i.e. boost uuid structure is not easily portable whereas strings are.
+		*
+		* @param instanceUuid	The UUID of the client or server instance.
+		* @param host			The fully qualified domain name of a network host, or its IP address as a set of four decimal digit groups separated by ".".
+		* @param port			The port number to connect to.
+		* @param urlPath		The rest of the locator consists of data specific to the scheme, and is known as the "url-path".
+		*						It supplies the details of how the specified resource can be accessed.
+		*						It must start with a slash or be empty.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT InitializationParameters(const std::string& instanceUuid,
+			const std::string& host, uint16_t port, const std::string& urlPath = "");
+
+		~InitializationParameters() = default;
+
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setMaxWebSocketMessagePayloadSize(uint64_t value) { maxWebSocketMessagePayloadSize = value; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT uint64_t getMaxWebSocketMessagePayloadSize() const { return maxWebSocketMessagePayloadSize; }
+
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setPreferredMaxFrameSize(uint64_t value) { preferredMaxFrameSize = value; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT uint64_t getPreferredMaxFrameSize() const { return preferredMaxFrameSize; }
+
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setAdditionalHandshakeHeaderFields(const std::map<std::string, std::string>& extraHandshakeHeaderFields)
+			{ this->additionalHandshakeHeaderFields = extraHandshakeHeaderFields; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT const std::map<std::string, std::string>& getAdditionalHandshakeHeaderFields() const { return additionalHandshakeHeaderFields; }
+
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setAdditionalCertificates(const std::string& extraCertificates) { additionalCertificates = extraCertificates; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT const std::string& getAdditionalCertificates() const { return additionalCertificates; }
+
+		/**
+		* Get the UUID that a client or server assigns itself to uniquely identify the instance of itself in an ETP session
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT const boost::uuids::uuid& getInstanceId() const { return identifier; }
+		
+		FETPAPI_DLL_IMPORT_OR_EXPORT const std::string& getEtpServerHost() const { return etpServerHost; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT uint16_t getEtpServerPort() const { return etpServerPort; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT const std::string& getEtpServerUrlPath() const { return etpServerUrlPath; }
+
+		FETPAPI_DLL_IMPORT_OR_EXPORT const std::string& getProxyHost() const { return proxyHost; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT uint16_t getProxyPort() const { return proxyPort; }
+
+		/**
+		* Allow to force TLS usage even if the connection is not done on the 443 TLS port.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setForceTls(bool force) { forceTls = force; }
+		/**
+		* Check if the connection has been asked to run on a secured websocket even if not using the 443  TLS port.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT bool isTlsForced() const { return forceTls; }
+
+		/**
+		* Set the string by which the client or server identifies itself, normally a software product or system name.
+		* The format is entirely application dependent. Vendors are encouraged to identify their company name as part of this string.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setApplicationName(std::string_view appName) { applicationName = appName; }
+		/**
+		* Set the string by which the client or server identifies itself, normally a software product or system name.
+		* The format is entirely application dependent. Vendors are encouraged to identify their company name as part of this string.
+		* Remark : SWIG pre v4.2 does not support std::string_view
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setApplicationName(const std::string& appName) { applicationName = appName; }
+		/**
+		* Get the string by which the client or server identifies itself, normally a software product or system name.
+		* The format is entirely application dependent. Vendors are encouraged to identify their company name as part of this string.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT const std::string& getApplicationName() const { return applicationName; }
+		/**
+		* Set The version of the application identified in applicationName.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setApplicationVersion(std::string_view appVersion) { applicationVersion = appVersion; }
+		/**
+		* Set The version of the application identified in applicationName.
+		* Remark : SWIG pre v4.2 does not support std::string_view
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setApplicationVersion(const std::string& appVersion) { applicationVersion = appVersion; }
+		/**
+		* Get The version of the application identified in applicationName.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT const std::string& getApplicationVersion() const { return applicationVersion; }
+
+		/**
+		* Set the data objects that the client wants to use in this session and the information for each.
+		* Client and server use this field (in RequestSession and OpenSession messages respectively) to negotiate the objects
+		* that will be used during the session and determine the data object capabilities for each.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setSupportedDataObjects(const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& dataObjects)
+			{ supportedDataObjects = dataObjects; }
+		/**
+		* Get the data objects that the client wants to use in this session and the information for each.
+		* Client and server use this field (in RequestSession and OpenSession messages respectively) to negotiate the objects
+		* that will be used during the session and determine the data object capabilities for each.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT const std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject>& getSupportedDataObjects() const { return supportedDataObjects; }
+		/**
+		* CLIENT NOTES:
+		* Set the ETP sub-protocol(s) and associated information for each sub-protocol that the client expects to communicate on for the ETP session.
+		* It is an array of SupportedProtocol records, each of which identifies
+		*   a sub-protocol ID,
+		*   the role for the sub-protocol it expects the server to fill,
+		*   and name-value pairs of protocol capabilities.
+		* 1. An ETP sub-protocol MUST appear only once in this array.
+		* 2. Each sub-protocol MUST specify only one role (for the server).
+		* 3. Core (Protocol 0) MUST NOT be included in this list.
+		* 4. Requested roles MUST be consistent across protocols in an ETP session.
+		*      EXAMPLE: An endpoint CANNOT request to be customer in one protocol and store in another, in the same ETP session.
+		* SERVER NOTES:
+		* Set the ETP sub-protocols and associated information for each sub-protocol that the server will support in response to the client's request.
+		* It is an array of SupportedProtocol records, each of which identifies
+		*   the protocol IDs that the server will support for this session,
+		*   the role it will use for each protocol (as assigned by the client in the RequestSession message),
+		*   and key-value pairs of related capabilities.
+		* 1. This array MUST be all or a subset of the protocols that the client requested in the supportedProtocols field of the RequestSession message.
+		* 2. A server may be capable of supporting both roles in an ETP sub-protocol, but in any given session it MUST fill only one role
+		*      (the one requested by the client in the RequestSession message).
+		* 3. Core (Protocol 0) MUST NOT be included in this list.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT void setSupportedProtocols(const std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol>& protocols)
+			{ supportedProtocols = protocols; }
+		/**
+		* CLIENT NOTES:
+		* Get the ETP sub-protocol(s) and associated information for each sub-protocol that the client expects to communicate on for the ETP session.
+		* It is an array of SupportedProtocol records, each of which identifies
+		*   a sub-protocol ID,
+		*   the role for the sub-protocol it expects the server to fill,
+		*   and name-value pairs of protocol capabilities.
+		* 1. An ETP sub-protocol MUST appear only once in this array.
+		* 2. Each sub-protocol MUST specify only one role (for the server).
+		* 3. Core (Protocol 0) MUST NOT be included in this list.
+		* 4. Requested roles MUST be consistent across protocols in an ETP session.
+		*      EXAMPLE: An endpoint CANNOT request to be customer in one protocol and store in another, in the same ETP session.
+		* SERVER NOTES:
+		* Get the ETP sub-protocols and associated information for each sub-protocol that the server will support in response to the client's request.
+		* It is an array of SupportedProtocol records, each of which identifies
+		*   the protocol IDs that the server will support for this session,
+		*   the role it will use for each protocol (as assigned by the client in the RequestSession message),
+		*   and key-value pairs of related capabilities.
+		* 1. This array MUST be all or a subset of the protocols that the client requested in the supportedProtocols field of the RequestSession message.
+		* 2. A server may be capable of supporting both roles in an ETP sub-protocol, but in any given session it MUST fill only one role
+		*      (the one requested by the client in the RequestSession message).
+		* 3. Core (Protocol 0) MUST NOT be included in this list.
+		*/
+		FETPAPI_DLL_IMPORT_OR_EXPORT const std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol>& getSupportedProtocols() const { return supportedProtocols; }
+		FETPAPI_DLL_IMPORT_OR_EXPORT std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> makeEndpointCapabilities() const;
 
 	protected:
 		boost::uuids::uuid identifier;
 		std::string etpServerHost;
-		uint16_t etpServerPort;
+		uint16_t etpServerPort = 0;
 		std::string etpServerUrlPath;
 		std::string proxyHost;
-		uint16_t proxyPort;
+		uint16_t proxyPort = 0;
 		std::map<std::string, std::string> additionalHandshakeHeaderFields;
 		std::string additionalCertificates;
 		bool forceTls = false;
+
+		std::string applicationName = "F2I-CONSULTING ETP CLIENT";
+		std::string applicationVersion = "0.0";
+		std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> supportedDataObjects;
+		std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> supportedProtocols;
 
 		/**
 		* @param preferredFrameSize The preferred websocket frame payload to use by this client.
@@ -69,117 +252,9 @@ namespace ETP_NS
 		*/
 		uint64_t maxWebSocketMessagePayloadSize = 16000000;
 
-	public:
-
-		/**
-		* @param instanceUuid	The UUID of the client instance.
-		* @param etpServerUrl	Must follow the syntax ws://<host>:<port>/<path> or wss://<host>:<port>/<path> or simply <host>:<port>/<path>
-		*						where port is optional and is defaulted to 80 if scheme is "ws" or if no scheme is provided.
-		*						In "wss" schema cases, port is defaulted to 443.
-		* @param proxyUrl		The proxy URL. It must follow the syntax http://<host>:<port> or simply <host>:<port>.
-		*						Leave it empty if your connection to eptServerUrl is direct and does not pass throughr any proxy.
-		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT InitializationParameters(boost::uuids::uuid instanceUuid,
-			const std::string& etpServerUrl, const std::string& proxyUrl = "")
-		{
-			initFromUrl(etpServerUrl, proxyUrl);
-			identifier = instanceUuid;
-		}
-
-		/**
-		* Mainly for use with SWIG i.e. boost uuid structure is not easily portable whereas strings are.
-		* @param instanceUuid	The UUID of the client instance.
-		* @param etpServerUrl	Must follow the syntax ws://<host>:<port>/<path> or wss://<host>:<port>/<path> or simply <host>:<port>/<path>
-		*						where port is optional and is defaulted to 80 if scheme is "ws" or if no scheme is provided.
-		*						In "wss" schema cases, port is defaulted to 443.
-		* @param proxyUrl		The proxy URL. It must follow the syntax http://<host>:<port> or simply <host>:<port>.
-		*						Leave it empty if your connection to eptServerUrl is direct and does not pass through any proxy.
-		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT InitializationParameters(const std::string& instanceUuid,
-			const std::string& etpServerUrl, const std::string& proxyUrl = "")
-		{
-			initFromUrl(etpServerUrl, proxyUrl);
-			std::stringstream ss(instanceUuid);
-			ss >> identifier;
-		}
-
-		/**
-		* Only to be used for direct connection to the ETP server URL (not whenpassing through a proxy)
-		* @param instanceUuid	The UUID of the client or server instance.
-		* @param host			The fully qualified domain name of a network host, or its IP address as a set of four decimal digit groups separated by ".".
-		* @param port			The port number to connect to.
-		* @param urlPath		The rest of the locator consists of data specific to the scheme, and is known as the "url-path".
-		*						It supplies the details of how the specified resource can be accessed.
-		*						It must start with a slash or be empty.
-		*/
-		InitializationParameters(boost::uuids::uuid instanceUuid,
-			const std::string& host, uint16_t port, const std::string& urlPath = "") :
-			identifier(instanceUuid), etpServerHost(host), etpServerPort(port), etpServerUrlPath(urlPath)
-		{
-			if (!etpServerUrlPath.empty() && etpServerUrlPath[0] != '/') {
-				throw std::invalid_argument("urlPath must start with a slash or be empty");
-			}
-		}
-		
-		/**
-		* Only to be used for direct connection to the ETP server URL (not whenpassing through a proxy)
-		* Mainly for use with SWIG i.e. boost uuid structure is not easily portable whereas strings are.
-		*
-		* @param instanceUuid	The UUID of the client or server instance.
-		* @param host			The fully qualified domain name of a network host, or its IP address as a set of four decimal digit groups separated by ".".
-		* @param port			The port number to connect to.
-		* @param urlPath		The rest of the locator consists of data specific to the scheme, and is known as the "url-path".
-		*						It supplies the details of how the specified resource can be accessed.
-		*						It must start with a slash or be empty.
-		*/
-		InitializationParameters(const std::string & instanceUuid,
-			const std::string& host, uint16_t port, const std::string& urlPath = "") :
-			etpServerHost(host), etpServerPort(port), etpServerUrlPath(urlPath)
-		{
-			std::stringstream ss(instanceUuid);
-			ss >> identifier;
-			if (!etpServerUrlPath.empty() && etpServerUrlPath[0] != '/') {
-				throw std::invalid_argument("urlPath must start with a slash or be empty");
-			}
-		}
-
-		virtual ~InitializationParameters() = default;
-
-		FETPAPI_DLL_IMPORT_OR_EXPORT void setMaxWebSocketMessagePayloadSize(uint64_t value) { maxWebSocketMessagePayloadSize = value; }
-		FETPAPI_DLL_IMPORT_OR_EXPORT uint64_t getMaxWebSocketMessagePayloadSize() const { return maxWebSocketMessagePayloadSize; }
-
-		FETPAPI_DLL_IMPORT_OR_EXPORT void setPreferredMaxFrameSize(uint64_t value) { preferredMaxFrameSize = value; }
-		FETPAPI_DLL_IMPORT_OR_EXPORT uint64_t getPreferredMaxFrameSize() const { return preferredMaxFrameSize; }
-
-		FETPAPI_DLL_IMPORT_OR_EXPORT void setAdditionalHandshakeHeaderFields(const std::map<std::string, std::string>& extraHandshakeHeaderFields)
-			{ this->additionalHandshakeHeaderFields = extraHandshakeHeaderFields; }
-		FETPAPI_DLL_IMPORT_OR_EXPORT const std::map<std::string, std::string>& getAdditionalHandshakeHeaderFields() const { return additionalHandshakeHeaderFields; }
-
-		FETPAPI_DLL_IMPORT_OR_EXPORT void setAdditionalCertificates(const std::string& extraCertificates) { this->additionalCertificates = extraCertificates; }
-		FETPAPI_DLL_IMPORT_OR_EXPORT const std::string& getAdditionalCertificates() const { return additionalCertificates; }
-
-		FETPAPI_DLL_IMPORT_OR_EXPORT const boost::uuids::uuid& getInstanceId() const { return identifier; }
-		
-		FETPAPI_DLL_IMPORT_OR_EXPORT const std::string& getEtpServerHost() const { return etpServerHost; }
-		FETPAPI_DLL_IMPORT_OR_EXPORT uint16_t getEtpServerPort() const { return etpServerPort; }
-		FETPAPI_DLL_IMPORT_OR_EXPORT const std::string& getEtpServerUrlPath() const { return etpServerUrlPath; }
-
-		FETPAPI_DLL_IMPORT_OR_EXPORT const std::string& getProxyHost() const { return proxyHost; }
-		FETPAPI_DLL_IMPORT_OR_EXPORT uint16_t getProxyPort() const { return proxyPort; }
-
-		FETPAPI_DLL_IMPORT_OR_EXPORT void setForceTls(bool force) { forceTls = force; }
-		FETPAPI_DLL_IMPORT_OR_EXPORT bool isTlsForced() const { return forceTls; }
-
-		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getApplicationName() const { return "F2I-CONSULTING ETP CLIENT"; }
-		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::string getApplicationVersion() const { return "0.0"; }
-
-		FETPAPI_DLL_IMPORT_OR_EXPORT std::map<std::string, Energistics::Etp::v12::Datatypes::DataValue> makeEndpointCapabilities() const;
-		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> makeSupportedDataObjects() const;
-		FETPAPI_DLL_IMPORT_OR_EXPORT virtual std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> makeSupportedProtocols() const;
-
-		/**
-		* Override this method in order to register some dedicated protocol handlers for a session.
-		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT virtual void postSessionCreationOperation(class AbstractSession* session) const;
+	private:
+		void initFromUrl(const std::string& etpUrl, const std::string& proxyUrl);
+		std::vector<Energistics::Etp::v12::Datatypes::SupportedDataObject> makeSupportedDataObjects() const;
+		std::vector<Energistics::Etp::v12::Datatypes::SupportedProtocol> makeSupportedProtocols() const;
 	};
 }

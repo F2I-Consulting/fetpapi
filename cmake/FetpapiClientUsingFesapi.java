@@ -101,84 +101,83 @@ public class FetpapiClientUsingFesapi {
 			additionalHeaderField.put("data-partition-id", "osdu"); // Example for OSDU RDDMS
 			initializationParams.setAdditionalHandshakeHeaderFields(additionalHeaderField);
 			
-			ClientSession clientSession = fetpapi.createClientSession(initializationParams, authorization);
-			clientSession.setCoreProtocolHandlers(new CoreHandlers(clientSession));
-			clientSession.setDataspaceProtocolHandlers(new DataspaceHandlers(clientSession));
-			clientSession.setDiscoveryProtocolHandlers(new DiscoveryHandlers(clientSession));
-			clientSession.setStoreProtocolHandlers(new StoreHandlers(clientSession));
-			clientSession.setDataArrayProtocolHandlers(new DataArrayHandlers(clientSession));
-			new Thread(clientSession::run).start();
-			long start = System.currentTimeMillis();
-			while (clientSession.isEtpSessionClosed() && System.currentTimeMillis() - start < 5000) {
-				TimeUnit.MILLISECONDS.sleep(1);
-			}			
-			if (clientSession.isEtpSessionClosed()) {
-				System.err.println("The ETP session cound not be establisehd in 5 seconds.");
-				return;
-			}
-			System.out.println("Now connected to ETP Server");
-			// ****** We are now connected to ETP server through clientSession ******
-			// Set the HDF proxy factory in order to use one compliant with ETP
-			repo.setHdfProxyFactory(new FesapiHdfProxyFactory(clientSession));
-	
-			// ****** Get a dataspace content. This corresponds to getting the content of an EPC file ******
-			// Find an available ETP dataspace
-			DataspaceVector allDataspaces = clientSession.getDataspaces();
-			Optional<Dataspace> dataspace = allDataspaces.stream().findAny();		
-			if (dataspace.isEmpty()) {
-				clientSession.close();
-				System.err.println("The ETP server has no dataspace.");
-				return;
-			}
-			System.out.println("Working on dataspace " + dataspace.get().getUri());
-			// List resources of this ETP dataspace
-			ContextInfo etpContext = new ContextInfo();
-			etpContext.setUri(dataspace.get().getUri());
-			etpContext.setDepth(1);
-			ResourceVector allResources = clientSession.getResources(etpContext, ContextScopeKind.self);
-			if (allResources.isEmpty()) {
-				clientSession.close();
-				System.err.println("The ETP dataspace has no resource.");
-				return;
-			}
-			// Get dataobjects from the resources to the DataObjectRepository
-			MapStringString uriMap = new MapStringString();
-			long index = 0;
-			for (Resource resource : allResources) {
-				uriMap.put(Long.toString(index++), resource.getUri());
-			}
-			MapStringDataObject allDataObjects = clientSession.getDataObjects(uriMap);
-			for (DataObject dataObject : allDataObjects.values()) {
-				repo.addOrReplaceGsoapProxy(dataObject.getData(), fetpapi.getDataObjectType(dataObject.getResource().getUri()), fetpapi.getDataspaceUri(dataObject.getResource().getUri()));
-			}
-			// ****** We have now in the DataObjectRepository the same content as if we would have deserialized and EPC file looking like the dataspace ******
-			
-			// ****** Use the DataObjectRepository exactly as you are used to do with FESAPI ******
-			if (repo.getIjkGridRepresentationCount() > 0) {
-				IjkGridExplicitRepresentation ijkGrid = repo.getIjkGridExplicitRepresentation(0);
-				ijkGrid.loadSplitInformation();
-				long originIndex = ijkGrid.getXyzPointIndexFromCellCorner(0, 0, 0, 0);
-				System.out.println("The index of the grid origin in XYZ points is : " + originIndex);
-				ijkGrid.unloadSplitInformation();
-				if (ijkGrid.getValuesPropertyCount() > 0) {
-					AbstractValuesProperty prop = ijkGrid.getValuesProperty(0);
-					SWIGTYPE_p_double propValues = fesapi.new_DoubleArray(prop.getValuesCountOfPatch(0));
-					try {
-						prop.getDoubleValuesOfPatch(0, propValues);
-						System.out.println("The first cell value of prop " + prop.getTitle() + " is " + fesapi.DoubleArray_getitem(propValues, 0));
-					}
-					finally {
-						fesapi.delete_DoubleArray(propValues);
+			try (ClientSession clientSession = fetpapi.createClientSession(initializationParams, authorization)) {
+				clientSession.setCoreProtocolHandlers(new CoreHandlers(clientSession));
+				clientSession.setDataspaceProtocolHandlers(new DataspaceHandlers(clientSession));
+				clientSession.setDiscoveryProtocolHandlers(new DiscoveryHandlers(clientSession));
+				clientSession.setStoreProtocolHandlers(new StoreHandlers(clientSession));
+				clientSession.setDataArrayProtocolHandlers(new DataArrayHandlers(clientSession));
+				new Thread(clientSession::run).start();
+				long start = System.currentTimeMillis();
+				while (clientSession.isEtpSessionClosed() && System.currentTimeMillis() - start < 5000) {
+					TimeUnit.MILLISECONDS.sleep(1);
+				}			
+				if (clientSession.isEtpSessionClosed()) {
+					System.err.println("The ETP session cound not be establisehd in 5 seconds.");
+					return;
+				}
+				System.out.println("Now connected to ETP Server");
+				// ****** We are now connected to ETP server through clientSession ******
+				// Set the HDF proxy factory in order to use one compliant with ETP
+				repo.setHdfProxyFactory(new FesapiHdfProxyFactory(clientSession));
+		
+				// ****** Get a dataspace content. This corresponds to getting the content of an EPC file ******
+				// Find an available ETP dataspace
+				DataspaceVector allDataspaces = clientSession.getDataspaces();
+				Optional<Dataspace> dataspace = allDataspaces.stream().findAny();		
+				if (dataspace.isEmpty()) {
+					clientSession.close();
+					System.err.println("The ETP server has no dataspace.");
+					return;
+				}
+				System.out.println("Working on dataspace " + dataspace.get().getUri());
+				// List resources of this ETP dataspace
+				ContextInfo etpContext = new ContextInfo();
+				etpContext.setUri(dataspace.get().getUri());
+				etpContext.setDepth(1);
+				ResourceVector allResources = clientSession.getResources(etpContext, ContextScopeKind.self);
+				if (allResources.isEmpty()) {
+					clientSession.close();
+					System.err.println("The ETP dataspace has no resource.");
+					return;
+				}
+				// Get dataobjects from the resources to the DataObjectRepository
+				MapStringString uriMap = new MapStringString();
+				long index = 0;
+				for (Resource resource : allResources) {
+					uriMap.put(Long.toString(index++), resource.getUri());
+				}
+				MapStringDataObject allDataObjects = clientSession.getDataObjects(uriMap);
+				for (DataObject dataObject : allDataObjects.values()) {
+					repo.addOrReplaceGsoapProxy(dataObject.getData(), fetpapi.getDataObjectType(dataObject.getResource().getUri()), fetpapi.getDataspaceUri(dataObject.getResource().getUri()));
+				}
+				// ****** We have now in the DataObjectRepository the same content as if we would have deserialized and EPC file looking like the dataspace ******
+				
+				// ****** Use the DataObjectRepository exactly as you are used to do with FESAPI ******
+				if (repo.getIjkGridExplicitRepresentationCount() > 0) {
+					IjkGridExplicitRepresentation ijkGrid = repo.getIjkGridExplicitRepresentation(0);
+					ijkGrid.loadSplitInformation();
+					long originIndex = ijkGrid.getXyzPointIndexFromCellCorner(0, 0, 0, 0);
+					System.out.println("The index of the grid origin in XYZ points is : " + originIndex);
+					ijkGrid.unloadSplitInformation();
+					if (ijkGrid.getValuesPropertyCount() > 0) {
+						AbstractValuesProperty prop = ijkGrid.getValuesProperty(0);
+						SWIGTYPE_p_double propValues = fesapi.new_DoubleArray(prop.getValuesCountOfPatch(0));
+						try {
+							prop.getDoubleValuesOfPatch(0, propValues);
+							System.out.println("The first cell value of prop " + prop.getTitle() + " is " + fesapi.DoubleArray_getitem(propValues, 0));
+						}
+						finally {
+							fesapi.delete_DoubleArray(propValues);
+						}
 					}
 				}
+				else {
+					System.out.println("This dataspace has no IJK Grid");
+				}
+				
+				System.out.println("Closing the session thanks to AutoCloseable...");
 			}
-			else {
-				System.out.println("This dataspace has no IJK Grid");
-			}
-			
-			// Do not forget to close session once you have processed all the dataobject repository.
-			System.out.println("Closing the session...");
-			clientSession.close();			
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

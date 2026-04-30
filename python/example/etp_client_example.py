@@ -20,7 +20,7 @@ initialization_params.setAdditionalHandshakeHeaderFields(additionalHeaderField)
 
 print("Creating the session...")
 client_session = fetpapi.createClientSession(initialization_params, authorization)
-t = Thread(target=start_etp_server, args=(client_session,), daemon=True)
+t = Thread(target=start_etp_server, args=(client_session,), daemon=False)
 print("Trying to connect to " + etp_server_url + " ...")
 t.start()
 start_time = perf_counter()
@@ -60,6 +60,7 @@ for index, resource in enumerate(all_resources):
 print("Create a FESAPI Dataobject repository to ease access to dataobjects");
 repo = fesapi.DataObjectRepository()
 hdf_proxy_factory = fetpapi.FesapiHdfProxyFactory(client_session)
+hdf_proxy_factory.thisown = False # Disable ownership of the factory to avoid it being garbage collected since DataObjectRepository will destroy it when it will be destroyed.
 print("Set specialized HdfProxy to deal with ETP DataArray subprotocol")
 repo.setHdfProxyFactory(hdf_proxy_factory)
 
@@ -130,5 +131,7 @@ else:
     print("This dataspace has no 2d Grid")
 
 repo.clear()
-client_session.close()
-print("FINISHED")
+print("Closing the session...");
+client_session.closeAndBlock()
+t.join(timeout=10)  # Wait for the thread to finish with a timeout
+print("The session is now closed.")
