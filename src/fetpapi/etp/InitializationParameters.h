@@ -110,12 +110,16 @@ namespace ETP_NS
 		* @param port			The port number to connect to.
 		* @param urlPath		The rest of the locator consists of data specific to the scheme, and is known as the "url-path".
 		*						It supplies the details of how the specified resource can be accessed.
-		*						Note that the "/" between the host (or port) and the url-path is NOT part of the url-path.
+		*						It must start with a slash or be empty.
 		*/
 		InitializationParameters(boost::uuids::uuid instanceUuid,
 			const std::string& host, uint16_t port, const std::string& urlPath = "") :
 			identifier(instanceUuid), etpServerHost(host), etpServerPort(port), etpServerUrlPath(urlPath)
-		{}
+		{
+			if (!etpServerUrlPath.empty() && etpServerUrlPath[0] != '/') {
+				throw std::invalid_argument("urlPath must start with a slash or be empty");
+			}
+		}
 		
 		/**
 		* Only to be used for direct connection to the ETP server URL (not whenpassing through a proxy)
@@ -126,7 +130,7 @@ namespace ETP_NS
 		* @param port			The port number to connect to.
 		* @param urlPath		The rest of the locator consists of data specific to the scheme, and is known as the "url-path".
 		*						It supplies the details of how the specified resource can be accessed.
-		*						Note that the "/" between the host (or port) and the url-path is NOT part of the url-path.
+		*						It must start with a slash or be empty.
 		*/
 		InitializationParameters(const std::string & instanceUuid,
 			const std::string& host, uint16_t port, const std::string& urlPath = "") :
@@ -134,6 +138,9 @@ namespace ETP_NS
 		{
 			std::stringstream ss(instanceUuid);
 			ss >> identifier;
+			if (!etpServerUrlPath.empty() && etpServerUrlPath[0] != '/') {
+				throw std::invalid_argument("urlPath must start with a slash or be empty");
+			}
 		}
 
 		virtual ~InitializationParameters() = default;

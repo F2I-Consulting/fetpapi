@@ -1734,8 +1734,12 @@ namespace ETP_NS
 		* Send a message for closing to the server after having sent all previous messages.
 		* The session would really close only after all messages have been sent and responded.
 		* This method does block.
+		* 
+		* @param	forceCloseAfterTimeOut	If true, the websocket session will be closed
+		*									even if the ETP server did not close the session before the time out.
+		*									By default, it is true.
 		*/
-		void closeAndBlock();
+		void closeAndBlock(bool forceCloseAfterTimeOut = true);
 		
 		/**
 		* Check if the ETP session (starting after the Core.OpenSession or Core.RequestSession message) is not opened yet or has been closed.

@@ -11,7 +11,7 @@
 # Prepare the dependencies
 Download (build and install if necessary) third party libraries:
 - BOOST : All versions from version 1.66 should be ok but you may experience some [min/max build issues](https://github.com/boostorg/beast/issues/1980) using version 1.72 or 1.73.
-- AVRO : https://avro.apache.org/releases.html#Download (starting from version 1.9.0 [except 1.11.1](https://issues.apache.org/jira/browse/AVRO-3601), build it with the above boost library.)
+- AVRO : https://avro.apache.org/releases.html#Download (starting from version 1.9.0 [except 1.11.1](https://issues.apache.org/jira/browse/AVRO-3601), build it with the above boost library if necessary.)
 - (OPTIONALLY) OpenSSL : version 3.4 is known to work. OpenSSL is mandatory on Unix environement if you want SSL/TLS support. On Windows environment, you can depends on [Wintls](https://github.com/laudrup/boost-wintls/tree/master) instead
 - (OPTIONALLY) [Wintls](https://github.com/laudrup/boost-wintls/tree/master) : Starting from version 0.9.9. Only on Windows and only if you don't want to use OpenSSL to support SSL/TLS. FYI, Wintls uses native Windows API [(SSPI/Schannel)](https://docs.microsoft.com/en-us/windows-server/security/tls/tls-ssl-schannel-ssp-overview) functionality instead of OpenSSL for providing TLS encrypted stream functionality.
 - (OPTIONALLY) [FESAPI](https://github.com/F2I-Consulting/fesapi/releases) : All versions from version 2.7.0.0 should be ok but a minimal version of 2.11.0.0 is recommended to automatically recognize FESAPI CMake Variables using CMake find Module and build silently the EtpClient example.

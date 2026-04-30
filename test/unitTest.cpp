@@ -61,10 +61,10 @@ struct EtpSessionFixture {
 		std::thread sessionThread(&ETP_NS::ClientSession::run, clientSession);
 		sessionThread.detach();
 
-		auto t_start = std::chrono::high_resolution_clock::now();
+		auto t_start = std::chrono::steady_clock::now();
 		while (clientSession->isEtpSessionClosed()) {
 			auto timeOut = std::chrono::duration<double, std::milli>(
-				std::chrono::high_resolution_clock::now() - t_start).count();
+				std::chrono::steady_clock::now() - t_start).count();
 			if (timeOut > 5000) {
 				clientSession = nullptr;
 				break;
@@ -175,13 +175,13 @@ TEST_CASE_METHOD(EtpDataspaceFixture, "Put a DataArray", "[DataArray]")
 		xyzPoints[ptIdx * 3 + 2] = (double)ptIdx;
 	}
 	std::cout << "size of the array : " << xyzPointCount * 3 * 8 << " bytes." << std::endl;
-	auto t_start = std::chrono::high_resolution_clock::now();
+	auto t_start = std::chrono::steady_clock::now();
 	std::vector<std::string> dataspaceUris;
 	dataspaceUris.push_back(dataspaceUri);
 	std::string transactionFailure = clientSession->startTransaction(dataspaceUris, false);
 	REQUIRE(transactionFailure.empty());
 	h1i1PointSetRep->pushBackXyzGeometryPatch(xyzPointCount, xyzPoints.get(), nullptr, crs);
-	std::cout << "Put DataArray in : " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " milliseconds." << std::endl;
+	std::cout << "Put DataArray in : " << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t_start).count() << " milliseconds." << std::endl;
 	
 	// send the XML part
 	repo.setUriSource(dataspaceUri);
@@ -196,9 +196,9 @@ TEST_CASE_METHOD(EtpDataspaceFixture, "Put a DataArray", "[DataArray]")
 
 	//Reading back
 	std::unique_ptr<double[]> receivedXyzPoints(new double[xyzPointCount * 3]);
-	t_start = std::chrono::high_resolution_clock::now();
+	t_start = std::chrono::steady_clock::now();
 	h1i1PointSetRep->getXyzPointsOfPatch(0, receivedXyzPoints.get());
-	std::cout << "Get DataArray in : " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " milliseconds." << std::endl;
+	std::cout << "Get DataArray in : " << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t_start).count() << " milliseconds." << std::endl;
 
 	for (size_t xyzPointIndex = 0; xyzPointIndex < xyzPointCount; ++xyzPointIndex) {
 		REQUIRE(receivedXyzPoints[xyzPointIndex * 3] == xyzPointIndex);

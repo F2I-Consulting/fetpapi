@@ -54,7 +54,9 @@ namespace {
 		else {
 			hostEnd = portStart++;
 			portEnd = url.find("/", portStart);
-			uint16_t readPort = static_cast<uint16_t>(stoi(url.substr(portStart, portEnd - portStart)));
+			uint16_t readPort = static_cast<uint16_t>(stoi(portEnd == std::string::npos
+				? url.substr(portStart)
+				: url.substr(portStart, portEnd - portStart)));
 			if (readPort < 1 || readPort > (std::numeric_limits<uint16_t>::max)()) {
 				throw std::out_of_range("The port " + std::to_string(readPort) + " is out of the allowed range for TCP ports (0,2^16)");
 			}
@@ -66,7 +68,7 @@ namespace {
 			std::get<0>(result) = url.substr(hostStart);
 		}
 		else {
-			std::get<2>(result) = portEnd < url.size() - 1 ? url.substr(portEnd + 1) : "";
+			std::get<2>(result) = portEnd == std::string::npos ? "" : url.substr(portEnd);
 			std::get<0>(result) = url.substr(hostStart, hostEnd - hostStart);
 		}
 

@@ -302,14 +302,14 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 					repo.addOrReplaceGsoapProxy(dataobjectEntry.second.data, ETP_NS::EtpHelpers::getDataObjectType(dataobjectEntry.second.resource.uri), ETP_NS::EtpHelpers::getDataspaceUri(dataobjectEntry.second.resource.uri));
 				}
 				// Parse reps
-				auto global_start = std::chrono::high_resolution_clock::now();
+				auto global_start = std::chrono::steady_clock::now();
 				for (auto* rep : repo.getDataObjects<RESQML2_NS::AbstractRepresentation>()) {
 					std::cout << "Representation " << rep->getTitle() << std::endl;
 					std::unique_ptr<double[]> ijkGridPoints(new double[rep->getXyzPointCountOfAllPatches() * 3]);
-					auto t_start = std::chrono::high_resolution_clock::now();
+					auto t_start = std::chrono::steady_clock::now();
 					try {
 						rep->getXyzPointsOfAllPatches(ijkGridPoints.get());
-						std::cout << "XYZ POINTS IN  " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " ms" << std::endl;
+						std::cout << "XYZ POINTS IN  " << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t_start).count() << " ms" << std::endl;
 					}
 					catch (...) {
 						std::cerr << "Error reading XYZ points." << std::endl;
@@ -322,20 +322,20 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 						if (dynamic_cast<RESQML2_NS::ContinuousProperty*>(prop) != nullptr) {
 							std::cout << "Continuous Prop " << propIndex++ << "/" << allProps.size() << " : " << prop->getTitle() << std::endl;
 							std::unique_ptr<double[]> propValues(new double[valuesCount]);
-							t_start = std::chrono::high_resolution_clock::now();
+							t_start = std::chrono::steady_clock::now();
 							prop->getDoubleValuesOfPatch(0, propValues.get());
-							std::cout << "Continuous Prop IN  " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " ms" << std::endl;
+							std::cout << "Continuous Prop IN  " << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t_start).count() << " ms" << std::endl;
 						}
 						else {
 							std::cout << "Non Continuous Prop " << propIndex++ << "/" << allProps.size() << " : " << prop->getTitle() << std::endl;
 							std::unique_ptr<int[]> propValues(new int[valuesCount]);
-							t_start = std::chrono::high_resolution_clock::now();
+							t_start = std::chrono::steady_clock::now();
 							prop->getInt32ValuesOfPatch(0, propValues.get());
-							std::cout << "Non Continuous Prop IN  " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " ms" << std::endl;
+							std::cout << "Non Continuous Prop IN  " << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t_start).count() << " ms" << std::endl;
 						}
 					}
 				}
-				std::cout << "GLOBALLY DONE IN  " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - global_start).count() << " ms" << std::endl;
+				std::cout << "GLOBALLY DONE IN  " << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - global_start).count() << " ms" << std::endl;
 			}
 			else {
 				std::cout << "There is no dataobject in this dataspace" << std::endl;
@@ -546,7 +546,7 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 				std::vector< std::string > dataspacesToLock;
 				dataspacesToLock.push_back(dataspace.uri);
 				
-				auto transaction_start = std::chrono::high_resolution_clock::now();
+				auto transaction_start = std::chrono::steady_clock::now();
 
 				std::string result = session->startTransaction(dataspacesToLock);
 				if (result.empty()) {
@@ -562,13 +562,13 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 						0.0, 1.0, 0.0, 50.0);
 
 					for (size_t propIndex = 0; propIndex < 100; ++propIndex) {
-						auto t_start = std::chrono::high_resolution_clock::now();
+						auto t_start = std::chrono::steady_clock::now();
 						auto* prop = tmpRepo.createContinuousProperty(horizon_grid_2d_representation, "", "", 1, gsoap_eml2_3::eml23__IndexableElement::nodes, gsoap_resqml2_0_1::resqml20__ResqmlUom::m,
 							gsoap_resqml2_0_1::resqml20__ResqmlPropertyKind::length);
 						std::unique_ptr<double[]> prop_values(new double[ni * nj]);
 						prop->pushBackDoubleHdf5Array2dOfValues(prop_values.get(), ni, nj, hdf_proxy);
-						std::cout << " Pushed prop " << propIndex << " in " << std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() << " ms" << std::endl;
-						std::cout << " Global time  " << std::chrono::duration<double>(std::chrono::high_resolution_clock::now() - transaction_start).count() << " s" << std::endl;
+						std::cout << " Pushed prop " << propIndex << " in " << std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t_start).count() << " ms" << std::endl;
+						std::cout << " Global time  " << std::chrono::duration<double>(std::chrono::steady_clock::now() - transaction_start).count() << " s" << std::endl;
 					}
 
 					tmpRepo.setUriSource(dataspace.uri);
@@ -706,7 +706,7 @@ void askUser(std::shared_ptr<ETP_NS::AbstractSession> session, COMMON_NS::DataOb
 	for (auto* hdfProxy : repo.getHdfProxySet()) {
 		hdfProxy->close();
 	}
-	session->close();
+	session->closeAndBlock();
 }
 
 int main(int argc, char **argv)
@@ -750,10 +750,10 @@ int main(int argc, char **argv)
 	std::thread sessionThread(&ETP_NS::ClientSession::run, clientSession);
 	
 	// Wait for the ETP session to be opened
-	auto t_start = std::chrono::high_resolution_clock::now();
+	auto t_start = std::chrono::steady_clock::now();
 	while (clientSession->isEtpSessionClosed()) {
-		auto timeOut = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count();
-		if (timeOut > 50000) {
+		auto timeOut = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t_start).count();
+		if (timeOut > 10000) {
 			throw std::invalid_argument("Time out : " + std::to_string(timeOut) + " ms.\n");
 		}
 	}

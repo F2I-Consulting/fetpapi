@@ -26,9 +26,9 @@ SslClientSession::SslClientSession(
 #else
 	ssl::context&& ctx,
 #endif
-	InitializationParameters const* initializationParams, const std::string& target, const std::string& authorization, const std::string& proxyAuthorization,
+	InitializationParameters const* initializationParams, const std::string& authorization, const std::string& proxyAuthorization,
 	const std::map<std::string, std::string>& additionalHandshakeHeaderFields, std::size_t frameSize)
-	: AbstractClientSessionCRTP<SslClientSession>(initializationParams, target, authorization, proxyAuthorization), sslContext_(std::move(ctx)), frameSize_(frameSize)
+	: AbstractClientSessionCRTP<SslClientSession>(initializationParams, authorization, proxyAuthorization), sslContext_(std::move(ctx)), frameSize_(frameSize)
 {
 	additionalHandshakeHeaderFields_ = additionalHandshakeHeaderFields;
 }

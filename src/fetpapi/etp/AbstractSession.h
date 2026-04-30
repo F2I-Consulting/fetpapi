@@ -187,10 +187,10 @@ namespace ETP_NS
 			// If the request message is itself multipart, the correlationId of each message of the multipart
 			// response MUST be set to the messageId of the FIRST message in the multipart request.
 
-			auto t_start = std::chrono::high_resolution_clock::now();
+			auto t_start = std::chrono::steady_clock::now();
 			while (isMessageStillProcessing(correlationId == 0 ? msgId : correlationId)) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
-				if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > _timeOut) {
+				if (std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t_start).count() > _timeOut) {
 					throw std::runtime_error("Time out waiting for a response of message id " + std::to_string(msgId));
 				}
 			}
@@ -285,10 +285,10 @@ namespace ETP_NS
 			// If the request message is itself multipart, the correlationId of each message of the multipart
 			// response MUST be set to the messageId of the FIRST message in the multipart request.
 
-			const auto t_start = std::chrono::high_resolution_clock::now();
+			const auto t_start = std::chrono::steady_clock::now();
 			while (isMessageStillProcessing(correlationId == 0 ? msgId : correlationId)) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
-				if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > _timeOut) {
+				if (std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t_start).count() > _timeOut) {
 					throw std::runtime_error("Time out waiting for a response of message id " + std::to_string(msgId));
 				}
 			}
@@ -385,14 +385,24 @@ namespace ETP_NS
 		* Send a message for closing to the server after having sent all previous messages.
 		* The session would really close only after all messages have been sent and responded.
 		* This method does block.
+		* 
+		* @param	forceCloseAfterTimeOut	If true, the websocket session will be closed
+		*									even if the ETP server did not close the session before the time out.
+		*									By default, it is true.
 		*/
-		FETPAPI_DLL_IMPORT_OR_EXPORT void closeAndBlock() {
+		FETPAPI_DLL_IMPORT_OR_EXPORT void closeAndBlock(bool forceCloseAfterTimeOut = true) {
 			close();
-			auto t_start = std::chrono::high_resolution_clock::now();
+			auto t_start = std::chrono::steady_clock::now();
 			while (!webSocketSessionClosed) {
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
-				if (std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - t_start).count() > _timeOut) {
-					throw std::runtime_error("Time out waiting for closing");
+				if (std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t_start).count() > _timeOut) {
+					if (forceCloseAfterTimeOut) {
+						fesapi_log("Time out waiting for closing. Forcefully closing.");
+						forceClose();
+					}
+					else {
+						throw std::runtime_error("Time out waiting for closing");
+					}
 				}
 			}
 		}
@@ -690,6 +700,11 @@ namespace ETP_NS
 		 * Write the current buffer on the web socket
 		 */
 		virtual void do_write() = 0;
+
+		/**
+		 * Force closing of the session
+		 */
+		virtual void forceClose() = 0;
 
 		/**
 		 * Reads the message header currently stored in the decoder.

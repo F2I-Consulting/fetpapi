@@ -139,17 +139,16 @@ namespace ETP_NS
 
 		/**
 		 * @param initializationParams  The initialization parameters of the session including IP host, port, requestedProtocols, supportedDataObjects
-		 * @param target				usually "/" but a server can decide to serve etp on a particular target
 		 * @param etpServerAuth			The HTTP authorization attribute to send to the ETP server. It may be empty if not needed.
 		 * @param proxyAuth				The HTTP authorization attribute to send to the proxy server. It may be empty if not needed.
 		 */
 		ClientSession(
-			InitializationParameters const* initializationParams, const std::string& target, const std::string& etpServerAuth, const std::string& proxyAuth = "") :
+			InitializationParameters const* initializationParams, const std::string& etpServerAuth, const std::string& proxyAuth = "") :
 			ioc(),
 			resolver(ioc),
 			etpServerHost(initializationParams->getEtpServerHost()),
 			etpServerPort(std::to_string(initializationParams->getEtpServerPort())),
-			etpServerTarget(target),
+			etpServerTarget(initializationParams->getEtpServerUrlPath()),
 			etpServerAuthorization(etpServerAuth),
 			proxyHost(initializationParams->getProxyHost()),
 			proxyPort(std::to_string(initializationParams->getProxyPort())),

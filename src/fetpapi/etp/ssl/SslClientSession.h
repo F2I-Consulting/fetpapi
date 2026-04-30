@@ -62,7 +62,7 @@ namespace ETP_NS
 #else
 			ssl::context&& ctx,
 #endif
-			InitializationParameters const* initializationParams, const std::string& target, const std::string& authorization, const std::string& proxyAuthorization = "",
+			InitializationParameters const* initializationParams, const std::string& authorization, const std::string& proxyAuthorization = "",
 			const std::map<std::string, std::string>& additionalHandshakeHeaderFields = {}, std::size_t frameSize = 4096);
 
 		virtual ~SslClientSession() {}
@@ -270,5 +270,14 @@ namespace ETP_NS
 		// NOTE: 200 response to a CONNECT request from a tunneling proxy do not carry a body
 		http::response_parser<http::empty_body> http_proxy_handshake_parser;
 		std::size_t frameSize_;
+
+		/**
+		 * Force closing of the session
+		 */
+		void forceClose() {
+			ws_->next_layer().shutdown();
+			ws_->next_layer().next_layer().close();
+			webSocketSessionClosed = true;
+		}
 	};
 }
