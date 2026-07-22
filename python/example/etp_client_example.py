@@ -60,7 +60,6 @@ for index, resource in enumerate(all_resources):
 print("Create a FESAPI Dataobject repository to ease access to dataobjects");
 repo = fesapi.DataObjectRepository()
 hdf_proxy_factory = fetpapi.FesapiHdfProxyFactory(client_session)
-hdf_proxy_factory.thisown = False # Disable ownership of the factory to avoid it being garbage collected since DataObjectRepository will destroy it when it will be destroyed.
 print("Set specialized HdfProxy to deal with ETP DataArray subprotocol")
 repo.setHdfProxyFactory(hdf_proxy_factory)
 

@@ -223,7 +223,26 @@ jobs:
       - name: Stub `setup.py` check
         # It will be generated during CMake run
         # https://github.com/pypa/cibuildwheel/issues/1139
-        run: touch python/setup.py
+        run: |
+          touch python/setup.py
+          cd ${{ runner.temp }}
+          pip download fesapi --no-deps --only-binary=:all: --no-cache-dir --no-color
+          $FESAPI_WHEEL = Get-ChildItem -File "fesapi-*.whl" | Select-Object -First 1 -ExpandProperty FullName
+          Write-Host ("Found FESAPI_WHEEL: " + $FESAPI_WHEEL)
+          7z x $FESAPI_WHEEL -o".\fesapi_wheel" -y
+          $MANGLED_LIB_FESAPI_CPP = Get-ChildItem -Path "$(Get-Location)\fesapi_wheel\fesapi.libs" -Filter 'FesapiCpp*.dll' -File | Select-Object -First 1 -ExpandProperty FullName
+          Write-Host "Found mangled FesapiCpp library: " + $MANGLED_LIB_FESAPI_CPP
+          # Set as environment variable for subsequent steps
+          echo "MANGLED_LIB_FESAPI_CPP=$MANGLED_LIB_FESAPI_CPP" >> $env:GITHUB_ENV
+          IMPORT_LIB_FESAPI_CPP = Get-ChildItem -Path "$(Get-Location)\fesapi_wheel\fesapi" -Filter 'FesapiCpp*.lib' -File | Select-Object -First 1 -ExpandProperty FullName
+          Write-Host "Found FesapiCpp import library: " + $IMPORT_LIB_FESAPI_CPP
+          # Set as environment variable for subsequent steps
+          echo "IMPORT_LIB_FESAPI_CPP=$IMPORT_LIB_FESAPI_CPP" >> $env:GITHUB_ENV
+          TODO : Trouver la dll Qui n'est pas mangled!!!!!
+          IMPORT_LIB_FESAPI_CPP = Get-ChildItem -Path "$(Get-Location)\fesapi_wheel\fesapi" -Filter 'FesapiCpp*.dll' -File | Select-Object -First 1 -ExpandProperty FullName
+          Write-Host "Found FesapiCpp import library: " + $IMPORT_LIB_FESAPI_CPP
+          # Set as environment variable for subsequent steps
+          echo "IMPORT_LIB_FESAPI_CPP=$IMPORT_LIB_FESAPI_CPP" >> $env:GITHUB_ENV
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.2.1
         env:
@@ -235,19 +254,18 @@ jobs:
             git clone --branch v2.14.1.0 --depth 1 https://github.com/F2I-Consulting/fesapi.git ${{ runner.temp }}/fesapi-src &&
             mkdir fesapi-build &&
             cd fesapi-build &&
-            cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fesapi-install ${{ runner.temp }}\fesapi-src &&
-            cmake --build . --config Release -j2 &&
-            cmake --build . --config Release --target INSTALL &&
+            cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated ${{ runner.temp }}\fesapi-src &&
+            ren "${{ runner.temp }}\fesapi-src\src" fesapi &&
             %VCPKG_INSTALLATION_ROOT%\vcpkg install bext-wintls boost-beast boost-url avro-cpp &&
             cd ${{ runner.temp }} &&
             mkdir fetpapi-build &&
-            cd fetpapi-build &&
-            cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DWITH_FESAPI=TRUE -DFESAPI_ROOT=${{ runner.temp }}/fesapi-install -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX=${{ runner.temp }}/fetpapi-install ${{ github.workspace }} &&
+            cd fetpapi-build &&cmake -DCMAKE_TOOLCHAIN_FILE=%VCPKG_INSTALLATION_ROOT%\scripts\buildsystems\vcpkg.cmake -G"Visual Studio 17 2022" -A x64 -T host=x64 -Wno-dev -Wno-deprecated -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=${{ runner.temp }}\fesapi-src -DFESAPI_LIBRARY_RELEASE=${{ env.IMPORT_LIB_FESAPI_CPP }} -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX==${{ runner.temp }}/fetpapi-install ${{ github.workspace }} &&
             cmake --build . --config Release --parallel 2 &&
             cmake --build . --config Release --target INSTALL &&
             pip install delvewheel
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
-            delvewheel repair --add-path ${{ runner.temp }}\fetpapi-build\Release --add-path ${{ runner.temp }}\fesapi-build\Release --namespace-pkg fetpapi -w {dest_dir} {wheel}
+            delvewheel repair --add-path ${{ runner.temp }}\fetpapi-build\Release --exclude "$MANGLED_LIB_FESAPI_CPP" --add-path ${{ runner.temp }}\fesapi-build\Release --namespace-pkg fetpapi -w {dest_dir} {wheel}
+            delvewheel replace-needed "$MANGLED_LIB_FESAPI_CPP" 
           CIBW_TEST_COMMAND: python ${{github.workspace}}\python\example\etp_client_example.py
         with:
           package-dir: ./python
@@ -287,8 +305,8 @@ jobs:
             pip download fesapi --no-deps --only-binary=:all: --no-cache-dir --no-color
             FESAPI_WHEEL=$(ls fesapi-*.whl | head -n 1)
             unzip "$FESAPI_WHEEL"
-            LIB_FESAPI_CPP=$(find "$(pwd)/fesapi.libs" -name 'libFesapiCpp*' -type f | head -n 1)
-            echo "Found libFesapiCpp file: $LIB_FESAPI_CPP"
+            MANGLED_LIB_FESAPI_CPP=$(find "$(pwd)/fesapi.libs" -name 'libFesapiCpp*' -type f | head -n 1)
+            echo "Found libFesapiCpp file: $MANGLED_LIB_FESAPI_CPP"
             cd /
             git clone -b release-1.12.1 https://github.com/apache/avro.git avro
             mkdir avro-build
@@ -299,12 +317,12 @@ jobs:
             cd /
             mkdir build
             cd build
-            cmake3 -DCMAKE_BUILD_TYPE=Release -DAVRO_ROOT=/avro-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=/fesapi-src -DFESAPI_LIBRARY_RELEASE="$LIB_FESAPI_CPP" -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fetpapi-install {project}
+            cmake3 -DCMAKE_BUILD_TYPE=Release -DAVRO_ROOT=/avro-install -DAVRO_USE_STATIC_LIBS=TRUE -DWITH_FESAPI=TRUE -DFESAPI_INCLUDE_DIR=/fesapi-src -DFESAPI_LIBRARY_RELEASE="$MANGLED_LIB_FESAPI_CPP" -DWITH_PYTHON_WRAPPING=TRUE -DCMAKE_INSTALL_PREFIX:STRING=/fetpapi-install {project}
             cmake3 --build . --parallel $(nproc)
             cmake3 --install .
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
             export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/fesapi-build/fesapi.libs:/fetpapi-install/lib64 &&
-            auditwheel repair -w {dest_dir} {wheel} --exclude "$LIB_FESAPI_CPP" 
+            auditwheel repair -w {dest_dir} {wheel} --exclude "$MANGLED_LIB_FESAPI_CPP" 
           CIBW_TEST_COMMAND: python {project}/python/example/etp_client_example.py
         with:
           package-dir: ./python

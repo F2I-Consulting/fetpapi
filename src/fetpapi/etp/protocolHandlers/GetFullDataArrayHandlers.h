@@ -153,16 +153,17 @@ namespace ETP_NS
 				throw std::invalid_argument("The data sub array has not been registered.");
 			}
 
-			auto dataArray = receivedKeyValue.second;
-			int64_t dataArrayValueCount = std::accumulate(iterator->second.counts.begin(), iterator->second.counts.end(), 1, std::multiplies<int64_t>());
+			const auto& dataArray = receivedKeyValue.second;
+			const auto& currentCounts = iterator->second.counts;
+			const int64_t dataArrayValueCount = std::accumulate(currentCounts.begin(), currentCounts.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
 			auto currentStarts = iterator->second.starts;
 
 			int64_t subarrayOffset = 0;
 			while (subarrayOffset < dataArrayValueCount) {
 				// Compute the offset in the receiving array
 				int64_t arrayOffset = currentStarts.back();
-				for (int64_t dimIndex = static_cast<int64_t>(iterator->second.counts.size()) - 2; dimIndex >= 0; --dimIndex) {
-					const int64_t multiplier = std::accumulate(iterator->second.counts.begin() + dimIndex + 1, iterator->second.counts.end(), 1, std::multiplies<int64_t>());
+				for (int64_t dimIndex = static_cast<int64_t>(currentCounts.size()) - 2; dimIndex >= 0; --dimIndex) {
+					const int64_t multiplier = std::accumulate(currentCounts.begin() + dimIndex + 1, currentCounts.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
 					arrayOffset += currentStarts[static_cast<size_t>(dimIndex)] * multiplier;
 				}
 
@@ -171,7 +172,7 @@ namespace ETP_NS
 					const Energistics::Etp::v12::Datatypes::ArrayOfBoolean& avroArray = dataArray.data.item.get_ArrayOfBoolean();
 					std::transform(
 						avroArray.values.begin() + subarrayOffset,
-						avroArray.values.begin() + subarrayOffset + iterator->second.counts.back(),
+						avroArray.values.begin() + subarrayOffset + currentCounts.back(),
 						values + arrayOffset,
 						[](const auto& x) { return static_cast<T>(x); }
 					);
@@ -180,7 +181,7 @@ namespace ETP_NS
 					const Energistics::Etp::v12::Datatypes::ArrayOfInt& avroArray = dataArray.data.item.get_ArrayOfInt();
 					std::transform(
 						avroArray.values.begin() + subarrayOffset,
-						avroArray.values.begin() + subarrayOffset + iterator->second.counts.back(),
+						avroArray.values.begin() + subarrayOffset + currentCounts.back(),
 						values + arrayOffset,
 						[](const auto& x) { return static_cast<T>(x); }
 					);
@@ -189,7 +190,7 @@ namespace ETP_NS
 					const Energistics::Etp::v12::Datatypes::ArrayOfLong& avroArray = dataArray.data.item.get_ArrayOfLong();
 					std::transform(
 						avroArray.values.begin() + subarrayOffset,
-						avroArray.values.begin() + subarrayOffset + iterator->second.counts.back(),
+						avroArray.values.begin() + subarrayOffset + currentCounts.back(),
 						values + arrayOffset,
 						[](const auto& x) { return static_cast<T>(x); }
 					);
@@ -198,7 +199,7 @@ namespace ETP_NS
 					const Energistics::Etp::v12::Datatypes::ArrayOfFloat& avroArray = dataArray.data.item.get_ArrayOfFloat();
 					std::transform(
 						avroArray.values.begin() + subarrayOffset,
-						avroArray.values.begin() + subarrayOffset + iterator->second.counts.back(),
+						avroArray.values.begin() + subarrayOffset + currentCounts.back(),
 						values + arrayOffset,
 						[](const auto& x) { return static_cast<T>(x); }
 					);
@@ -207,7 +208,7 @@ namespace ETP_NS
 					const Energistics::Etp::v12::Datatypes::ArrayOfDouble& avroArray = dataArray.data.item.get_ArrayOfDouble();
 					std::transform(
 						avroArray.values.begin() + subarrayOffset,
-						avroArray.values.begin() + subarrayOffset + iterator->second.counts.back(),
+						avroArray.values.begin() + subarrayOffset + currentCounts.back(),
 						values + arrayOffset,
 						[](const auto& x) { return static_cast<T>(x); }
 					);
@@ -224,16 +225,16 @@ namespace ETP_NS
 					const std::string& avroValues = dataArray.data.item.get_bytes();
 					std::transform(
 						avroValues.begin() + subarrayOffset,
-						avroValues.begin() + subarrayOffset + iterator->second.counts.back(),
+						avroValues.begin() + subarrayOffset + currentCounts.back(),
 						values + arrayOffset,
 						[](const auto& x) { return static_cast<T>(x); }
 					);
 				}
 
 				// Compute the new starts in the ETP subarray
-				for (int64_t dimIndex = static_cast<int64_t>(iterator->second.counts.size()) - 2; dimIndex >= 0; --dimIndex) {
+				for (int64_t dimIndex = static_cast<int64_t>(currentCounts.size()) - 2; dimIndex >= 0; --dimIndex) {
 					const size_t uDimIndex = static_cast<size_t>(dimIndex);
-					if (currentStarts[uDimIndex] + 1 < iterator->second.starts[uDimIndex] + iterator->second.counts[uDimIndex]) {
+					if (currentStarts[uDimIndex] + 1 < iterator->second.starts[uDimIndex] + currentCounts[uDimIndex]) {
 						++currentStarts[uDimIndex];
 						break;
 					}
@@ -242,7 +243,7 @@ namespace ETP_NS
 					}
 				}
 
-				subarrayOffset += iterator->second.counts.back();
+				subarrayOffset += currentCounts.back();
 			}
 		}
 	}

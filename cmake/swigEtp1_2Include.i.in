@@ -673,6 +673,9 @@ namespace Energistics {
 %template(MapStringPutDataSubarraysType) std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::PutDataSubarraysType>;
 %template(MapStringPutUninitializedDataArrayType) std::map<std::string, Energistics::Etp::v12::Datatypes::DataArrayTypes::PutUninitializedDataArrayType>;
 
+%include <std_shared_ptr.i>
+%shared_ptr(ETP_NS::EtpMessage)
+
 %nodefaultctor ETP_NS::EtpMessage;
 namespace ETP_NS
 {
@@ -686,6 +689,15 @@ namespace ETP_NS
 
 /**************** CORE PROTOCOL  *****************/
 
+%shared_ptr(Energistics::Etp::v12::Protocol::Core::RequestSession)
+%shared_ptr(Energistics::Etp::v12::Protocol::Core::OpenSession)
+%shared_ptr(Energistics::Etp::v12::Protocol::Core::CloseSession)
+%shared_ptr(Energistics::Etp::v12::Protocol::Core::Authorize)
+%shared_ptr(Energistics::Etp::v12::Protocol::Core::AuthorizeResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::Core::Ping)
+%shared_ptr(Energistics::Etp::v12::Protocol::Core::Pong)
+%shared_ptr(Energistics::Etp::v12::Protocol::Core::ProtocolException)
+%shared_ptr(Energistics::Etp::v12::Protocol::Core::Acknowledge)
 namespace Energistics {
 	namespace Etp {	
 		namespace v12 {		
@@ -763,6 +775,11 @@ namespace Energistics {
 
 /**************** DISCOVERY PROTOCOL  *****************/
 
+%shared_ptr(Energistics::Etp::v12::Protocol::Discovery::GetResources)
+%shared_ptr(Energistics::Etp::v12::Protocol::Discovery::GetResourcesResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::Discovery::GetDeletedResources)
+%shared_ptr(Energistics::Etp::v12::Protocol::Discovery::GetDeletedResourcesResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::Discovery::GetResourcesEdgesResponse)
 namespace Energistics {
 	namespace Etp {	
 		namespace v12 {		
@@ -809,6 +826,13 @@ namespace Energistics {
 
 /**************** STORE PROTOCOL  *****************/
 
+%shared_ptr(Energistics::Etp::v12::Protocol::Store::GetDataObjects)
+%shared_ptr(Energistics::Etp::v12::Protocol::Store::PutDataObjects)
+%shared_ptr(Energistics::Etp::v12::Protocol::Store::DeleteDataObjects)
+%shared_ptr(Energistics::Etp::v12::Protocol::Store::GetDataObjectsResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::Store::Chunk)
+%shared_ptr(Energistics::Etp::v12::Protocol::Store::PutDataObjectsResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::Store::DeleteDataObjectsResponse)
 namespace Energistics {
 	namespace Etp {	
 		namespace v12 {		
@@ -864,6 +888,8 @@ namespace Energistics {
 
 /**************** STORE OSDU PROTOCOL  *****************/
 
+%shared_ptr(Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValue)
+%shared_ptr(Energistics::Etp::v12::Protocol::StoreOSDU::CopyDataObjectsByValueResponse)
 namespace Energistics {
 	namespace Etp {	
 		namespace v12 {		
@@ -888,6 +914,18 @@ namespace Energistics {
 
 /**************** DATA ARRAY PROTOCOL  *****************/
 
+%shared_ptr(Energistics::Etp::v12::Protocol::DataArray::GetDataArrays)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataArray::GetDataArraysResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataArray::GetDataSubarrays)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataArray::GetDataSubarraysResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataArray::PutDataArrays)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataArray::PutDataArraysResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataArray::PutDataSubarrays)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataArray::PutDataSubarraysResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArrays)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataArray::PutUninitializedDataArraysResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadata)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataArray::GetDataArrayMetadataResponse)
 namespace Energistics {
 	namespace Etp {	
 		namespace v12 {		
@@ -960,6 +998,12 @@ namespace Energistics {
 
 /**************** TRANSACTION PROTOCOL  *****************/
 
+%shared_ptr(Energistics::Etp::v12::Protocol::Transaction::StartTransaction)
+%shared_ptr(Energistics::Etp::v12::Protocol::Transaction::StartTransactionResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::Transaction::CommitTransaction)
+%shared_ptr(Energistics::Etp::v12::Protocol::Transaction::RollbackTransaction)
+%shared_ptr(Energistics::Etp::v12::Protocol::Transaction::CommitTransactionResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::Transaction::RollbackTransactionResponse)
 namespace Energistics {
 	namespace Etp {	
 		namespace v12 {		
@@ -1010,6 +1054,12 @@ namespace Energistics {
 
 /**************** DATASPACE PROTOCOL  *****************/
 
+%shared_ptr(Energistics::Etp::v12::Protocol::Dataspace::GetDataspaces)
+%shared_ptr(Energistics::Etp::v12::Protocol::Dataspace::GetDataspacesResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::Dataspace::PutDataspaces)
+%shared_ptr(Energistics::Etp::v12::Protocol::Dataspace::PutDataspacesResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspaces)
+%shared_ptr(Energistics::Etp::v12::Protocol::Dataspace::DeleteDataspacesResponse)
 namespace Energistics {
 	namespace Etp {
 		namespace v12 {
@@ -1053,6 +1103,14 @@ namespace Energistics {
 
 /**************** DATASPACE OSDU PROTOCOL  *****************/
 
+%shared_ptr(Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfo)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataspaceOSDU::GetDataspaceInfoResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContent)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyDataspacesContentResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspaces)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataspaceOSDU::LockDataspacesResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspace)
+%shared_ptr(Energistics::Etp::v12::Protocol::DataspaceOSDU::CopyToDataspaceResponse)
 namespace Energistics {
 	namespace Etp {
 		namespace v12 {
@@ -1108,6 +1166,16 @@ namespace Energistics {
 
 /**************** STORE NOTIFICATION PROTOCOL  *****************/
 
+%shared_ptr(Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotificationsResponse)
+%shared_ptr(Energistics::Etp::v12::Protocol::StoreNotification::Chunk)
+%shared_ptr(Energistics::Etp::v12::Protocol::StoreNotification::ObjectAccessRevoked)
+%shared_ptr(Energistics::Etp::v12::Protocol::StoreNotification::ObjectDeleted)
+%shared_ptr(Energistics::Etp::v12::Protocol::StoreNotification::SubscriptionEnded)
+%shared_ptr(Energistics::Etp::v12::Protocol::StoreNotification::UnsubscribeNotifications)
+%shared_ptr(Energistics::Etp::v12::Protocol::StoreNotification::ObjectActiveStatusChanged)
+%shared_ptr(Energistics::Etp::v12::Protocol::StoreNotification::ObjectChanged)
+%shared_ptr(Energistics::Etp::v12::Protocol::StoreNotification::SubscribeNotifications)
+%shared_ptr(Energistics::Etp::v12::Protocol::StoreNotification::UnsolicitedStoreNotifications)
 namespace Energistics {
 	namespace Etp {
 		namespace v12 {
@@ -1174,7 +1242,6 @@ namespace Energistics {
 	}
 }
 
-%include <std_shared_ptr.i>
 %shared_ptr(ETP_NS::ProtocolHandlers)
 %shared_ptr(ETP_NS::CoreHandlers)
 %shared_ptr(ETP_NS::DiscoveryHandlers)
@@ -1187,7 +1254,6 @@ namespace Energistics {
 %shared_ptr(ETP_NS::DataspaceOSDUHandlers)
 %shared_ptr(ETP_NS::AbstractSession)
 %shared_ptr(ETP_NS::ClientSession)
-%shared_ptr(ETP_NS::EtpMessage)
 
 %feature("director") ETP_NS::CoreHandlers;
 %feature("director") ETP_NS::DiscoveryHandlers;
